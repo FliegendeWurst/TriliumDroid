@@ -85,7 +85,7 @@ class Cache {
 
 		fun getTreeData(activity: Activity, id: String) {
 			db!!.rawQuery(
-				"SELECT branchId, noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title FROM branches, notes WHERE branches.noteId = notes.noteId",
+				"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title FROM branches, notes WHERE branches.noteId = notes.noteId",
 				arrayOf()
 			).use {
 				while (it.moveToNext()) {
