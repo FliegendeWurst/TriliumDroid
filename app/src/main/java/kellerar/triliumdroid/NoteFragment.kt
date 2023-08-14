@@ -1,14 +1,19 @@
 package kellerar.triliumdroid
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.*
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
 import kellerar.triliumdroid.databinding.FragmentNoteBinding
+
 
 class NoteFragment() : Fragment(R.layout.fragment_note) {
 	companion object {
@@ -44,34 +49,31 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 			override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
 				// called when an internal link is used
 				if (url.startsWith(WEBVIEW_DOMAIN) && url.contains('#')) {
-					Log.i(TAG, "good")
 					val parts = url.split('/')
 					val lastPart = parts.last()
 					if (lastPart == id) {
 						return
 					}
-					var inNotePath = false
-					var last = ""
-					for (part in parts) {
-						if (part.endsWith("#root")) {
-							inNotePath = true
-						} else if (inNotePath) {
-							Cache.getTreeData(activity!!, part)
-							handler!!.post {
-								val items = Cache.getTreeList("root", 0)
-								MainActivity.tree?.submitList(items)
-							}
-						}
-						last = part
-					}
-					if (inNotePath) {
-						parentFragmentManager.beginTransaction()
-							.replace(R.id.fragment_container, NoteFragment(last))
-							.addToBackStack(null)
-							.commit()
-					}
+					val id = parts.last()
+					Log.i(TAG, "navigating to note $id")
+					(activity as MainActivity).scrollTreeTo(id)
+					(activity as MainActivity).navigateTo(id)
 				}
 				Log.i(TAG, url)
+			}
+
+			override fun shouldOverrideUrlLoading(
+				view: WebView?,
+				request: WebResourceRequest?
+			): Boolean {
+				// open external sites in external browser
+				return if (request?.url?.host != WEBVIEW_HOST) {
+					val intent = Intent(Intent.ACTION_VIEW, request!!.url)
+					startActivity(intent)
+					true
+				} else {
+					false
+				}
 			}
 
 			override fun shouldInterceptRequest(
@@ -90,7 +92,7 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 					if (id == "favicon.ico") {
 						return null // TODO: catch all invalid IDs
 					}
-					val note = Cache.getNote(activity!!, id)
+					val note = Cache.getNote(id)
 					return if (note != null) {
 						WebResourceResponse(note.mime, null, note.content!!.inputStream())
 					} else {
@@ -119,7 +121,7 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 		this.load = true
 		Log.i(TAG, "loading $id")
 		binding!!.idText.text = id
-		val note = Cache.getNote(requireActivity(), id) ?: return
+		val note = Cache.getNote(id) ?: return
 		handler!!.post {
 			binding!!.text.text = note.title
 			if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
@@ -138,16 +140,18 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 				)
 			}
 		}
+		/*
 		if (tree) {
 			if (treeLoad) {
 				treeLoad = false
 			}
-			Cache.getTreeData(requireActivity(), id)
+			Cache.getTreeData()
 			handler!!.post {
 				val items = Cache.getTreeList("root", 0)
 				Log.i(TAG, "about to show ${items.size} tree items")
 				MainActivity.tree?.submitList(items)
 			}
 		}
+		 */
 	}
 }

@@ -3,12 +3,21 @@ package kellerar.triliumdroid
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import kellerar.triliumdroid.databinding.TreeListItemBinding
 
 class TreeItemAdapter(private val onClick: (Branch) -> Unit) : ListAdapter<Pair<Branch, Int>, TreeItemAdapter.TreeItemViewHolder>(TreeItemDiffCallback) {
+	private var selectedNote: String? = null
+
+	fun select(noteId: String) {
+		selectedNote = noteId
+		notifyItemChanged(Cache.branchPosition[noteId] ?: return)
+	}
+
 	class TreeItemViewHolder(private val binding: TreeListItemBinding, itemView: View, val onClick: (Branch) -> Unit) :
 			RecyclerView.ViewHolder(itemView) {
 		fun bind(item: Pair<Branch, Int>) {
@@ -29,6 +38,15 @@ class TreeItemAdapter(private val onClick: (Branch) -> Unit) : ListAdapter<Pair<
 	override fun onBindViewHolder(holder: TreeItemViewHolder, position: Int) {
 		val item = getItem(position)
 		holder.bind(item)
+		val button = holder.itemView.findViewById<Button>(R.id.label)
+		// highlight the selected note
+		if (item.first.note == selectedNote) {
+			button
+				.backgroundTintList = ContextCompat.getColorStateList(holder.itemView.context, R.color.tree_selected)
+		} else {
+			button
+				.backgroundTintList = ContextCompat.getColorStateList(holder.itemView.context, R.color.tree_normal)
+		}
 	}
 }
 

@@ -1,22 +1,13 @@
 package kellerar.triliumdroid
 
 import android.app.Activity
-import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.provider.BaseColumns
 import android.util.Log
-import kellerar.triliumdroid.Cache.CacheDatabaseContract.BranchRow
-import kellerar.triliumdroid.Cache.CacheDatabaseContract.NoteRow
 import org.json.JSONObject
-import java.io.BufferedReader
-import java.io.InputStream
-import java.io.InputStreamReader
 import java.lang.Exception
-import java.text.DateFormat
-import java.time.Instant
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -34,10 +25,12 @@ class Cache {
 
 		public var branchesDirty: MutableSet<String> = HashSet()
 
+		public var branchPosition: MutableMap<String, Int> = HashMap()
+
 		private var dbHelper: CacheDbHelper? = null
 		var db: SQLiteDatabase? = null
 
-		fun getNote(activity: Activity, id: String): Note? {
+		fun getNote(id: String): Note? {
 			var note: Note? = null
 			db!!.rawQuery(
 				"SELECT content, mime, title FROM notes, note_contents WHERE notes.noteId = note_contents.noteId AND notes.noteId = ?",
@@ -51,39 +44,10 @@ class Cache {
 			return note
 		}
 
-		fun insertBranch(branch: Branch) {
-			return
-			if (branches.containsKey(branch.note)) {
-				branchesDirty.add(branch.id)
-				for (entry in branch.children.entries) {
-					branches[branch.note]!!.children[entry.key] = entry.value
-				}
-			} else {
-				branches[branch.note] = branch
-			}
-
-			val values = ContentValues().apply {
-				put(BranchRow._ID, branch.id)
-				put(BranchRow.COLUMN_NAME_NOTE, branch.note)
-				put(BranchRow.COLUMN_NAME_PARENT_NOTE, branch.parentNote)
-				put(BranchRow.COLUMN_NAME_POSITION, branch.position)
-				put(BranchRow.COLUMN_NAME_PREFIX, branch.prefix)
-				put(BranchRow.COLUMN_NAME_EXPANDED, branch.expanded)
-			}
-
-			try {
-				db!!.insertWithOnConflict(
-					BranchRow.TABLE_NAME,
-					null,
-					values,
-					SQLiteDatabase.CONFLICT_REPLACE
-				)
-			} catch (t: Throwable) {
-				Log.e(TAG, "fatal", t)
-			}
-		}
-
-		fun getTreeData(activity: Activity, id: String) {
+		/**
+		 * Populate the tree data cache.
+		 */
+		fun getTreeData() {
 			db!!.rawQuery(
 				"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title FROM branches, notes WHERE branches.noteId = notes.noteId",
 				arrayOf()
@@ -128,6 +92,9 @@ class Cache {
 			list.add(Pair(current, lvl))
 			for (children in current.children.values) {
 				list.addAll(getTreeList(children.note, lvl + 1))
+			}
+			for ((i, pair) in list.withIndex()) {
+				branchPosition[pair.first.note] = i
 			}
 			return list
 		}
@@ -240,62 +207,22 @@ class Cache {
 		}
 
 		override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-			// This database is only a cache for online data, so its upgrade policy is
-			// to simply to discard the data and start over
+			// TODO: execute the migrations
 			try {
-				db.execSQL(CacheDatabaseContract.SQL_DELETE_BRANCHES)
-				db.execSQL(CacheDatabaseContract.SQL_DELETE_NOTES)
+				//db.execSQL("...")
 			} catch (t: Throwable) {
 				Log.e(TAG, "fatal", t)
 			}
-			onCreate(db)
 		}
 
 		override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-			onUpgrade(db, oldVersion, newVersion)
+			// TODO: do something here
 		}
 
 		companion object {
 			// If you change the database schema, you must increment the database version.
 			const val DATABASE_VERSION = 1
 			const val DATABASE_NAME = "Document.db"
-		}
-	}
-
-
-	object CacheDatabaseContract {
-		public const val SQL_CREATE_BRANCHES =
-			"CREATE TABLE ${BranchRow.TABLE_NAME} (" +
-					"${BranchRow._ID} TEXT PRIMARY KEY," +
-					"${BranchRow.COLUMN_NAME_NOTE} TEXT NOT NULL," +
-					"${BranchRow.COLUMN_NAME_PARENT_NOTE} TEXT NOT NULL," +
-					"${BranchRow.COLUMN_NAME_POSITION} INT NOT NULL," +
-					"${BranchRow.COLUMN_NAME_PREFIX} TEXT," +
-					"${BranchRow.COLUMN_NAME_EXPANDED} INT NOT NULL)"
-		public const val SQL_DELETE_BRANCHES = "DROP TABLE ${BranchRow.TABLE_NAME}"
-
-		public const val SQL_CREATE_NOTES =
-			"CREATE TABLE ${NoteRow.TABLE_NAME} (" +
-					"${NoteRow._ID} TEXT PRIMARY KEY," +
-					"${NoteRow.COLUMN_NAME_TITLE} TEXT NOT NULL," +
-					"${NoteRow.COLUMN_NAME_CONTENT} BLOB)"
-		public const val SQL_DELETE_NOTES = "DROP TABLE ${NoteRow.TABLE_NAME}"
-
-		object BranchRow : BaseColumns {
-			const val TABLE_NAME = "branch"
-			const val _ID = "id"
-			const val COLUMN_NAME_NOTE = "note"
-			const val COLUMN_NAME_PARENT_NOTE = "parentNote"
-			const val COLUMN_NAME_POSITION = "position"
-			const val COLUMN_NAME_PREFIX = "prefix"
-			const val COLUMN_NAME_EXPANDED = "expanded"
-		}
-
-		object NoteRow : BaseColumns {
-			const val TABLE_NAME = "note"
-			const val _ID = "id"
-			const val COLUMN_NAME_TITLE = "title"
-			const val COLUMN_NAME_CONTENT = "content"
 		}
 	}
 }
