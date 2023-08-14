@@ -14,7 +14,14 @@ class TreeItemAdapter(private val onClick: (Branch) -> Unit) : ListAdapter<Pair<
 	private var selectedNote: String? = null
 
 	fun select(noteId: String) {
+		val prev = selectedNote
 		selectedNote = noteId
+		if (prev != null) {
+			val idx = Cache.branchPosition[prev]
+			if (idx != null) {
+				notifyItemChanged(idx)
+			}
+		}
 		notifyItemChanged(Cache.branchPosition[noteId] ?: return)
 	}
 

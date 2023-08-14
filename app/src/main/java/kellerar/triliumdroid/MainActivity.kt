@@ -76,6 +76,7 @@ class MainActivity : AppCompatActivity() {
 			.replace(R.id.fragment_container, NoteFragment(noteId, true))
 			.addToBackStack(null)
 			.commit()
+		binding.drawerLayout.closeDrawers()
 	}
 
 	override fun onDestroy() {
