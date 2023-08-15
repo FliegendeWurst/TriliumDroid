@@ -44,6 +44,20 @@ class Cache {
 			return note
 		}
 
+		fun getJumpToResults(input: String): List<Note> {
+			val notes = mutableListOf<Note>()
+			db!!.rawQuery(
+				"SELECT noteId, mime, title FROM notes WHERE title LIKE ? LIMIT 200",
+				arrayOf("%$input%")
+			).use {
+				while (it.moveToNext()) {
+					val note = Note(it.getString(0), it.getString(1), it.getString(2))
+					notes.add(note)
+				}
+			}
+			return notes
+		}
+
 		/**
 		 * Populate the tree data cache.
 		 */
@@ -136,7 +150,10 @@ class Cache {
 								// TODO
 								return@use
 							}
-							if (arrayOf("note_contents", "note_revision_contents").contains(entityName)) {
+							if (arrayOf("note_contents", "note_revision_contents").contains(
+									entityName
+								)
+							) {
 								entity.put("content", Base64.decode(entity.getString("content")))
 							}
 							val keys = entity.keys().asSequence().toList()

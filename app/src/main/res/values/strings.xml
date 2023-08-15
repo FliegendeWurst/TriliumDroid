@@ -4,4 +4,6 @@
     <string name="user_placeholder">Username</string>
     <string name="password_placeholder">Password</string>
     <string name="setup_button">Start</string>
+    <string name="fab_description">Jump to note</string>
+    <string name="jump_to_dialog">Jump to note</string>
 </resources>
