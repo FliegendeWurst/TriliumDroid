@@ -1,44 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".SetupActivity">
 
-    <EditText
-        android:id="@+id/server"
-        android:layout_width="200dp"
-        android:layout_height="45dp"
-        android:hint="@string/server_placeholder"
-        android:text="http://192.168.178.21:12783"
-        android:importantForAutofill="no"
-        android:inputType="textUri" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-    <EditText
-        android:id="@+id/username"
-        android:layout_width="200dp"
-        android:layout_height="45dp"
-        android:autofillHints="username"
-        android:hint="@string/user_placeholder"
-        android:text="arne"
-        android:inputType="textPersonName" />
+        <TextView
+            style="@style/SettingsSectionLabelStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_sync_server_header" />
 
-    <EditText
-        android:id="@+id/password"
-        android:layout_width="200dp"
-        android:layout_height="45dp"
-        android:autofillHints="password"
-        android:hint="@string/password_placeholder"
-        android:text="UNGHXdk0Ln22nDeIy98k4pDES9FBbrry8POEMMrkx4ovZLNyFGEDxCCE0yOHwP52riSTwCP5vhU7DbOkpdUOpelQJlJVwvA1u0k63pybca1yWBQFAFqEJ1NVT8iGDrIIdRmuVsod5v7gFQGRZCnxrtle3FHDUywufUNSROxrZfeT3gzqszsmn1yHFAJh6xqqSSKT6Ako9SqeDXmRIs8rfV8NmYom5Rur3TY4IlHxE2dKmldU9V7ii8vR9mNLHX4H"
-        android:inputType="textPassword"
-        android:maxLength="1000" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/settings_server"
+            style="@style/SettingsHolderTextViewOneLinerStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-    <Button
-        android:id="@+id/setup_button"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:text="@string/setup_button" />
-    <!--android:onClick="@{()->SetupActivity.setup()}"-->
+            <TextView
+                android:id="@+id/server_label"
+                style="@style/SettingsTextLabelStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/server_label"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-</LinearLayout>
+            <EditText
+                android:id="@+id/server"
+                android:layout_width="200dp"
+                android:layout_height="45dp"
+                android:hint="@string/server_placeholder"
+                android:importantForAutofill="no"
+                android:inputType="textUri"
+                android:text="http://192.168.178.21:12783"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/server_label" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <include layout="@layout/divider" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/settings_password"
+            style="@style/SettingsHolderTextViewOneLinerStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/password_label"
+                style="@style/SettingsTextLabelStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/password_label"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <EditText
+                android:id="@+id/password"
+                android:layout_width="200dp"
+                android:layout_height="45dp"
+                android:autofillHints="password"
+                android:hint="@string/password_placeholder"
+                android:inputType="textPassword"
+                android:text="UNGHXdk0Ln22nDeIy98k4pDES9FBbrry8POEMMrkx4ovZLNyFGEDxCCE0yOHwP52riSTwCP5vhU7DbOkpdUOpelQJlJVwvA1u0k63pybca1yWBQFAFqEJ1NVT8iGDrIIdRmuVsod5v7gFQGRZCnxrtle3FHDUywufUNSROxrZfeT3gzqszsmn1yHFAJh6xqqSSKT6Ako9SqeDXmRIs8rfV8NmYom5Rur3TY4IlHxE2dKmldU9V7ii8vR9mNLHX4H"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/password_label" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <include
+            layout="@layout/divider"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/divider_height"
+            android:layout_marginBottom="2dp" />
+
+        <include layout="@layout/divider" />
+
+        <Button
+            android:id="@+id/setup_button"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:text="@string/setup_button" />
+
+    </LinearLayout>
+
+</ScrollView>

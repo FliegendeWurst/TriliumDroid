@@ -135,7 +135,7 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		R.id.action_settings -> {
-			// User chose the "Settings" item, show the app settings UI...
+			startActivity(Intent(this, SetupActivity::class.java))
 			true
 		}
 

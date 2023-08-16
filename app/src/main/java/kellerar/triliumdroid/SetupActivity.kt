@@ -16,19 +16,17 @@ class SetupActivity : AppCompatActivity() {
 		binding.setupButton.setOnClickListener { setup() }
 	}
 
-	fun setup() {
+	private fun setup() {
 		val server = binding.server.text.toString().trimEnd('/')
-		val username = binding.username.text.toString()
 		val password = binding.password.text.toString()
-		if (server == "" || username == "" || password == "") {
+		if (server == "" || password == "") {
 			return
 		}
 		val prefs = PreferenceManager.getDefaultSharedPreferences(this)
 		prefs.edit()
-				.putString("hostname", server)
-				.putString("username", username)
-				.putString("password", password)
-				.apply()
+			.putString("hostname", server)
+			.putString("password", password)
+			.apply()
 		val looper = applicationContext.mainLooper
 		val handler = Handler(looper)
 		ConnectionUtil.connect(this, server, password) {
