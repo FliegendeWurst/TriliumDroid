@@ -1,4 +1,4 @@
-This license applies to app/src/main/res/drawable/bx_send.xml
+This license applies to all bx_*.xml in app/src/main/res/drawable/
 
 ---
 

@@ -20,12 +20,12 @@ class TreeItemAdapter(private val onClick: (Branch) -> Unit) :
 		val prev = selectedNote
 		selectedNote = noteId
 		if (prev != null) {
-			val idx = Cache.branchPosition[prev]
+			val idx = Cache.getBranchPosition(prev)
 			if (idx != null) {
 				notifyItemChanged(idx)
 			}
 		}
-		notifyItemChanged(Cache.branchPosition[noteId] ?: return)
+		notifyItemChanged(Cache.getBranchPosition(noteId) ?: return)
 	}
 
 	class TreeItemViewHolder(
@@ -84,10 +84,12 @@ object TreeItemDiffCallback : DiffUtil.ItemCallback<Pair<Branch, Int>>() {
 		oldItem: Pair<Branch, Int>,
 		newItem: Pair<Branch, Int>
 	): Boolean {
+		/* TODO: this is where expanded tree items need to be handled
 		if (Cache.branchesDirty.contains(newItem.first.id)) {
 			Cache.branchesDirty.remove(newItem.first.id)
 			return false
 		}
+		 */
 		return oldItem.first.id == newItem.first.id
 	}
 }

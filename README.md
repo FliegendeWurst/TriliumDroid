@@ -9,6 +9,7 @@
 - Jump to note dialog
 
 ## TODO
+- Dark Theme
 - Jump to note dialog: smart sort
 - Attributes
 - Editing note content
@@ -22,4 +23,4 @@ This program is free software: you can redistribute it and/or modify it under th
 
 The same license (AGPL 3+) applies for the parts of this program that are derived from zadam's [Trilium Notes](https://github.com/zadam/trilium/).
 
-The MIT License applies to the [boxicons](https://boxicons.com/) included in the project (see `app/src/main/res/drawable/boxicons_LICENSE.txt`).
+The MIT License applies to the [boxicons](https://boxicons.com/) included in the project (see `boxicons_LICENSE.txt`).

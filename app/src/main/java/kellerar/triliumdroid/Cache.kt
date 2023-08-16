@@ -21,12 +21,14 @@ object Cache {
 	private var notes: MutableMap<String, Note> = HashMap()
 	private var branches: MutableMap<String, Branch> = HashMap()
 
-	private var branchesDirty: MutableSet<String> = HashSet()
-
 	private var branchPosition: MutableMap<String, Int> = HashMap()
 
 	private var dbHelper: CacheDbHelper? = null
-	var db: SQLiteDatabase? = null
+	private var db: SQLiteDatabase? = null
+
+	fun getBranchPosition(id: String): Int? {
+		return branchPosition[id]
+	}
 
 	fun getNoteWithContent(id: String): Note? {
 		if (notes.containsKey(id) && notes[id]!!.content != null) {
@@ -162,7 +164,12 @@ object Cache {
 							return@use
 						}
 						if (entityName == "note_reordering") {
-							// TODO
+							for (key in entity.keys()) {
+								db!!.execSQL(
+									"UPDATE branches SET notePosition = ? WHERE branchId = ?",
+									arrayOf(entity[key], key)
+								);
+							}
 							return@use
 						}
 						if (arrayOf("note_contents", "note_revision_contents").contains(

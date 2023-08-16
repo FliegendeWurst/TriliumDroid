@@ -6,4 +6,7 @@
     <string name="setup_button">Start</string>
     <string name="fab_description">Jump to note</string>
     <string name="jump_to_dialog">Jump to note</string>
+
+    <string name="action_edit">Edit</string>
+    <string name="action_settings">Settings</string>
 </resources>

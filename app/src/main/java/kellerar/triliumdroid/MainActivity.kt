@@ -4,10 +4,14 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.WindowManager
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.navigation.fragment.NavHostFragment
@@ -34,6 +38,9 @@ class MainActivity : AppCompatActivity() {
 		binding = ActivityMainBinding.inflate(layoutInflater)
 		setContentView(binding.root)
 		val handler = Handler(applicationContext.mainLooper)
+
+		val toolbar = findViewById<Toolbar>(R.id.toolbar)
+		setSupportActionBar(toolbar)
 
 		Cache.initializeDatabase(applicationContext)
 
@@ -114,9 +121,35 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
+	override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+		menuInflater.inflate(R.menu.action_bar, findViewById<Toolbar>(R.id.toolbar).menu)
+		return true
+	}
+
+	override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+		R.id.action_edit -> {
+			val t = Toast(this)
+			t.setText("Editing is not yet supported!")
+			t.show()
+			true
+		}
+
+		R.id.action_settings -> {
+			// User chose the "Settings" item, show the app settings UI...
+			true
+		}
+
+		else -> {
+			// If we got here, the user's action was not recognized.
+			// Invoke the superclass to handle it.
+			super.onOptionsItemSelected(item)
+		}
+	}
+
+
 	public fun scrollTreeTo(noteId: String) {
 		tree!!.select(noteId)
-		val pos = Cache.branchPosition[noteId] ?: return
+		val pos = Cache.getBranchPosition(noteId) ?: return
 		(binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(pos, 5)
 	}
 
