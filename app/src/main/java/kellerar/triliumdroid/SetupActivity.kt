@@ -31,7 +31,7 @@ class SetupActivity : AppCompatActivity() {
 				.apply()
 		val looper = applicationContext.mainLooper
 		val handler = Handler(looper)
-		ConnectionUtil.connect(this, server, username, password) {
+		ConnectionUtil.connect(this, server, password) {
 			handler.post {
 				Cache.sync(this) {
 					finish() // TODO: check success status

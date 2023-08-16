@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">TriliumDroid</string>
+    <string name="app_name">Trilium Notes</string>
     <string name="server_placeholder">http://server:8080</string>
     <string name="user_placeholder">Username</string>
     <string name="password_placeholder">Password</string>

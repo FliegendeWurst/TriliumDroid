@@ -5,10 +5,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.WindowManager
-import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -42,7 +39,7 @@ class MainActivity : AppCompatActivity() {
 
 		val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 		val adapter = TreeItemAdapter {
-			navigateTo(it.note)
+			navigateTo(Cache.getNote(it.note)!!)
 		}
 		binding.treeList.adapter = adapter
 		tree = adapter
@@ -59,7 +56,7 @@ class MainActivity : AppCompatActivity() {
 			val adapter2 = TreeItemAdapter {
 				dialog.dismiss()
 				scrollTreeTo(it.note)
-				navigateTo(it.note)
+				navigateTo(Cache.getNote(it.note)!!)
 			}
 			list.adapter = adapter2
 			input.requestFocus()
@@ -101,8 +98,9 @@ class MainActivity : AppCompatActivity() {
 							val items = Cache.getTreeList("root", 0)
 							Log.i(TAG, "about to show ${items.size} tree items")
 							tree!!.submitList(items)
-							getNoteFragment().load("root", true)
+							getNoteFragment().load("root")
 							scrollTreeTo("root")
+							supportActionBar?.title = "root"
 						}
 					}
 				}
@@ -120,16 +118,16 @@ class MainActivity : AppCompatActivity() {
 		tree!!.select(noteId)
 		val pos = Cache.branchPosition[noteId] ?: return
 		(binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(pos, 5)
-		//val treeItem = binding.treeList.getChildAt(pos)
 	}
 
-	public fun navigateTo(noteId: String) {
-		tree!!.select(noteId)
+	public fun navigateTo(note: Note) {
+		tree!!.select(note.id)
 		supportFragmentManager.beginTransaction()
-			.replace(R.id.fragment_container, NoteFragment(noteId, true))
+			.replace(R.id.fragment_container, NoteFragment(note.id))
 			.addToBackStack(null)
 			.commit()
 		binding.drawerLayout.closeDrawers()
+		supportActionBar?.title = note.title
 	}
 
 	override fun onDestroy() {
@@ -139,8 +137,12 @@ class MainActivity : AppCompatActivity() {
 
 	private fun getNoteFragment(): NoteFragment {
 		val hostFragment =
-			supportFragmentManager.findFragmentById(R.id.fragment_container) as NavHostFragment
-		val frags = hostFragment.childFragmentManager.fragments
-		return frags[0] as NoteFragment
+			supportFragmentManager.findFragmentById(R.id.fragment_container)
+		return if (hostFragment is NoteFragment) {
+			hostFragment
+		} else {
+			val frags = (hostFragment as NavHostFragment).childFragmentManager.fragments
+			frags[0] as NoteFragment
+		}
 	}
 }

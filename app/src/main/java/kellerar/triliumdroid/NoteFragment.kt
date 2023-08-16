@@ -26,17 +26,10 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 	private var handler: Handler? = null
 	private var id: String = ""
 	private var load: Boolean = false
-	private var treeLoad: Boolean = true
 
 	constructor(id: String) : this() {
 		this.id = id
 		this.load = true
-	}
-
-	constructor(id: String, treeLoad: Boolean) : this() {
-		this.id = id
-		this.load = true
-		this.treeLoad = treeLoad
 	}
 
 	override fun onCreateView(
@@ -57,7 +50,7 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 					val id = parts.last()
 					Log.i(TAG, "navigating to note $id")
 					(activity as MainActivity).scrollTreeTo(id)
-					(activity as MainActivity).navigateTo(id)
+					(activity as MainActivity).navigateTo(Cache.getNote(id)!!)
 				}
 				Log.i(TAG, url)
 			}
@@ -80,20 +73,19 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 				view: WebView,
 				request: WebResourceRequest
 			): WebResourceResponse? {
-				/*
-				Log.i(TAG, "intercept:")
-				Log.i(TAG, request.url.host ?: "no host")
-				Log.i(TAG, request.url.query ?: "no query")
-				Log.i(TAG, request.url.toString())
-				Log.i(TAG, request.url.pathSegments.size.toString())
-				 */
+				Log.d(TAG, "intercept:")
+				Log.d(TAG, request.url.host ?: "no host")
+				Log.d(TAG, request.url.query ?: "no query")
+				Log.d(TAG, request.url.toString())
+				Log.d(TAG, request.url.pathSegments.size.toString())
 				if (request.url.host == WEBVIEW_HOST && request.url.pathSegments.size == 1) {
 					val id = request.url.lastPathSegment!!
 					if (id == "favicon.ico") {
 						return null // TODO: catch all invalid IDs
 					}
-					val note = Cache.getNote(id)
+					val note = Cache.getNoteWithContent(id)
 					return if (note != null) {
+						Log.d(TAG, "intercept returns data")
 						WebResourceResponse(note.mime, null, note.content!!.inputStream())
 					} else {
 						null
@@ -105,7 +97,7 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 		handler = Handler(requireContext().mainLooper)
 
 		if (load) {
-			load(id, treeLoad)
+			load(id)
 		}
 
 		return binding!!.root
@@ -116,7 +108,7 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 		binding = null
 	}
 
-	fun load(id: String, tree: Boolean) {
+	fun load(id: String) {
 		this.id = id
 		this.load = true
 		Log.i(TAG, "loading $id")
@@ -132,26 +124,13 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 				binding!!.webview.settings.builtInZoomControls = true
 				binding!!.webview.settings.displayZoomControls = false
 				binding!!.webview.loadDataWithBaseURL(
-					"file:///dev/null",
-					"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><img src='/data/$id'>",
+					WEBVIEW_DOMAIN,
+					"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><img src='/$id'>",
 					"text/html; charset=UTF-8",
 					null,
 					null
 				)
 			}
 		}
-		/*
-		if (tree) {
-			if (treeLoad) {
-				treeLoad = false
-			}
-			Cache.getTreeData()
-			handler!!.post {
-				val items = Cache.getTreeList("root", 0)
-				Log.i(TAG, "about to show ${items.size} tree items")
-				MainActivity.tree?.submitList(items)
-			}
-		}
-		 */
 	}
 }

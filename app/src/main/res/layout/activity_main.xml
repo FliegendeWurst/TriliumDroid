@@ -27,8 +27,10 @@
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
             android:layout_margin="16dp"
+            android:backgroundTint="@color/secondary_light"
             android:contentDescription="@string/fab_description"
-            android:src="@drawable/bx_send" />
+            android:src="@drawable/bx_send"
+            app:borderWidth="0dp" />
     </RelativeLayout>
 
     <LinearLayout

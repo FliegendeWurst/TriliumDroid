@@ -35,7 +35,7 @@ class TreeItemAdapter(private val onClick: (Branch) -> Unit) :
 	) :
 		RecyclerView.ViewHolder(itemView) {
 		fun bind(item: Pair<Branch, Int>) {
-			binding.label.text = Cache.notes[item.first.note]?.title ?: item.first.note
+			binding.label.text = Cache.getNote(item.first.note)?.title ?: item.first.note
 			val params = binding.label.layoutParams
 			if (params is ViewGroup.MarginLayoutParams) {
 				params.leftMargin = item.second * 20
