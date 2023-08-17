@@ -1,6 +1,5 @@
 package kellerar.triliumdroid
 
-import android.app.Activity
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
@@ -131,8 +130,13 @@ object Cache {
 	}
 
 	@OptIn(ExperimentalEncodingApi::class)
-	fun sync(activity: Activity, callback: () -> Unit) {
+	fun sync(
+		callbackOutstanding: (Int) -> Unit,
+		callbackError: (Exception) -> Unit,
+		callbackDone: (Int) -> Unit
+	) {
 		try {
+			var totalSynced = 0
 			var lastSyncedPull = 0;
 			db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPull"))
 				.use {
@@ -150,12 +154,13 @@ object Cache {
 				val entityChangeId = resp.getString("lastEntityChangeId")
 				Log.i(TAG, "sync outstanding $outstandingPullCount")
 				val changes = resp.getJSONArray("entityChanges")
+				totalSynced += changes.length()
 				for (i in 0 until changes.length()) {
 					val change = changes.get(i) as JSONObject
 					val entityChange = change.optJSONObject("entityChange")!!
 					val entityName = entityChange.getString("entityName")
 					val changeId = entityChange.getString("changeId")
-					var entity = change.optJSONObject("entity") ?: continue
+					val entity = change.optJSONObject("entity") ?: continue
 					db!!.rawQuery(
 						"SELECT 1 FROM entity_changes WHERE changeId = ?",
 						arrayOf(changeId)
@@ -198,13 +203,15 @@ object Cache {
 					arrayOf("lastSyncedPull", entityChangeId, utc)
 				)
 				if (outstandingPullCount > 0) {
-					sync(activity, callback)
+					callbackOutstanding(outstandingPullCount)
+					sync(callbackOutstanding, callbackError, callbackDone)
 				} else {
-					callback()
+					callbackDone(totalSynced)
 				}
 			}
 		} catch (e: Exception) {
 			Log.e(TAG, "sync error", e)
+			callbackError(e)
 		}
 	}
 

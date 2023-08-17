@@ -1,9 +1,7 @@
 package kellerar.triliumdroid
 
-import android.app.Activity
 import android.content.SharedPreferences
 import android.util.Log
-import android.widget.Toast
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Cookie
@@ -15,6 +13,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
+import java.lang.Exception
 
 
 object ConnectionUtil {
@@ -25,21 +24,18 @@ object ConnectionUtil {
 	private var csrf: String = ""
 	private var loginFails = 0
 
-	fun setup(activity: Activity, prefs: SharedPreferences, callback: () -> Unit) {
+	fun setup(prefs: SharedPreferences, callback: () -> Unit, callbackError: (Exception) -> Unit) {
 		this.prefs = prefs
 		server = prefs.getString("hostname", null)!!
-		val username = prefs.getString("username", null)!!
 		val password = prefs.getString("password", null)!!
-		connect(activity, server, password) {
-			callback()
-		}
+		connect(server, password, callback, callbackError)
 	}
 
 	fun connect(
-		activity: Activity,
 		server: String,
 		password: String,
-		callback: () -> Unit
+		callback: () -> Unit,
+		callbackError: (Exception) -> Unit
 	) {
 		client = OkHttpClient.Builder()
 			.cookieJar(object : CookieJar {
@@ -94,15 +90,9 @@ object ConnectionUtil {
 
 			override fun onFailure(call: Call, e: IOException) {
 				Log.e(TAG, "fail", e)
-				activity.runOnUiThread {
-					Toast.makeText(
-						activity, e.toString(),
-						Toast.LENGTH_LONG
-					).show()
-				}
 
 				loginFails++
-				callback()
+				callbackError(e)
 			}
 		})
 	}

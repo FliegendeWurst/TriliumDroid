@@ -10,6 +10,7 @@
 
 ## TODO
 - Dark Theme
+- Folder view of child nodes
 - Jump to note dialog: smart sort
 - Attributes
 - Migrating to newer database versions
@@ -17,6 +18,19 @@
 - Collapsing note tree parts
 - Editing note tree
 - Scripting
+- Encrypted local database (maybe): https://github.com/sqlcipher/android-database-sqlcipher
+
+## Related issues
+
+https://github.com/zadam/trilium/issues/3641
+
+https://github.com/zadam/trilium/issues/3624
+
+Fixes https://github.com/zadam/trilium/issues/3047 https://github.com/zadam/trilium/issues/2953 https://github.com/zadam/trilium/discussions/2751
+
+https://github.com/zadam/trilium/discussions/2990
+
+https://github.com/zadam/trilium/discussions/2939
 
 ## License
 

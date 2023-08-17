@@ -40,7 +40,6 @@
                 android:hint="@string/server_placeholder"
                 android:importantForAutofill="no"
                 android:inputType="textUri"
-                android:text="http://192.168.178.21:12783"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/server_label" />
 
@@ -70,7 +69,6 @@
                 android:autofillHints="password"
                 android:hint="@string/password_placeholder"
                 android:inputType="textPassword"
-                android:text="UNGHXdk0Ln22nDeIy98k4pDES9FBbrry8POEMMrkx4ovZLNyFGEDxCCE0yOHwP52riSTwCP5vhU7DbOkpdUOpelQJlJVwvA1u0k63pybca1yWBQFAFqEJ1NVT8iGDrIIdRmuVsod5v7gFQGRZCnxrtle3FHDUywufUNSROxrZfeT3gzqszsmn1yHFAJh6xqqSSKT6Ako9SqeDXmRIs8rfV8NmYom5Rur3TY4IlHxE2dKmldU9V7ii8vR9mNLHX4H"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/password_label" />
 
@@ -81,14 +79,6 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/divider_height"
             android:layout_marginBottom="2dp" />
-
-        <include layout="@layout/divider" />
-
-        <Button
-            android:id="@+id/setup_button"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:text="@string/setup_button" />
 
     </LinearLayout>
 

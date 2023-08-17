@@ -3,22 +3,33 @@ package kellerar.triliumdroid
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.system.ErrnoException
+import android.system.OsConstants
 import android.util.Log
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.view.WindowManager
 import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.Snackbar
 import kellerar.triliumdroid.databinding.ActivityMainBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.lang.Exception
 import java.util.TreeMap
 
 
@@ -97,27 +108,80 @@ class MainActivity : AppCompatActivity() {
 			val intent = Intent(this, SetupActivity::class.java)
 			startActivity(intent)
 		} else {
-			ConnectionUtil.setup(this, prefs) {
+			ConnectionUtil.setup(prefs, {
 				handler.post {
-					Cache.sync(this) {
-						Cache.getTreeData()
-						handler.post {
-							val items = Cache.getTreeList("root", 0)
-							Log.i(TAG, "about to show ${items.size} tree items")
-							tree!!.submitList(items)
-							getNoteFragment().load("root")
-							scrollTreeTo("root")
-							supportActionBar?.title = "root"
-						}
-					}
+					startSync(handler)
 				}
-			}
+			}, {
+				handler.post {
+					handleError(it)
+				}
+			})
 
 			try {
 				binding.drawerLayout.openDrawer(GravityCompat.START)
 			} catch (t: Throwable) {
 				Log.e("Main", "fatality!", t)
 			}
+		}
+	}
+
+	private fun handleError(it: Exception) {
+		var toastText: String? = null
+		if (it.cause?.cause is ErrnoException) {
+			when ((it.cause!!.cause as ErrnoException).errno) {
+				OsConstants.ECONNREFUSED -> {
+					toastText = "Sync server refused connection"
+				}
+
+				OsConstants.EHOSTUNREACH -> {
+					toastText = "Sync server unreachable"
+				}
+			}
+		}
+		if (toastText == null) {
+			toastText = it.toString()
+		}
+		Toast.makeText(
+			this, toastText,
+			Toast.LENGTH_LONG
+		).show()
+	}
+
+	private fun startSync(handler: Handler) {
+		val contextView = findViewById<View>(R.id.fragment_container)
+
+		val snackbar = Snackbar.make(contextView, "Sync: starting...", Snackbar.LENGTH_INDEFINITE)
+		snackbar.view.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
+		snackbar.view.minimumWidth = 300
+		(snackbar.view.layoutParams as FrameLayout.LayoutParams).gravity =
+			Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
+		snackbar.show()
+		lifecycleScope.launch(Dispatchers.IO) {
+			Cache.sync({
+				handler.post {
+					snackbar.setText("Sync: $it outstanding...")
+				}
+			}, {
+				handler.post {
+					handleError(it)
+				}
+			}, {
+				handler.post {
+					snackbar.setText("Sync: finished, $it changes")
+					snackbar.duration = Snackbar.LENGTH_SHORT
+					snackbar.show()
+				}
+				Cache.getTreeData()
+				handler.post {
+					val items = Cache.getTreeList("root", 0)
+					Log.i(TAG, "about to show ${items.size} tree items")
+					tree!!.submitList(items)
+					getNoteFragment().load("root")
+					scrollTreeTo("root")
+					supportActionBar?.title = "root"
+				}
+			})
 		}
 	}
 
