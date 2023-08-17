@@ -8,7 +8,7 @@ public data class Branch(
 	val parentNote: String?,
 	val position: Int,
 	val prefix: String?,
-	val expanded: Boolean,
+	var expanded: Boolean,
 	public var children: SortedMap<Int, Branch>
 ) {
 

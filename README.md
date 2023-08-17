@@ -3,7 +3,7 @@
 ## Working
 - Sync with other Trilium instance
 - Displaying note content
-- Displaying note tree
+- Displaying/collapsing/expanding note tree
 - Navigating using internal links
 - Browsing external links
 - Jump to note dialog
@@ -15,7 +15,6 @@
 - Attributes
 - Migrating to newer database versions
 - Editing note content
-- Collapsing note tree parts
 - Editing note tree
 - Scripting
 - Encrypted local database (maybe): https://github.com/sqlcipher/android-database-sqlcipher

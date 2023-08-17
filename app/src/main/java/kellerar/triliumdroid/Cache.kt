@@ -36,6 +36,34 @@ object Cache {
 		return getNoteInternal(id)
 	}
 
+	fun getNotePath(id: String): List<Branch> {
+		val l = mutableListOf<Branch>()
+		var lastId = id
+		while (true) {
+			db!!.rawQuery("SELECT branchId, parentNoteId, isExpanded FROM branches WHERE noteId = ? LIMIT 1", arrayOf(lastId)).use {
+				if (it.moveToNext()) {
+					val branchId = it.getString(0)
+					val parentId = it.getString(1)
+					val expanded = it.getInt(2) == 1
+					l.add(Branch(branchId, lastId, parentId, 0, null, expanded, TreeMap()))
+					if (parentId == "none") {
+						return l
+					}
+					lastId = parentId
+				} else {
+					return l
+				}
+			}
+		}
+	}
+
+	fun toggleBranch(branch: Branch) {
+		db!!.execSQL("UPDATE branches SET isExpanded = ? WHERE branchId = ?", arrayOf(if (branch.expanded) { 0 } else { 1 }, branch.id))
+		val newValue = !branch.expanded
+		branch.expanded = newValue
+		branches[branch.note]?.expanded = newValue
+	}
+
 	fun getNote(id: String): Note? {
 		if (notes.containsKey(id)) {
 			return notes[id]
@@ -63,7 +91,7 @@ object Cache {
 	fun getJumpToResults(input: String): List<Note> {
 		val notes = mutableListOf<Note>()
 		db!!.rawQuery(
-			"SELECT noteId, mime, title FROM notes WHERE title LIKE ? LIMIT 200",
+			"SELECT noteId, mime, title FROM notes WHERE title LIKE ? LIMIT 50",
 			arrayOf("%$input%")
 		).use {
 			while (it.moveToNext()) {
@@ -120,6 +148,9 @@ object Cache {
 		val list = ArrayList<Pair<Branch, Int>>()
 		val current = branches[id] ?: return list
 		list.add(Pair(current, lvl))
+		if (!current.expanded) {
+			return list
+		}
 		for (children in current.children.values) {
 			list.addAll(getTreeList(children.note, lvl + 1))
 		}

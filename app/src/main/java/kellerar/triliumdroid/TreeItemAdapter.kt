@@ -12,7 +12,10 @@ import androidx.recyclerview.widget.RecyclerView
 import kellerar.triliumdroid.databinding.TreeListItemBinding
 
 
-class TreeItemAdapter(private val onClick: (Branch) -> Unit) :
+class TreeItemAdapter(
+	private val onClick: (Branch) -> Unit,
+	private val onLongClick: (Branch) -> Unit,
+) :
 	ListAdapter<Pair<Branch, Int>, TreeItemAdapter.TreeItemViewHolder>(TreeItemDiffCallback) {
 	private var selectedNote: String? = null
 
@@ -31,7 +34,8 @@ class TreeItemAdapter(private val onClick: (Branch) -> Unit) :
 	class TreeItemViewHolder(
 		private val binding: TreeListItemBinding,
 		itemView: View,
-		val onClick: (Branch) -> Unit
+		val onClick: (Branch) -> Unit,
+		val onLongClick: (Branch) -> Unit,
 	) :
 		RecyclerView.ViewHolder(itemView) {
 		fun bind(item: Pair<Branch, Int>) {
@@ -40,14 +44,19 @@ class TreeItemAdapter(private val onClick: (Branch) -> Unit) :
 			if (params is ViewGroup.MarginLayoutParams) {
 				params.leftMargin = item.second * 20
 			}
+			binding.label.isLongClickable = true
 			binding.label.setOnClickListener { onClick(item.first) }
+			binding.label.setOnLongClickListener {
+				onLongClick(item.first)
+				return@setOnLongClickListener true
+			}
 		}
 	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TreeItemViewHolder {
 		val binding =
 			TreeListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-		return TreeItemViewHolder(binding, binding.root, onClick)
+		return TreeItemViewHolder(binding, binding.root, onClick, onLongClick)
 	}
 
 	override fun onBindViewHolder(holder: TreeItemViewHolder, position: Int) {

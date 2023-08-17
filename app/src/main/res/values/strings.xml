@@ -9,6 +9,7 @@
 
     <string name="action_edit">Edit</string>
     <string name="action_settings">Settings</string>
+    <string name="action_sync">Sync</string>
     <string name="settings_sync_server_header">Sync server</string>
     <string name="password_label">Password</string>
     <string name="server_label">Server instance address</string>
