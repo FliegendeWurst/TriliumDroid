@@ -9,6 +9,12 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_share"
+        android:icon="@drawable/bx_share_alt"
+        android:title="@string/action_share"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_sync"
         android:title="@string/action_sync"
         app:showAsAction="never" />

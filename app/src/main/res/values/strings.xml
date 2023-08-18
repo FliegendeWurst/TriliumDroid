@@ -13,4 +13,7 @@
     <string name="settings_sync_server_header">Sync server</string>
     <string name="password_label">Password</string>
     <string name="server_label">Server instance address</string>
+    <string name="action_share">Share</string>
+    <string name="button_new_note">Create new child note</string>
+    <string name="button_new_note_sibling">Create new sibling note</string>
 </resources>

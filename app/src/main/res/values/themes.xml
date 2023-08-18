@@ -13,9 +13,10 @@
         <item name="android:statusBarColor">@color/primary_light</item>
         <!-- Customize your theme here. -->
         <item name="actionBarTheme">@style/Theme.TriliumDroid.AppBarOverlay</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.TriliumDroid.AppBarOverlay" parent="ThemeOverlay.AppCompat.ActionBar">
-        <item name="android:textColorPrimary">@color/white</item>
+        <!--<item name="android:textColorPrimary">@color/</item>-->
     </style>
 </resources>
