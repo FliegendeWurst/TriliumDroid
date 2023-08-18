@@ -2,7 +2,7 @@ package kellerar.triliumdroid.data
 
 import java.util.SortedMap
 
-public data class Branch(
+data class Branch(
 	val id: String,
 	val note: String,
 	val parentNote: String?,
@@ -10,6 +10,4 @@ public data class Branch(
 	val prefix: String?,
 	var expanded: Boolean,
 	public var children: SortedMap<Int, Branch>
-) {
-
-}
+)

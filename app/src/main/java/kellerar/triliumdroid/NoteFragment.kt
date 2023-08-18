@@ -53,7 +53,6 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 					}
 					val id = parts.last()
 					Log.i(TAG, "navigating to note $id")
-					(activity as MainActivity).scrollTreeTo(id)
 					(activity as MainActivity).navigateTo(Cache.getNote(id)!!)
 				}
 				Log.i(TAG, url)
@@ -125,10 +124,14 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 			for (attribute in note.labels ?: emptyList()) {
 				Log.d(TAG, "adding one attribute")
 				val view =
-					LayoutInflater.from(context).inflate(R.layout.item_attribute, constraintLayout, false)
+					LayoutInflater.from(context)
+						.inflate(R.layout.item_attribute, constraintLayout, false)
 				view.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
 				view.findViewById<TextView>(R.id.label_attribute_value).text = attribute.value
-				view.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT)
+				view.layoutParams = ConstraintLayout.LayoutParams(
+					ConstraintLayout.LayoutParams.WRAP_CONTENT,
+					ConstraintLayout.LayoutParams.WRAP_CONTENT
+				)
 				view.id = View.generateViewId()
 				constraintLayout.addView(view)
 				flow.addView(view)

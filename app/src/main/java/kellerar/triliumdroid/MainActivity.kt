@@ -1,6 +1,7 @@
 package kellerar.triliumdroid
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
 import android.system.ErrnoException
@@ -31,11 +32,13 @@ import java.lang.Exception
 class MainActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityMainBinding
 	private lateinit var handler: Handler
+	private lateinit var prefs: SharedPreferences
 	private var jumpRequestId = 0
 
 	companion object {
 		private const val TAG = "MainActivity"
 		public const val JUMP_TO_NOTE_ENTRY = "JUMP_TO_NOTE_ENTRY"
+		private const val LAST_NOTE = "LastNote"
 		var tree: TreeItemAdapter? = null
 	}
 
@@ -51,7 +54,7 @@ class MainActivity : AppCompatActivity() {
 
 		Cache.initializeDatabase(applicationContext)
 
-		val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 		val adapter = TreeItemAdapter({
 			navigateTo(Cache.getNote(it.note)!!)
 		}, {
@@ -79,12 +82,6 @@ class MainActivity : AppCompatActivity() {
 					handleError(it)
 				}
 			})
-
-			try {
-				binding.drawerLayout.openDrawer(GravityCompat.START)
-			} catch (t: Throwable) {
-				Log.e(TAG, "fatality!", t)
-			}
 		}
 	}
 
@@ -143,9 +140,12 @@ class MainActivity : AppCompatActivity() {
 				Cache.getTreeData()
 				handler.post {
 					refreshTree()
-					getNoteFragment().load("root")
-					scrollTreeTo("root")
-					supportActionBar?.title = "root"
+					val n = prefs.getString(LAST_NOTE, "root")!!
+					navigateTo(Cache.getNote(n) ?: return@post)
+					// first use: open the drawer
+					if (!prefs.contains(LAST_NOTE)) {
+						binding.drawerLayout.openDrawer(GravityCompat.START)
+					}
 				}
 			})
 		}
@@ -184,6 +184,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	public fun navigateTo(note: Note) {
+		prefs.edit().putString(LAST_NOTE, note.id).apply()
 		// make sure note is visible
 		val path = Cache.getNotePath(note.id)
 		var expandedAny = false
@@ -198,12 +199,10 @@ class MainActivity : AppCompatActivity() {
 			refreshTree()
 		}
 		tree!!.select(note.id)
-		supportFragmentManager.beginTransaction()
-			.replace(R.id.fragment_container, NoteFragment(note.id))
-			.addToBackStack(null)
-			.commit()
+		getNoteFragment().load(note.id)
 		binding.drawerLayout.closeDrawers()
 		supportActionBar?.title = note.title
+		scrollTreeTo(note.id)
 	}
 
 	override fun onDestroy() {

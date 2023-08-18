@@ -20,7 +20,6 @@ object JumpToNoteDialog {
 		val list = dialog.findViewById<RecyclerView>(R.id.jump_to_list)!!
 		val adapter2 = TreeItemAdapter({
 			dialog.dismiss()
-			activity.scrollTreeTo(it.note)
 			activity.navigateTo(Cache.getNote(it.note)!!)
 		}, {
 			// long click has no effect

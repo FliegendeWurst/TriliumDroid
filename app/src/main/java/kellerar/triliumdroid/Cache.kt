@@ -43,7 +43,10 @@ object Cache {
 		val l = mutableListOf<Branch>()
 		var lastId = id
 		while (true) {
-			db!!.rawQuery("SELECT branchId, parentNoteId, isExpanded FROM branches WHERE noteId = ? LIMIT 1", arrayOf(lastId)).use {
+			db!!.rawQuery(
+				"SELECT branchId, parentNoteId, isExpanded FROM branches WHERE noteId = ? LIMIT 1",
+				arrayOf(lastId)
+			).use {
 				if (it.moveToNext()) {
 					val branchId = it.getString(0)
 					val parentId = it.getString(1)
@@ -61,7 +64,16 @@ object Cache {
 	}
 
 	fun toggleBranch(branch: Branch) {
-		db!!.execSQL("UPDATE branches SET isExpanded = ? WHERE branchId = ?", arrayOf(if (branch.expanded) { 0 } else { 1 }, branch.id))
+		db!!.execSQL(
+			"UPDATE branches SET isExpanded = ? WHERE branchId = ?",
+			arrayOf(
+				if (branch.expanded) {
+					0
+				} else {
+					1
+				}, branch.id
+			)
+		)
 		val newValue = !branch.expanded
 		branch.expanded = newValue
 		branches[branch.note]?.expanded = newValue
@@ -123,6 +135,7 @@ object Cache {
 			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title FROM branches, notes WHERE branches.noteId = notes.noteId",
 			arrayOf()
 		).use {
+			val clones = mutableListOf<Triple<String, String, Int>>()
 			while (it.moveToNext()) {
 				val branchId = it.getString(0)
 				val noteId = it.getString(1)
@@ -146,10 +159,11 @@ object Cache {
 					TreeMap()
 				)
 				notes[noteId] = Note(noteId, mime, title)
+				clones.add(Triple(parentNoteId, noteId, notePosition))
 			}
-			for (branchId in branches.keys) {
-				val b = branches[branchId]!!
-				branches[b.parentNote]?.children?.set(b.position, b)
+			for (p in clones) {
+				val b = branches[p.second]!!
+				branches[p.first]?.children?.set(p.third, b)
 			}
 		}
 	}
@@ -181,7 +195,7 @@ object Cache {
 	) {
 		try {
 			var totalSynced = 0
-			var lastSyncedPull = 0;
+			var lastSyncedPull = 0
 			db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPull"))
 				.use {
 					if (it.moveToFirst()) {
@@ -191,7 +205,7 @@ object Cache {
 			val logMarkerId = "trilium-droid"
 			val instanceId = "trilium-droid-1"
 			val changesUri =
-				"/api/sync/changed?instanceId=${instanceId}&lastEntityChangeId=${lastSyncedPull}&logMarkerId=${logMarkerId}";
+				"/api/sync/changed?instanceId=${instanceId}&lastEntityChangeId=${lastSyncedPull}&logMarkerId=${logMarkerId}"
 
 			ConnectionUtil.doSyncRequest(changesUri) { resp ->
 				val outstandingPullCount = resp.getInt("outstandingPullCount")
@@ -217,7 +231,7 @@ object Cache {
 								db!!.execSQL(
 									"UPDATE branches SET notePosition = ? WHERE branchId = ?",
 									arrayOf(entity[key], key)
-								);
+								)
 							}
 							return@use
 						}
