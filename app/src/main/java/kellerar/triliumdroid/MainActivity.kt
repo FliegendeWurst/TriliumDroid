@@ -10,27 +10,22 @@ import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.view.WindowManager
-import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
-import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
+import kellerar.triliumdroid.data.Note
 import kellerar.triliumdroid.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.lang.Exception
-import java.util.TreeMap
 
 
 class MainActivity : AppCompatActivity() {

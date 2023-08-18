@@ -9,7 +9,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import kellerar.triliumdroid.databinding.TreeListItemBinding
+import kellerar.triliumdroid.data.Branch
+import kellerar.triliumdroid.databinding.ItemTreeNoteBinding
 
 
 class TreeItemAdapter(
@@ -32,7 +33,7 @@ class TreeItemAdapter(
 	}
 
 	class TreeItemViewHolder(
-		private val binding: TreeListItemBinding,
+		private val binding: ItemTreeNoteBinding,
 		itemView: View,
 		val onClick: (Branch) -> Unit,
 		val onLongClick: (Branch) -> Unit,
@@ -55,7 +56,7 @@ class TreeItemAdapter(
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TreeItemViewHolder {
 		val binding =
-			TreeListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+			ItemTreeNoteBinding.inflate(LayoutInflater.from(parent.context), parent, false)
 		return TreeItemViewHolder(binding, binding.root, onClick, onLongClick)
 	}
 

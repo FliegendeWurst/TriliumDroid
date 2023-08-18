@@ -4,6 +4,9 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import kellerar.triliumdroid.data.Branch
+import kellerar.triliumdroid.data.Label
+import kellerar.triliumdroid.data.Note
 import org.json.JSONObject
 import java.lang.Exception
 import java.time.OffsetDateTime
@@ -74,12 +77,22 @@ object Cache {
 	private fun getNoteInternal(id: String): Note? {
 		var note: Note? = null
 		db!!.rawQuery(
-			"SELECT content, mime, title FROM notes, note_contents WHERE notes.noteId = note_contents.noteId AND notes.noteId = ?",
+			"SELECT content, mime, title, attributes.name, attributes.value FROM notes, note_contents LEFT JOIN attributes USING(noteId) WHERE notes.noteId = note_contents.noteId AND notes.noteId = ? AND (attributes.type == 'label' OR attributes.type IS NULL)",
 			arrayOf(id)
 		).use {
+			val labels = mutableListOf<Label>()
 			if (it.moveToFirst()) {
 				note = Note(id, it.getString(1), it.getString(2))
 				note!!.content = it.getBlob(0)
+			}
+			while (!it.isAfterLast) {
+				if (!it.isNull(3)) {
+					val name = it.getString(3)
+					val value = it.getString(4)
+					labels.add(Label(note!!, name, value))
+				}
+				it.moveToNext()
+				note!!.labels = labels
 			}
 		}
 		if (note != null) {

@@ -1,5 +1,6 @@
 package kellerar.triliumdroid
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -11,7 +12,10 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import kellerar.triliumdroid.data.Label
 import kellerar.triliumdroid.databinding.FragmentNoteBinding
 
 
@@ -108,14 +112,28 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 		binding = null
 	}
 
+	@SuppressLint("MissingInflatedId")
 	fun load(id: String) {
 		this.id = id
 		this.load = true
 		Log.i(TAG, "loading $id")
-		binding!!.idText.text = id
-		val note = Cache.getNote(id) ?: return
+		binding!!.textId.text = id
+		val note = Cache.getNoteWithContent(id) ?: return
 		handler!!.post {
-			binding!!.text.text = note.title
+			val constraintLayout = binding!!.noteHeader
+			val flow = binding!!.noteHeaderAttributes
+			for (attribute in note.labels ?: emptyList()) {
+				Log.d(TAG, "adding one attribute")
+				val view =
+					LayoutInflater.from(context).inflate(R.layout.item_attribute, constraintLayout, false)
+				view.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
+				view.findViewById<TextView>(R.id.label_attribute_value).text = attribute.value
+				view.layoutParams = ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT)
+				view.id = View.generateViewId()
+				constraintLayout.addView(view)
+				flow.addView(view)
+			}
+
 			if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
 				Log.i(TAG, "updating content for $id")
 				binding!!.webview.loadUrl(WEBVIEW_DOMAIN + id)

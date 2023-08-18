@@ -1,4 +1,4 @@
-package kellerar.triliumdroid
+package kellerar.triliumdroid.data
 
 import java.util.SortedMap
 
