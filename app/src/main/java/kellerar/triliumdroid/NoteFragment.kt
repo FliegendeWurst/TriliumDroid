@@ -14,6 +14,8 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.allViews
+import androidx.core.view.iterator
 import androidx.fragment.app.Fragment
 import kellerar.triliumdroid.data.Label
 import kellerar.triliumdroid.databinding.FragmentNoteBinding
@@ -121,6 +123,14 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 		handler!!.post {
 			val constraintLayout = binding!!.noteHeader
 			val flow = binding!!.noteHeaderAttributes
+			// remove previously shown attributes
+			constraintLayout.iterator().also { iterator ->
+				iterator.forEach { view ->
+					if (view.contentDescription == "Label") {
+						iterator.remove()
+					}
+				}
+			}
 			for (attribute in note.labels ?: emptyList()) {
 				Log.d(TAG, "adding one attribute")
 				val view =

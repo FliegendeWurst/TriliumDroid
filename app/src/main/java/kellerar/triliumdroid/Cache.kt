@@ -89,7 +89,7 @@ object Cache {
 	private fun getNoteInternal(id: String): Note? {
 		var note: Note? = null
 		db!!.rawQuery(
-			"SELECT content, mime, title, attributes.name, attributes.value FROM notes, note_contents LEFT JOIN attributes USING(noteId) WHERE notes.noteId = note_contents.noteId AND notes.noteId = ? AND (attributes.type == 'label' OR attributes.type IS NULL)",
+			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value FROM notes, note_contents LEFT JOIN attributes USING(noteId) WHERE notes.noteId = note_contents.noteId AND notes.noteId = ?",
 			arrayOf(id)
 		).use {
 			val labels = mutableListOf<Label>()
@@ -99,9 +99,12 @@ object Cache {
 			}
 			while (!it.isAfterLast) {
 				if (!it.isNull(3)) {
-					val name = it.getString(3)
-					val value = it.getString(4)
-					labels.add(Label(note!!, name, value))
+					val type = it.getString(3)
+					if (type == "label") {
+						val name = it.getString(4)
+						val value = it.getString(5)
+						labels.add(Label(note!!, name, value))
+					}
 				}
 				it.moveToNext()
 				note!!.labels = labels
