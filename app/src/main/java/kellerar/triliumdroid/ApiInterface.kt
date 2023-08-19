@@ -1,16 +1,50 @@
 package kellerar.triliumdroid
 
+import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Intent
+import android.icu.text.DateFormat
+import android.icu.text.SimpleDateFormat
+import android.icu.util.Calendar
 import android.util.Log
 import android.webkit.JavascriptInterface
+import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.os.bundleOf
+
 
 class ApiInterface(private val noteFragment: NoteFragment) {
+	private val mainActivity: MainActivity = noteFragment.requireActivity() as MainActivity
+
+	@SuppressLint("SimpleDateFormat")
 	companion object {
 		const val TAG: String = "ApiInterface"
+		val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 	}
 
 	@JavascriptInterface
 	fun isMobile(): Boolean {
 		return true
+	}
+
+	@JavascriptInterface
+	fun registerAlarm(tag: String, time: String, message: String, note: String) {
+		if (!mainActivity.checkNotificationPermission()) {
+			return
+		}
+		Log.i(TAG, "registerAlarm $tag $time $message $note")
+		val context = noteFragment.requireContext()
+		val alarmMgr = getSystemService(context, AlarmManager::class.java)!!
+		val intent = Intent(context, AlarmReceiver::class.java)
+		intent.putExtras(bundleOf(Pair("message", message), Pair("note", note)))
+		val pendingIntent = PendingIntent.getBroadcast(
+			context,
+			0,
+			intent,
+			PendingIntent.FLAG_IMMUTABLE
+		)
+		val timeMs = df.parse(time).time
+		alarmMgr.setExact(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
 	}
 
 	// TODO: properties (not supported by this interface)

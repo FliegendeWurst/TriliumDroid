@@ -1,7 +1,12 @@
 package kellerar.triliumdroid
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.system.ErrnoException
@@ -19,6 +24,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.app.ActivityCompat
 import androidx.core.view.GravityCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
@@ -39,6 +45,7 @@ class MainActivity : AppCompatActivity() {
 	private var jumpRequestId = 0
 	private lateinit var consoleLogMenuItem: MenuItem
 	private var consoleVisible: Boolean = false
+	private var firstNote: String? = null
 
 	companion object {
 		private const val TAG = "MainActivity"
@@ -47,8 +54,32 @@ class MainActivity : AppCompatActivity() {
 		var tree: TreeItemAdapter? = null
 	}
 
+	private fun oneTimeSetup() {
+		// Create the NotificationChannel.
+		val name = getString(R.string.channel_name)
+		val importance = NotificationManager.IMPORTANCE_DEFAULT
+		val mChannel = NotificationChannel(AlarmReceiver.CHANNEL_ID, name, importance)
+		// Register the channel with the system. You can't change the importance
+		// or other notification behaviors after this.
+		val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+		notificationManager.createNotificationChannel(mChannel)
+	}
+
+	fun checkNotificationPermission(): Boolean {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			return ActivityCompat.checkSelfPermission(
+				this,
+				Manifest.permission.POST_NOTIFICATIONS
+			) == PackageManager.PERMISSION_GRANTED
+		}
+		return true
+	}
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		firstNote = intent.extras?.getString("note")
+
+		oneTimeSetup()
 
 		binding = ActivityMainBinding.inflate(layoutInflater)
 		setContentView(binding.root)
@@ -145,7 +176,7 @@ class MainActivity : AppCompatActivity() {
 				Cache.getTreeData()
 				handler.post {
 					refreshTree()
-					val n = prefs.getString(LAST_NOTE, "root")!!
+					val n = firstNote ?: prefs.getString(LAST_NOTE, "root")!!
 					navigateTo(Cache.getNote(n) ?: return@post)
 					// first use: open the drawer
 					if (!prefs.contains(LAST_NOTE)) {
