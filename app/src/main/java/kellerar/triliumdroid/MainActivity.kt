@@ -11,9 +11,12 @@ import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
@@ -34,6 +37,8 @@ class MainActivity : AppCompatActivity() {
 	private lateinit var handler: Handler
 	private lateinit var prefs: SharedPreferences
 	private var jumpRequestId = 0
+	private lateinit var consoleLogMenuItem: MenuItem
+	private var consoleVisible: Boolean = false
 
 	companion object {
 		private const val TAG = "MainActivity"
@@ -151,9 +156,26 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
-	override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-		menuInflater.inflate(R.menu.action_bar, findViewById<Toolbar>(R.id.toolbar).menu)
+	override fun onCreateOptionsMenu(m: Menu?): Boolean {
+		val menu = findViewById<Toolbar>(R.id.toolbar).menu
+		menuInflater.inflate(R.menu.action_bar, menu)
 		return true
+	}
+
+	override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+		consoleLogMenuItem = menu?.findItem(R.id.action_console) ?: return true
+		consoleLogMenuItem.isVisible = consoleVisible
+		return true
+	}
+
+	fun enableConsoleLogAction() {
+		consoleLogMenuItem.isVisible = true
+		consoleVisible = true
+	}
+
+	fun disableConsoleLogAction() {
+		consoleVisible = false
+		invalidateOptionsMenu()
 	}
 
 	override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
@@ -166,6 +188,20 @@ class MainActivity : AppCompatActivity() {
 
 		R.id.action_settings -> {
 			startActivity(Intent(this, SetupActivity::class.java))
+			true
+		}
+
+		R.id.action_console -> {
+			val dialog = AlertDialog.Builder(this)
+				.setTitle(R.string.action_console_log)
+				.setView(R.layout.dialog_console)
+				.create()
+			val text = StringBuilder()
+			for (entry in getNoteFragment().console) {
+				text.append(entry.message()).append("\n")
+			}
+			dialog.show()
+			dialog.findViewById<TextView>(R.id.dialog_console_output)!!.text = text
 			true
 		}
 

@@ -16,4 +16,5 @@
     <string name="action_share">Share</string>
     <string name="button_new_note">Create new child note</string>
     <string name="button_new_note_sibling">Create new sibling note</string>
+    <string name="action_console_log">Console log</string>
 </resources>

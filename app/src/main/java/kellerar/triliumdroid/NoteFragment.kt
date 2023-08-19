@@ -8,6 +8,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.ConsoleMessage
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -20,7 +22,7 @@ import kellerar.triliumdroid.data.Note
 import kellerar.triliumdroid.databinding.FragmentNoteBinding
 
 
-class NoteFragment() : Fragment(R.layout.fragment_note) {
+class NoteFragment : Fragment(R.layout.fragment_note) {
 	companion object {
 		private const val TAG: String = "NoteFragment"
 		private const val WEBVIEW_DOMAIN: String = "https://trilium-notes.invalid/"
@@ -32,6 +34,7 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 	private var id: String = ""
 	private var load: Boolean = false
 	private var subCodeNotes: List<Note>? = null
+	public var console: MutableList<ConsoleMessage> = mutableListOf()
 
 	@SuppressLint("SetJavaScriptEnabled")
 	override fun onCreateView(
@@ -42,6 +45,13 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 		binding = FragmentNoteBinding.inflate(inflater, container, false)
 		binding.webview.settings.javaScriptEnabled = true
 		binding.webview.addJavascriptInterface(ApiInterface(this), "api")
+		binding.webview.webChromeClient = object : WebChromeClient() {
+			override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+				(this@NoteFragment.activity as MainActivity).enableConsoleLogAction()
+				this@NoteFragment.console.add(consoleMessage ?: return true)
+				return true
+			}
+		}
 		binding.webview.webViewClient = object : WebViewClient() {
 			override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
 				// called when an internal link is used
@@ -121,6 +131,10 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 
 	@SuppressLint("MissingInflatedId")
 	fun load(id: String) {
+		(this@NoteFragment.activity as MainActivity).disableConsoleLogAction()
+		console.clear()
+		subCodeNotes = emptyList()
+
 		this.id = id
 		this.load = true
 		Log.i(TAG, "loading $id")
