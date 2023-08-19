@@ -1,18 +1,24 @@
 package kellerar.triliumdroid
 
 import android.content.Context
+import android.database.AbstractWindowedCursor
+import android.database.Cursor
+import android.database.CursorWindow
+import android.database.sqlite.SQLiteCursorDriver
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.database.sqlite.SQLiteQuery
+import android.os.Build
 import android.util.Log
 import kellerar.triliumdroid.data.Branch
 import kellerar.triliumdroid.data.Label
 import kellerar.triliumdroid.data.Note
+import kellerar.triliumdroid.data.Relation
 import org.json.JSONObject
-import java.lang.Exception
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.TreeMap
+import java.util.*
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -88,13 +94,17 @@ object Cache {
 
 	private fun getNoteInternal(id: String): Note? {
 		var note: Note? = null
-		db!!.rawQuery(
-			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value FROM notes, note_contents LEFT JOIN attributes USING(noteId) WHERE notes.noteId = note_contents.noteId AND notes.noteId = ?",
-			arrayOf(id)
+		CursorFactory.selectionArgs = arrayOf(id)
+		db!!.rawQueryWithFactory(
+			CursorFactory,
+			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type FROM notes, note_contents LEFT JOIN attributes USING(noteId) WHERE notes.noteId = note_contents.noteId AND notes.noteId = ?",
+			arrayOf(id),
+			"notes"
 		).use {
 			val labels = mutableListOf<Label>()
+			val relations = mutableListOf<Relation>()
 			if (it.moveToFirst()) {
-				note = Note(id, it.getString(1), it.getString(2))
+				note = Note(id, it.getString(1), it.getString(2), it.getString(6))
 				note!!.content = it.getBlob(0)
 			}
 			while (!it.isAfterLast) {
@@ -104,10 +114,19 @@ object Cache {
 						val name = it.getString(4)
 						val value = it.getString(5)
 						labels.add(Label(note!!, name, value))
+					} else if (type == "relation") {
+						val name = it.getString(4)
+						// value = note ID
+						val value = it.getString(5)
+						if (!notes.containsKey(value)) {
+							notes[value] = Note(value, "INVALID", "INVALID", "INVALID")
+						}
+						relations.add(Relation(note!!, notes[value], name))
 					}
 				}
 				it.moveToNext()
 				note!!.labels = labels
+				note!!.relations = relations
 			}
 		}
 		if (note != null) {
@@ -119,11 +138,11 @@ object Cache {
 	fun getJumpToResults(input: String): List<Note> {
 		val notes = mutableListOf<Note>()
 		db!!.rawQuery(
-			"SELECT noteId, mime, title FROM notes WHERE title LIKE ? LIMIT 50",
+			"SELECT noteId, mime, title, type FROM notes WHERE title LIKE ? LIMIT 50",
 			arrayOf("%$input%")
 		).use {
 			while (it.moveToNext()) {
-				val note = Note(it.getString(0), it.getString(1), it.getString(2))
+				val note = Note(it.getString(0), it.getString(1), it.getString(2), it.getString(3))
 				notes.add(note)
 			}
 		}
@@ -135,7 +154,7 @@ object Cache {
 	 */
 	fun getTreeData() {
 		db!!.rawQuery(
-			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title FROM branches, notes WHERE branches.noteId = notes.noteId",
+			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title, notes.type FROM branches, notes WHERE branches.noteId = notes.noteId",
 			arrayOf()
 		).use {
 			val clones = mutableListOf<Triple<String, String, Int>>()
@@ -152,6 +171,7 @@ object Cache {
 				val isExpanded = it.getInt(5) == 1
 				val mime = it.getString(6)
 				val title = it.getString(7)
+				val type = it.getString(8)
 				branches[noteId] = Branch(
 					branchId,
 					noteId,
@@ -161,7 +181,7 @@ object Cache {
 					isExpanded,
 					TreeMap()
 				)
-				notes[noteId] = Note(noteId, mime, title)
+				notes[noteId] = Note(noteId, mime, title, type)
 				clones.add(Triple(parentNoteId, noteId, notePosition))
 			}
 			for (p in clones) {
@@ -169,6 +189,10 @@ object Cache {
 				branches[p.first]?.children?.set(p.third, b)
 			}
 		}
+	}
+
+	fun getBranch(noteId: String): Branch? {
+		return branches[noteId]
 	}
 
 	/**
@@ -330,5 +354,28 @@ object Cache {
 			const val DATABASE_VERSION = 1
 			const val DATABASE_NAME = "Document.db"
 		}
+	}
+
+	object CursorFactory : SQLiteDatabase.CursorFactory {
+		var selectionArgs: Array<String> = emptyArray()
+
+		override fun newCursor(
+			db: SQLiteDatabase?,
+			masterQuery: SQLiteCursorDriver?,
+			editTable: String?,
+			query: SQLiteQuery?
+		): Cursor {
+			val cursor =
+				db?.rawQuery(query!!.toString().substring("SQLiteQuery: ".length), selectionArgs)!!
+			// try 16 MB for note content
+			val cw = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+				CursorWindow("note_content", 16 * 1024 * 1024)
+			} else {
+				CursorWindow("note_content")
+			}
+			(cursor as AbstractWindowedCursor).window = cw
+			return cursor
+		}
+
 	}
 }

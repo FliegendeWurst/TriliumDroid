@@ -14,10 +14,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.allViews
 import androidx.core.view.iterator
 import androidx.fragment.app.Fragment
-import kellerar.triliumdroid.data.Label
+import kellerar.triliumdroid.data.Note
 import kellerar.triliumdroid.databinding.FragmentNoteBinding
 
 
@@ -28,23 +27,22 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 		private const val WEBVIEW_HOST: String = "trilium-notes.invalid"
 	}
 
-	private var binding: FragmentNoteBinding? = null
+	private lateinit var binding: FragmentNoteBinding
 	private var handler: Handler? = null
 	private var id: String = ""
 	private var load: Boolean = false
+	private var subCodeNotes: List<Note>? = null
 
-	constructor(id: String) : this() {
-		this.id = id
-		this.load = true
-	}
-
+	@SuppressLint("SetJavaScriptEnabled")
 	override fun onCreateView(
 		inflater: LayoutInflater,
 		container: ViewGroup?,
 		savedInstanceState: Bundle?
 	): View {
 		binding = FragmentNoteBinding.inflate(inflater, container, false)
-		binding!!.webview.webViewClient = object : WebViewClient() {
+		binding.webview.settings.javaScriptEnabled = true
+		binding.webview.addJavascriptInterface(ApiInterface(this), "api")
+		binding.webview.webViewClient = object : WebViewClient() {
 			override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
 				// called when an internal link is used
 				if (url.startsWith(WEBVIEW_DOMAIN) && url.contains('#')) {
@@ -91,7 +89,20 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 					val note = Cache.getNoteWithContent(id)
 					return if (note != null) {
 						Log.d(TAG, "intercept returns data")
-						WebResourceResponse(note.mime, null, note.content!!.inputStream())
+						var data = note.content!!
+						if (note.id == this@NoteFragment.id && subCodeNotes != null && !note.contentFixed) {
+							Log.d(TAG, "intercept adds sub code notes")
+							// append <script> tags to load children
+							if (data.isEmpty()) {
+								data += "<!DOCTYPE html>".encodeToByteArray()
+							}
+							for (n in subCodeNotes!!) {
+								data += "<script src='/${n.id}'></script>".encodeToByteArray()
+							}
+							note.content = data
+							note.contentFixed = true
+						}
+						WebResourceResponse(note.mime, null, data.inputStream())
 					} else {
 						null
 					}
@@ -105,12 +116,7 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 			load(id)
 		}
 
-		return binding!!.root
-	}
-
-	override fun onDestroyView() {
-		super.onDestroyView()
-		binding = null
+		return binding.root
 	}
 
 	@SuppressLint("MissingInflatedId")
@@ -118,11 +124,11 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 		this.id = id
 		this.load = true
 		Log.i(TAG, "loading $id")
-		binding!!.textId.text = id
+		binding.textId.text = id
 		val note = Cache.getNoteWithContent(id) ?: return
 		handler!!.post {
-			val constraintLayout = binding!!.noteHeader
-			val flow = binding!!.noteHeaderAttributes
+			val constraintLayout = binding.noteHeader
+			val flow = binding.noteHeaderAttributes
 			// remove previously shown attributes
 			constraintLayout.iterator().also { iterator ->
 				iterator.forEach { view ->
@@ -132,7 +138,6 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 				}
 			}
 			for (attribute in note.labels ?: emptyList()) {
-				Log.d(TAG, "adding one attribute")
 				val view =
 					LayoutInflater.from(context)
 						.inflate(R.layout.item_attribute, constraintLayout, false)
@@ -147,14 +152,23 @@ class NoteFragment() : Fragment(R.layout.fragment_note) {
 				flow.addView(view)
 			}
 
-			if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
+			if (note.type == "render") {
+				val renderTarget = note.relations!!.find { it.name == "renderNote" } ?: return@post
+				load((renderTarget.target ?: return@post).id)
+			} else if (note.type == "code") {
+				// code notes automatically load all the scripts in child nodes
+				// -> modify content returned by webview interceptor
+				val branch = Cache.getBranch(note.id) ?: return@post
+				subCodeNotes = branch.children.map { Cache.getNote(it.value.note)!! }
+				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)
+			} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
 				Log.i(TAG, "updating content for $id")
-				binding!!.webview.loadUrl(WEBVIEW_DOMAIN + id)
+				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)
 			} else {
 				Log.i(TAG, "embedding img!") // TODO: figure out how to zoom to fit
-				binding!!.webview.settings.builtInZoomControls = true
-				binding!!.webview.settings.displayZoomControls = false
-				binding!!.webview.loadDataWithBaseURL(
+				binding.webview.settings.builtInZoomControls = true
+				binding.webview.settings.displayZoomControls = false
+				binding.webview.loadDataWithBaseURL(
 					WEBVIEW_DOMAIN,
 					"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><img src='/$id'>",
 					"text/html; charset=UTF-8",
