@@ -4,6 +4,7 @@
 
     <style name="SettingsSectionLabelStyle" parent="@style/MaterialSectionLabelStyle">
         <item name="android:layout_marginStart">@dimen/settings_label_start_margin</item>
+        <item name="android:textColor">@color/black</item>
     </style>
 
     <style name="MaterialSectionLabelStyle">

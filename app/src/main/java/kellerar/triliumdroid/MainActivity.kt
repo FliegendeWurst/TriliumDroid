@@ -231,11 +231,6 @@ class MainActivity : AppCompatActivity() {
 			true
 		}
 
-		R.id.action_settings -> {
-			startActivity(Intent(this, SetupActivity::class.java))
-			true
-		}
-
 		R.id.action_sync -> {
 			startSync(handler, false)
 			true
@@ -252,6 +247,16 @@ class MainActivity : AppCompatActivity() {
 			}
 			dialog.show()
 			dialog.findViewById<TextView>(R.id.dialog_console_output)!!.text = text
+			true
+		}
+
+		R.id.action_settings -> {
+			startActivity(Intent(this, SetupActivity::class.java))
+			true
+		}
+
+		R.id.action_about -> {
+			startActivity(Intent(this, SetupActivity::class.java))
 			true
 		}
 

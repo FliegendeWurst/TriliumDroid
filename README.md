@@ -3,22 +3,26 @@
 Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 
 ## Working
-- Sync with other Trilium instance
-- Displaying note content
+- Sync with other Trilium instance (push + pull)
+- Displaying/editing note content
+- Displaying note attributes
 - Displaying/collapsing/expanding note tree
 - Navigating using internal links
 - Browsing external links
 - Jump to note dialog
+- Basic Scripting
 
 ## TODO
 - Dark Theme
+- Share target (create note from received text)
 - Folder view of child nodes
 - Jump to note dialog: smart sort
-- Attributes
+- Modifying attributes
 - Migrating to newer database versions
-- Editing note content
 - Editing note tree
-- Scripting
+- Advanced Scripting
+- Encrypted notes
+- Erasing notes
 - Encrypted local database (maybe): https://github.com/sqlcipher/android-database-sqlcipher
 
 ## Related issues
@@ -54,3 +58,4 @@ The same license (AGPL-3.0) applies for the parts of this program that are deriv
 
 The MIT License applies to the [boxicons](https://boxicons.com/) included in the project (see `boxicons_LICENSE.txt`).
 The GPL-3.0 license applies to the styles derived from [Simple-Commons](https://github.com/SimpleMobileTools/Simple-Commons).
+The MPL-2.0 license applies to the included [AztecEditor-Android](https://github.com/wordpress-mobile/AztecEditor-Android/).

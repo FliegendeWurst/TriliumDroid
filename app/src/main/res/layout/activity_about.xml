@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/margin_extra_large"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="@dimen/extra_big_text_icon_size"
+            android:layout_height="@dimen/extra_big_text_icon_size"
+            android:layout_gravity="center"
+            android:layout_marginEnd="@dimen/normal_margin"
+            android:contentDescription="app icon"
+            android:scaleType="center"
+            android:src="@drawable/icon_color" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/app_name"
+            android:textSize="@dimen/xxxl_text_size" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/text_description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:paddingStart="@dimen/big_margin"
+        android:paddingEnd="@dimen/big_margin"
+        android:text="Trilium Notes is a hierarchical note taking application with focus on building large personal knowledge bases."
+        android:textSize="@dimen/big_text_size"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header" />
+
+    <ImageView
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_height"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:background="@color/divider_grey"
+        android:importantForAccessibility="no"
+        app:layout_constraintTop_toBottomOf="@id/text_description" />
+
+    <TextView
+        android:id="@+id/header_pc"
+        style="@style/SettingsSectionLabelStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="PC version"
+        app:layout_constraintTop_toBottomOf="@id/divider" />
+
+    <TextView
+        android:id="@+id/description_pc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:paddingStart="@dimen/big_margin"
+        android:paddingEnd="@dimen/big_margin"
+        android:text="The original version of this app has been developed by zadam since 2017. It runs on Windows, Mac and Linux."
+        android:textSize="@dimen/bigger_text_size"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header_pc" />
+
+    <Button
+        android:id="@+id/button_github"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/small_margin"
+        android:layout_marginBottom="@dimen/activity_margin"
+        android:drawableStart="@drawable/bxl_github"
+        android:text=" zadam / trilium"
+        android:textSize="@dimen/bigger_text_size"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/description_pc" />
+
+    <ImageView
+        android:id="@+id/divider2"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_height"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:background="@color/divider_grey"
+        android:importantForAccessibility="no"
+        app:layout_constraintTop_toBottomOf="@id/button_github" />
+
+    <TextView
+        android:id="@+id/header_app"
+        style="@style/SettingsSectionLabelStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Android port"
+        app:layout_constraintTop_toBottomOf="@id/divider2" />
+
+    <TextView
+        android:id="@+id/description_app"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:paddingStart="@dimen/big_margin"
+        android:paddingEnd="@dimen/big_margin"
+        android:text="The Android port has been developed by FliegendeWurst since 2023. If you encouter any issues using the app, feel free to open an issue in the repository linked below."
+        android:textSize="@dimen/bigger_text_size"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header_app" />
+
+    <Button
+        android:id="@+id/button_github2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:layout_marginBottom="@dimen/activity_margin"
+        android:drawableStart="@drawable/bxl_github"
+        android:text=" FliegendeWurst / trilium-android"
+        android:textSize="@dimen/bigger_text_size"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/description_app" />
+
+    <ImageView
+        android:id="@+id/divider3"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_height"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:background="@color/divider_grey"
+        android:importantForAccessibility="no"
+        app:layout_constraintTop_toBottomOf="@id/button_github2" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
