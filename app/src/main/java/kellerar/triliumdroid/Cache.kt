@@ -1,5 +1,6 @@
 package kellerar.triliumdroid
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.database.AbstractWindowedCursor
 import android.database.Cursor
@@ -8,13 +9,18 @@ import android.database.sqlite.SQLiteCursorDriver
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteQuery
+import android.icu.text.SimpleDateFormat
 import android.os.Build
 import android.util.Log
 import kellerar.triliumdroid.data.Branch
 import kellerar.triliumdroid.data.Label
 import kellerar.triliumdroid.data.Note
 import kellerar.triliumdroid.data.Relation
+import org.json.JSONArray
 import org.json.JSONObject
+import java.lang.StrictMath.max
+import java.security.MessageDigest
+import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -23,8 +29,12 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 
+@OptIn(ExperimentalEncodingApi::class)
 object Cache {
 	private const val TAG: String = "Cache"
+
+	@SuppressLint("SimpleDateFormat")
+	private val localTime: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
 
 	private var notes: MutableMap<String, Note> = HashMap()
 	private var branches: MutableMap<String, Branch> = HashMap()
@@ -39,10 +49,42 @@ object Cache {
 	}
 
 	fun getNoteWithContent(id: String): Note? {
-		if (notes.containsKey(id) && notes[id]!!.content != null) {
+		if (notes.containsKey(id) && notes[id]!!.mime != "INVALID" && notes[id]!!.content != null) {
 			return notes[id]
 		}
 		return getNoteInternal(id)
+	}
+
+	fun setNoteContent(id: String, content: String) {
+		if (!notes.containsKey(id)) {
+			getNoteInternal(id)
+		}
+		val data = content.encodeToByteArray()
+		notes[id]!!.content = data
+		val date = localTime.format(Calendar.getInstance().time)
+		val utc = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
+		db!!.execSQL(
+			"UPDATE note_contents SET content = ?, dateModified = ?, utcDateModified = ? WHERE note_contents.noteId = ?",
+			arrayOf(notes[id]!!.content, date, utc, id)
+		)
+		val md = MessageDigest.getInstance("SHA-1")
+		md.update(data, 0, data.size)
+		val sha1hash = md.digest()
+		val hash = Base64.encode(sha1hash)
+		db!!.execSQL(
+			"INSERT OR REPLACE INTO entity_changes (entityName, entityId, hash, isErased, changeId, componentId, instanceId, isSynced, utcDateChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			arrayOf(
+				"note_contents",
+				id,
+				hash,
+				0,
+				"changeId${(1000..9999).random()}",
+				"NA",
+				"mobilemobile",
+				1,
+				utc
+			)
+		)
 	}
 
 	fun getNotePath(id: String): List<Branch> {
@@ -86,7 +128,7 @@ object Cache {
 	}
 
 	fun getNote(id: String): Note? {
-		if (notes.containsKey(id)) {
+		if (notes.containsKey(id) && notes[id]?.mime != "INVALID") {
 			return notes[id]
 		}
 		return getNoteInternal(id)
@@ -214,13 +256,131 @@ object Cache {
 		return list
 	}
 
-	@OptIn(ExperimentalEncodingApi::class)
+	private fun syncPush(): Int {
+		var lastSyncedPush = 0
+		db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPush"))
+			.use {
+				if (it.moveToFirst()) {
+					lastSyncedPush = it.getInt(0)
+				}
+			}
+		Log.i(TAG, "last synced push: $lastSyncedPush")
+		val logMarkerId = "trilium-droid"
+		val instanceId = "mobilemobile"
+		val changesUri = "/api/sync/update?logMarkerId=$logMarkerId"
+
+		val data = JSONObject()
+		data.put("instanceId", instanceId)
+		val entities = JSONArray()
+		var largestId = lastSyncedPush
+		db!!.rawQuery(
+			"SELECT * FROM entity_changes WHERE isSynced = 1 AND id > ?",
+			arrayOf(lastSyncedPush.toString())
+		).use {
+
+			while (it.moveToNext()) {
+				val instanceIdSaved = it.getString(7)
+				if (instanceIdSaved != instanceId) {
+					continue
+				}
+
+				val id = it.getInt(0)
+				largestId = max(largestId, id)
+				val entityName = it.getString(1)
+				val entityId = it.getString(2)
+				val hash = it.getString(3)
+				val isErased = it.getInt(4)
+				val changeId = it.getString(5)
+				val componentId = it.getString(6)
+				val isSynced = it.getString(8)
+				val utc = it.getString(9)
+
+				val row = JSONObject()
+
+				val entityChange = JSONObject()
+				entityChange.put("id", id)
+				entityChange.put("entityName", entityName)
+				entityChange.put("entityId", entityId)
+				entityChange.put("hash", hash)
+				entityChange.put("isErased", isErased)
+				entityChange.put("changeId", changeId)
+				entityChange.put("componentId", componentId)
+				entityChange.put("instanceId", instanceId)
+				entityChange.put("isSynced", isSynced)
+				entityChange.put("utcDateChanged", utc)
+				row.put("entityChange", entityChange)
+
+				val entity = fetchEntity(entityName, entityId)
+				row.put("entity", entity)
+
+				entities.put(row)
+			}
+		}
+		data.put("entities", entities)
+
+		if (entities.length() > 0) {
+			ConnectionUtil.doSyncPushRequest(changesUri, data)
+			Log.i(TAG, "synced up to $largestId")
+			val utc =
+				DateTimeFormatter.ISO_INSTANT.format(OffsetDateTime.now(ZoneOffset.UTC))
+					.replace('T', ' ')
+			db!!.execSQL(
+				"INSERT OR REPLACE INTO options (name, value, isSynced, utcDateModified) VALUES (?, ?, 0, ?)",
+				arrayOf("lastSyncedPush", largestId.toString(), utc)
+			)
+		}
+		return entities.length()
+	}
+
+	private fun fetchEntity(entityName: String, entityId: String): JSONObject {
+		var keyName = entityName.substring(0, entityName.length - 1)
+		if (keyName == "note_content") {
+			keyName = "note"
+		}
+		val obj = JSONObject()
+		db!!.rawQuery("SELECT * FROM $entityName WHERE ${keyName}Id = ?", arrayOf(entityId)).use {
+			if (it.moveToNext()) {
+				for (i in (0 until it.columnCount)) {
+					var x: Any? = null
+					when (it.getType(i)) {
+						Cursor.FIELD_TYPE_NULL -> {
+							x = null
+						}
+
+						Cursor.FIELD_TYPE_BLOB -> {
+							x = it.getBlob(i)
+						}
+
+						Cursor.FIELD_TYPE_FLOAT -> {
+							x = it.getDouble(i)
+						}
+
+						Cursor.FIELD_TYPE_INTEGER -> {
+							x = it.getLong(i)
+						}
+
+						Cursor.FIELD_TYPE_STRING -> {
+							x = it.getString(i)
+						}
+					}
+					if (x is ByteArray) {
+						obj.put(it.getColumnName(i), Base64.encode(x))
+					} else {
+						obj.put(it.getColumnName(i), x)
+					}
+				}
+			}
+		}
+		return obj
+	}
+
 	fun sync(
 		callbackOutstanding: (Int) -> Unit,
 		callbackError: (Exception) -> Unit,
-		callbackDone: (Int) -> Unit
+		callbackDone: (Pair<Int, Int>) -> Unit
 	) {
 		try {
+			val totalPushed = syncPush()
 			var totalSynced = 0
 			var lastSyncedPull = 0
 			db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPull"))
@@ -230,7 +390,7 @@ object Cache {
 					}
 				}
 			val logMarkerId = "trilium-droid"
-			val instanceId = "trilium-droid-1"
+			val instanceId = "mobilemobile"
 			val changesUri =
 				"/api/sync/changed?instanceId=${instanceId}&lastEntityChangeId=${lastSyncedPull}&logMarkerId=${logMarkerId}"
 
@@ -291,7 +451,7 @@ object Cache {
 					callbackOutstanding(outstandingPullCount)
 					sync(callbackOutstanding, callbackError, callbackDone)
 				} else {
-					callbackDone(totalSynced)
+					callbackDone(Pair(totalSynced, totalPushed))
 				}
 			}
 		} catch (e: Exception) {

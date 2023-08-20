@@ -7,4 +7,9 @@
         android:id="@+id/noteFragment"
         android:name="kellerar.triliumdroid.NoteFragment"
         android:label="NoteFragment" />
+
+    <fragment
+        android:id="@+id/noteEditFragment"
+        android:name="kellerar.triliumdroid.NoteEditFragment"
+        android:label="NoteEditFragment" />
 </navigation>

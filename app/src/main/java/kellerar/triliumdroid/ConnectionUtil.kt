@@ -8,8 +8,12 @@ import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.HttpUrl
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
@@ -116,6 +120,32 @@ object ConnectionUtil {
 
 			override fun onFailure(call: Call, e: IOException) {
 				Log.e(TAG, "failed to fetch sync data", e)
+			}
+		})
+	}
+
+	fun doSyncPushRequest(uri: String, data: JSONObject) {
+		if (csrf == "") {
+			Log.e(TAG, "tried to sync without token")
+			return
+		}
+		val dataBody = data.toString(0)
+		Log.i(TAG, "syncing $data")
+		val req = Request.Builder()
+			.header("pageCount", "1")
+			.header("pageIndex", "0")
+			.header("requestId", "n/a")
+			.put(dataBody.toRequestBody("application/json".toMediaType()))
+			.url("$server$uri")
+			.build()
+		Log.i(TAG, uri)
+		client!!.newCall(req).enqueue(object : Callback {
+			override fun onResponse(call: Call, response: Response) {
+				response.use {}
+			}
+
+			override fun onFailure(call: Call, e: IOException) {
+				Log.e(TAG, "failed to push sync data", e)
 			}
 		})
 	}

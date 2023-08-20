@@ -34,7 +34,11 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 	private var id: String = ""
 	private var load: Boolean = false
 	private var subCodeNotes: List<Note>? = null
-	public var console: MutableList<ConsoleMessage> = mutableListOf()
+	var console: MutableList<ConsoleMessage> = mutableListOf()
+
+	fun getNoteId(): String {
+		return id
+	}
 
 	@SuppressLint("SetJavaScriptEnabled")
 	override fun onCreateView(
@@ -86,11 +90,10 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 				view: WebView,
 				request: WebResourceRequest
 			): WebResourceResponse? {
-				Log.d(TAG, "intercept:")
-				Log.d(TAG, request.url.host ?: "no host")
-				Log.d(TAG, request.url.query ?: "no query")
-				Log.d(TAG, request.url.toString())
-				Log.d(TAG, request.url.pathSegments.size.toString())
+				Log.d(
+					TAG,
+					"intercept: ${request.url.host} ${request.url.query} ${request.url} ${request.url.pathSegments.size}"
+				)
 				if (request.url.host == WEBVIEW_HOST && request.url.pathSegments.size == 1) {
 					val id = request.url.lastPathSegment!!
 					if (id == "favicon.ico") {

@@ -56,10 +56,12 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun oneTimeSetup() {
-		StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
-			.detectLeakedClosableObjects()
-			.penaltyLog()
-			.build())
+		StrictMode.setVmPolicy(
+			StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
+				.detectLeakedClosableObjects()
+				.penaltyLog()
+				.build()
+		)
 
 		// Create the NotificationChannel.
 		val name = getString(R.string.channel_name)
@@ -155,7 +157,7 @@ class MainActivity : AppCompatActivity() {
 		).show()
 	}
 
-	private fun startSync(handler: Handler) {
+	private fun startSync(handler: Handler, resetView: Boolean = true) {
 		val contextView = findViewById<View>(R.id.fragment_container)
 
 		val snackbar = Snackbar.make(contextView, "Sync: starting...", Snackbar.LENGTH_INDEFINITE)
@@ -175,18 +177,22 @@ class MainActivity : AppCompatActivity() {
 				}
 			}, {
 				handler.post {
-					snackbar.setText("Sync: finished, $it changes")
+					snackbar.setText("Sync: ${it.first} pulled, ${it.second} pushed")
 					snackbar.duration = Snackbar.LENGTH_SHORT
 					snackbar.show()
 				}
 				Cache.getTreeData()
 				handler.post {
 					refreshTree()
-					val n = firstNote ?: prefs.getString(LAST_NOTE, "root")!!
-					navigateTo(Cache.getNote(n) ?: return@post)
-					// first use: open the drawer
-					if (!prefs.contains(LAST_NOTE)) {
-						binding.drawerLayout.openDrawer(GravityCompat.START)
+					if (resetView) {
+						val n = firstNote ?: prefs.getString(LAST_NOTE, "root")!!
+						navigateTo(Cache.getNote(n) ?: return@post)
+						// first use: open the drawer
+						if (!prefs.contains(LAST_NOTE)) {
+							binding.drawerLayout.openDrawer(GravityCompat.START)
+						}
+					} else {
+						navigateTo(Cache.getNote(getNoteFragment().getNoteId()) ?: return@post)
 					}
 				}
 			})
@@ -217,14 +223,21 @@ class MainActivity : AppCompatActivity() {
 
 	override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
 		R.id.action_edit -> {
-			val t = Toast(this)
-			t.setText("Editing is not yet supported!")
-			t.show()
+			val id = getNoteFragment().getNoteId()
+			supportFragmentManager.beginTransaction()
+				.replace(R.id.fragment_container, NoteEditFragment(id))
+				.addToBackStack(null)
+				.commit()
 			true
 		}
 
 		R.id.action_settings -> {
 			startActivity(Intent(this, SetupActivity::class.java))
+			true
+		}
+
+		R.id.action_sync -> {
+			startSync(handler, false)
 			true
 		}
 
