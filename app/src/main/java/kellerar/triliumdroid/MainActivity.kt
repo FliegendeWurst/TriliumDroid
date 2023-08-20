@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.StrictMode
 import android.system.ErrnoException
 import android.system.OsConstants
 import android.util.Log
@@ -55,6 +56,11 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun oneTimeSetup() {
+		StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
+			.detectLeakedClosableObjects()
+			.penaltyLog()
+			.build())
+
 		// Create the NotificationChannel.
 		val name = getString(R.string.channel_name)
 		val importance = NotificationManager.IMPORTANCE_DEFAULT
