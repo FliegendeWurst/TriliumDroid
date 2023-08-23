@@ -1,4 +1,4 @@
-package kellerar.triliumdroid
+package eu.fliegendewurst.triliumdroid
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -12,10 +12,10 @@ import android.database.sqlite.SQLiteQuery
 import android.icu.text.SimpleDateFormat
 import android.os.Build
 import android.util.Log
-import kellerar.triliumdroid.data.Branch
-import kellerar.triliumdroid.data.Label
-import kellerar.triliumdroid.data.Note
-import kellerar.triliumdroid.data.Relation
+import eu.fliegendewurst.triliumdroid.data.Branch
+import eu.fliegendewurst.triliumdroid.data.Label
+import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.data.Relation
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.StrictMath.max

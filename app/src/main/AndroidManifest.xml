@@ -15,7 +15,7 @@
         android:theme="@style/Theme.TriliumDroid"
         android:usesCleartextTraffic="true">
         <activity
-            android:name=".MainActivity"
+            android:name="eu.fliegendewurst.triliumdroid.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,9 +23,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SetupActivity" />
+        <activity android:name="eu.fliegendewurst.triliumdroid.SetupActivity" />
+        <activity android:name="eu.fliegendewurst.triliumdroid.AboutActivity" />
 
-        <receiver android:name=".AlarmReceiver" />
+        <receiver android:name="eu.fliegendewurst.triliumdroid.AlarmReceiver" />
     </application>
 
 </manifest>

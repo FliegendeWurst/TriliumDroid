@@ -1,4 +1,4 @@
-package kellerar.triliumdroid
+package eu.fliegendewurst.triliumdroid
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -17,7 +17,6 @@ import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -32,8 +31,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
-import kellerar.triliumdroid.data.Note
-import kellerar.triliumdroid.databinding.ActivityMainBinding
+import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.lang.Exception

@@ -1,16 +1,13 @@
-package kellerar.triliumdroid
+package eu.fliegendewurst.triliumdroid
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.ConsoleMessage
 import androidx.fragment.app.Fragment
-import kellerar.triliumdroid.data.Note
-import kellerar.triliumdroid.databinding.FragmentNoteEditBinding
+import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteEditBinding
 import org.wordpress.aztec.Aztec
 import org.wordpress.aztec.ITextFormat
 import org.wordpress.aztec.toolbar.IAztecToolbarClickListener

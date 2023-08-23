@@ -1,11 +1,12 @@
-package kellerar.triliumdroid
+package eu.fliegendewurst.triliumdroid
 
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
-import kellerar.triliumdroid.databinding.ActivitySetupBinding
+import eu.fliegendewurst.triliumdroid.ConnectionUtil
+import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 
 class SetupActivity : AppCompatActivity() {
 	private lateinit var binding: ActivitySetupBinding

@@ -1,4 +1,4 @@
-package kellerar.triliumdroid
+package eu.fliegendewurst.triliumdroid
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -18,8 +18,8 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.iterator
 import androidx.fragment.app.Fragment
-import kellerar.triliumdroid.data.Note
-import kellerar.triliumdroid.databinding.FragmentNoteBinding
+import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteBinding
 
 
 class NoteFragment : Fragment(R.layout.fragment_note) {

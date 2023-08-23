@@ -1,11 +1,11 @@
-package kellerar.triliumdroid
+package eu.fliegendewurst.triliumdroid
 
 import android.view.WindowManager
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
-import kellerar.triliumdroid.data.Branch
+import eu.fliegendewurst.triliumdroid.data.Branch
 import java.util.*
 
 object JumpToNoteDialog {

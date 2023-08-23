@@ -1,4 +1,4 @@
-package kellerar.triliumdroid.data
+package eu.fliegendewurst.triliumdroid.data
 
 import java.util.SortedMap
 

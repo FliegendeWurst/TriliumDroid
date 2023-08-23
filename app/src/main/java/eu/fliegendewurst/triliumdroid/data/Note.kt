@@ -1,4 +1,4 @@
-package kellerar.triliumdroid.data
+package eu.fliegendewurst.triliumdroid.data
 
 class Note(var id: String, val mime: String, var title: String, var type: String) {
 	var content: ByteArray? = null

@@ -1,4 +1,4 @@
-package kellerar.triliumdroid
+package eu.fliegendewurst.triliumdroid
 
 import android.content.SharedPreferences
 import android.util.Log
@@ -8,11 +8,9 @@ import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.HttpUrl
-import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONObject
@@ -29,7 +27,7 @@ object ConnectionUtil {
 	private var loginFails = 0
 
 	fun setup(prefs: SharedPreferences, callback: () -> Unit, callbackError: (Exception) -> Unit) {
-		this.prefs = prefs
+		ConnectionUtil.prefs = prefs
 		server = prefs.getString("hostname", null)!!
 		val password = prefs.getString("password", null)!!
 		connect(server, password, callback, callbackError)
@@ -71,7 +69,7 @@ object ConnectionUtil {
 			})
 			.build()
 
-		this.server = server
+		ConnectionUtil.server = server
 		val obj = JSONObject()
 		obj.put("password", password)
 		Log.i(TAG, "$server/login")

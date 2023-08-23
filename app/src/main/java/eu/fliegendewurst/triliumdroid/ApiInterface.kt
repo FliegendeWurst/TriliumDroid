@@ -1,4 +1,4 @@
-package kellerar.triliumdroid
+package eu.fliegendewurst.triliumdroid
 
 import android.annotation.SuppressLint
 import android.app.AlarmManager
@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.icu.text.DateFormat
 import android.icu.text.SimpleDateFormat
-import android.icu.util.Calendar
 import android.util.Log
 import android.webkit.JavascriptInterface
 import androidx.core.content.ContextCompat.getSystemService

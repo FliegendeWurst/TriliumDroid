@@ -1,4 +1,4 @@
-package kellerar.triliumdroid
+package eu.fliegendewurst.triliumdroid
 
 import android.view.LayoutInflater
 import android.view.View
@@ -9,8 +9,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import kellerar.triliumdroid.data.Branch
-import kellerar.triliumdroid.databinding.ItemTreeNoteBinding
+import eu.fliegendewurst.triliumdroid.data.Branch
+import eu.fliegendewurst.triliumdroid.databinding.ItemTreeNoteBinding
 
 
 class TreeItemAdapter(

@@ -1,9 +1,9 @@
-package kellerar.triliumdroid
+package eu.fliegendewurst.triliumdroid
 
 import android.os.Bundle
 import android.os.PersistableBundle
 import androidx.appcompat.app.AppCompatActivity
-import kellerar.triliumdroid.databinding.ActivityAboutBinding
+import eu.fliegendewurst.triliumdroid.databinding.ActivityAboutBinding
 
 class AboutActivity : AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
