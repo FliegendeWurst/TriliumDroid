@@ -1,6 +1,7 @@
 package eu.fliegendewurst.triliumdroid
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
@@ -14,10 +15,15 @@ import android.system.ErrnoException
 import android.system.OsConstants
 import android.util.Log
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.webkit.ConsoleMessage
+import android.webkit.WebChromeClient
+import android.webkit.WebView
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -40,11 +46,13 @@ import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityMainBinding
-	private lateinit var handler: Handler
+	internal lateinit var handler: Handler
 	private lateinit var prefs: SharedPreferences
 	private var jumpRequestId = 0
 	private lateinit var consoleLogMenuItem: MenuItem
+	private lateinit var executeScriptMenuItem: MenuItem
 	private var consoleVisible: Boolean = false
+	private var executeVisible: Boolean = false
 	private var firstNote: String? = null
 
 	companion object {
@@ -106,6 +114,16 @@ class MainActivity : AppCompatActivity() {
 		})
 		binding.treeList.adapter = adapter
 		tree = adapter
+
+		// add custom buttons
+		for (buttonId in prefs.all.keys.filter { it.startsWith("button") }) {
+			val view = LayoutInflater.from(this).inflate(R.layout.button, binding.buttons, true)
+			val script = prefs.getString(buttonId, "() => {}")
+			view.findViewById<ImageButton>(R.id.button_custom).setOnClickListener {
+				Log.i(TAG, "executing button script $script")
+				runScript(getNoteFragment(), "($script)()")
+			}
+		}
 
 		binding.fab.setOnClickListener {
 			JumpToNoteDialog.showDialog(this)
@@ -206,7 +224,9 @@ class MainActivity : AppCompatActivity() {
 
 	override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
 		consoleLogMenuItem = menu?.findItem(R.id.action_console) ?: return true
+		executeScriptMenuItem = menu.findItem(R.id.action_execute) ?: return true
 		consoleLogMenuItem.isVisible = consoleVisible
+		executeScriptMenuItem.isVisible = executeVisible
 		return true
 	}
 
@@ -220,6 +240,17 @@ class MainActivity : AppCompatActivity() {
 		invalidateOptionsMenu()
 	}
 
+	fun enableExecuteAction() {
+		executeScriptMenuItem.isVisible = true
+		executeVisible = true
+	}
+
+	fun disableExecuteAction() {
+		executeVisible = false
+		invalidateOptionsMenu()
+	}
+
+	@SuppressLint("SetJavaScriptEnabled")
 	override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
 		R.id.action_edit -> {
 			val id = getNoteFragment().getNoteId()
@@ -227,6 +258,19 @@ class MainActivity : AppCompatActivity() {
 				.replace(R.id.fragment_container, NoteEditFragment(id))
 				.addToBackStack(null)
 				.commit()
+			true
+		}
+
+		R.id.action_share -> {
+			TODO("xxx")
+		}
+
+		R.id.action_execute -> {
+			Log.i(TAG, "executing code note")
+			val noteFrag = getNoteFragment()
+			val noteId = getNoteFragment().getNoteId()
+			val script = String(Cache.getNoteWithContent(noteId)!!.content!!)
+			runScript(noteFrag, script)
 			true
 		}
 
@@ -264,6 +308,27 @@ class MainActivity : AppCompatActivity() {
 			// Invoke the superclass to handle it.
 			super.onOptionsItemSelected(item)
 		}
+	}
+
+	@SuppressLint("SetJavaScriptEnabled")
+	private fun runScript(noteFrag: NoteFragment, script: String) {
+		val webview = WebView(this)
+		webview.settings.javaScriptEnabled = true
+		webview.addJavascriptInterface(FrontendApi(noteFrag, this), "api")
+		webview.webChromeClient = object : WebChromeClient() {
+			override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+				Log.i(TAG, "console message ${consoleMessage?.message()}")
+				enableConsoleLogAction()
+				noteFrag.console?.add(consoleMessage ?: return true)
+				return true
+			}
+		}
+		Log.i(TAG, "executing $script")
+		webview.evaluateJavascript(script) {
+			Log.i(TAG, "done executing code note!")
+			webview.destroy()
+		}
+		webview.addJavascriptInterface(FrontendApi(noteFrag, this), "api")
 	}
 
 

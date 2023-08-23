@@ -19,4 +19,5 @@
     <string name="button_new_note_sibling">Create new sibling note</string>
     <string name="action_console_log">Console log</string>
     <string name="channel_name">Custom Notifications</string>
+    <string name="action_execute">Execute</string>
 </resources>

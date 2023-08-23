@@ -3,21 +3,26 @@ package eu.fliegendewurst.triliumdroid
 import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.icu.text.DateFormat
 import android.icu.text.SimpleDateFormat
 import android.util.Log
 import android.webkit.JavascriptInterface
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.os.bundleOf
+import androidx.preference.PreferenceManager
+import org.json.JSONObject
 
 
-class ApiInterface(private val noteFragment: NoteFragment) {
+class FrontendApi(private val noteFragment: NoteFragment, private val context: Context) {
 	private val mainActivity: MainActivity = noteFragment.requireActivity() as MainActivity
 
-	@SuppressLint("SimpleDateFormat")
 	companion object {
 		const val TAG: String = "ApiInterface"
+
+		@SuppressLint("SimpleDateFormat")
 		val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 	}
 
@@ -46,10 +51,44 @@ class ApiInterface(private val noteFragment: NoteFragment) {
 		alarmMgr.setExact(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
 	}
 
+	@JavascriptInterface
+	fun addButtonToToolbar(optsJson: String?) {
+		if (optsJson == null) {
+			Log.e(TAG, "addButtonToToolbar called with null!")
+			return
+		}
+		val opts = JSONObject(optsJson)
+		val title = opts.getString("title")
+		val icon = if (opts.has("icon")) {
+			opts.getString("icon")
+		} else {
+			null
+		}
+		val action = opts.getString("action")
+		Log.i(TAG, "addButtonToToolbar $title $icon $action")
+		val prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
+		if (prefs.contains("button$title")) {
+			prefs.edit().putString("button$title", action).apply()
+		} else {
+			val countButton = prefs.getInt("countButton", 0) + 1
+			prefs.edit()
+				.putInt("countButton", countButton)
+				.putString("button$title", action).apply()
+		}
+	}
+
+	@JavascriptInterface
+	fun getTodayNote(): FrontendNote {
+		return FrontendNote(Cache.getNote("root")!!)
+	}
+
 	// TODO: properties (not supported by this interface)
 
 	@JavascriptInterface
 	fun activateNote(notePath: String) {
+		mainActivity.handler.post {
+			mainActivity.navigateTo(Cache.getNote(notePath.split("/").last())!!)
+		}
 	}
 
 	@JavascriptInterface
@@ -62,10 +101,6 @@ class ApiInterface(private val noteFragment: NoteFragment) {
 
 	@JavascriptInterface
 	fun openSplitWithNote(notePath: String, activate: Boolean) {
-	}
-
-	@JavascriptInterface
-	fun addButtonToToolbar(opts: Object) {
 	}
 
 	@JavascriptInterface
@@ -165,10 +200,6 @@ class ApiInterface(private val noteFragment: NoteFragment) {
 
 	@JavascriptInterface
 	fun protectSubTree(noteId: String, protect: Boolean) {
-	}
-
-	@JavascriptInterface
-	fun getTodayNote() {
 	}
 
 	@JavascriptInterface

@@ -15,6 +15,12 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_execute"
+        android:icon="@drawable/bx_play"
+        android:title="@string/action_execute"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/action_console"
         android:title="@string/action_console_log"
         app:showAsAction="never" />

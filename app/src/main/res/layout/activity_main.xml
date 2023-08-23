@@ -55,17 +55,18 @@
             android:id="@+id/tree_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
             android:layout_above="@id/list_buttons"
+            android:layout_alignParentTop="true"
             app:layoutManager="LinearLayoutManager" />
 
         <HorizontalScrollView
             android:id="@+id/list_buttons"
-            android:layout_alignParentBottom="true"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true">
 
             <LinearLayout
+                android:id="@+id/buttons"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">

@@ -1,3 +1,8 @@
 package eu.fliegendewurst.triliumdroid.data
 
-data class Label(val note: Note, val name: String, val value: String)
+class Label(val note: Note, name: String, val value: String) : Attribute(name) {
+	override fun value(): String {
+		TODO("Not yet implemented")
+	}
+
+}
