@@ -82,24 +82,26 @@ class TreeItemAdapter(
 				ContextCompat.getColorStateList(holder.itemView.context, R.color.tree_normal)
 		}
 	}
-}
 
-
-object TreeItemDiffCallback : DiffUtil.ItemCallback<Pair<Branch, Int>>() {
-	override fun areItemsTheSame(oldItem: Pair<Branch, Int>, newItem: Pair<Branch, Int>): Boolean {
-		return oldItem == newItem
-	}
-
-	override fun areContentsTheSame(
-		oldItem: Pair<Branch, Int>,
-		newItem: Pair<Branch, Int>
-	): Boolean {
-		/* TODO: this is where expanded tree items need to be handled
-		if (Cache.branchesDirty.contains(newItem.first.id)) {
-			Cache.branchesDirty.remove(newItem.first.id)
-			return false
+	object TreeItemDiffCallback : DiffUtil.ItemCallback<Pair<Branch, Int>>() {
+		override fun areItemsTheSame(
+			oldItem: Pair<Branch, Int>,
+			newItem: Pair<Branch, Int>
+		): Boolean {
+			return oldItem == newItem
 		}
-		 */
-		return oldItem.first.id == newItem.first.id
+
+		override fun areContentsTheSame(
+			oldItem: Pair<Branch, Int>,
+			newItem: Pair<Branch, Int>
+		): Boolean {
+			/* TODO: this is where expanded tree items need to be handled
+			if (Cache.branchesDirty.contains(newItem.first.id)) {
+				Cache.branchesDirty.remove(newItem.first.id)
+				return false
+			}
+			 */
+			return oldItem.first.id == newItem.first.id
+		}
 	}
 }

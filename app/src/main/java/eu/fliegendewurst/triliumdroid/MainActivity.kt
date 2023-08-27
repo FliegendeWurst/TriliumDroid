@@ -13,7 +13,6 @@ import android.os.Handler
 import android.os.StrictMode
 import android.system.ErrnoException
 import android.system.OsConstants
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
@@ -41,14 +40,12 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.lang.Exception
 
 
 class MainActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityMainBinding
 	internal lateinit var handler: Handler
 	private lateinit var prefs: SharedPreferences
-	private var jumpRequestId = 0
 	private lateinit var consoleLogMenuItem: MenuItem
 	private lateinit var executeScriptMenuItem: MenuItem
 	private var consoleVisible: Boolean = false
@@ -57,7 +54,7 @@ class MainActivity : AppCompatActivity() {
 
 	companion object {
 		private const val TAG = "MainActivity"
-		public const val JUMP_TO_NOTE_ENTRY = "JUMP_TO_NOTE_ENTRY"
+		const val JUMP_TO_NOTE_ENTRY = "JUMP_TO_NOTE_ENTRY"
 		private const val LAST_NOTE = "LastNote"
 		var tree: TreeItemAdapter? = null
 	}
@@ -100,7 +97,7 @@ class MainActivity : AppCompatActivity() {
 		setContentView(binding.root)
 		handler = Handler(applicationContext.mainLooper)
 
-		val toolbar = findViewById<Toolbar>(R.id.toolbar)
+		val toolbar = binding.toolbar
 		setSupportActionBar(toolbar)
 
 		Cache.initializeDatabase(applicationContext)
@@ -175,7 +172,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun startSync(handler: Handler, resetView: Boolean = true) {
-		val contextView = findViewById<View>(R.id.fragment_container)
+		val contextView = binding.fragmentContainer
 
 		val snackbar = Snackbar.make(contextView, "Sync: starting...", Snackbar.LENGTH_INDEFINITE)
 		snackbar.view.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
@@ -217,7 +214,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	override fun onCreateOptionsMenu(m: Menu?): Boolean {
-		val menu = findViewById<Toolbar>(R.id.toolbar).menu
+		val menu = binding.toolbar.menu
 		menuInflater.inflate(R.menu.action_bar, menu)
 		return true
 	}
@@ -319,7 +316,7 @@ class MainActivity : AppCompatActivity() {
 			override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
 				Log.i(TAG, "console message ${consoleMessage?.message()}")
 				enableConsoleLogAction()
-				noteFrag.console?.add(consoleMessage ?: return true)
+				noteFrag.console.add(consoleMessage ?: return true)
 				return true
 			}
 		}
@@ -332,13 +329,17 @@ class MainActivity : AppCompatActivity() {
 	}
 
 
-	public fun scrollTreeTo(noteId: String) {
+	fun scrollTreeTo(noteId: String) {
 		tree!!.select(noteId)
 		val pos = Cache.getBranchPosition(noteId) ?: return
 		(binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(pos, 5)
 	}
 
-	public fun navigateTo(note: Note) {
+	fun navigateToPath(notePath: String) {
+		navigateTo(Cache.getNote(notePath.split("/").last())!!)
+	}
+
+	fun navigateTo(note: Note) {
 		prefs.edit().putString(LAST_NOTE, note.id).apply()
 		// make sure note is visible
 		val path = Cache.getNotePath(note.id)
@@ -374,5 +375,9 @@ class MainActivity : AppCompatActivity() {
 			val frags = (hostFragment as NavHostFragment).childFragmentManager.fragments
 			frags[0] as NoteFragment
 		}
+	}
+
+	fun getNoteLoaded(): Note {
+		return Cache.getNoteWithContent(getNoteFragment().getNoteId())!!
 	}
 }

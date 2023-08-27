@@ -5,22 +5,38 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.icu.text.DateFormat
 import android.icu.text.SimpleDateFormat
-import android.util.Log
 import android.webkit.JavascriptInterface
+import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.os.bundleOf
 import androidx.preference.PreferenceManager
+import eu.fliegendewurst.triliumdroid.service.DateNotesService
 import org.json.JSONObject
 
 
+/**
+ * Frontend javascript API object.
+ * Due to WebView limitations all methods are synchronous, but awaiting their result is still
+ * possible.
+ *
+ * New methods:
+ * - isMobile(): always returns true
+ * - registerAlarm(...): deliver a notification at the specified time
+ *
+ * TODO:
+ * - create wrapper for properties (not supported by WebView, has to be hacked via script)
+ * - create wrapper for addButtonToToolbar to offer identical API
+ * - create fake objects for CKEditor / CodeMirror instances (if needed)
+ * - implement remaining methods
+ */
 class FrontendApi(private val noteFragment: NoteFragment, private val context: Context) {
 	private val mainActivity: MainActivity = noteFragment.requireActivity() as MainActivity
 
 	companion object {
 		const val TAG: String = "ApiInterface"
+		val RANDOM_CHAR_POOL: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
 
 		@SuppressLint("SimpleDateFormat")
 		val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
@@ -87,24 +103,33 @@ class FrontendApi(private val noteFragment: NoteFragment, private val context: C
 	@JavascriptInterface
 	fun activateNote(notePath: String) {
 		mainActivity.handler.post {
-			mainActivity.navigateTo(Cache.getNote(notePath.split("/").last())!!)
+			mainActivity.navigateToPath(notePath)
 		}
 	}
 
 	@JavascriptInterface
 	fun activateNewNote(notePath: String) {
+		activateNote(notePath)
 	}
 
 	@JavascriptInterface
 	fun openTabWithNote(notePath: String, activate: Boolean) {
+		if (!activate) {
+			return
+		}
+		activateNote(notePath)
 	}
 
 	@JavascriptInterface
 	fun openSplitWithNote(notePath: String, activate: Boolean) {
+		if (!activate) {
+			return
+		}
+		activateNote(notePath)
 	}
 
 	@JavascriptInterface
-	fun runOnBackend(script: String, params: List<Object>) {
+	fun runOnBackend(script: String, params: List<Any>) {
 	}
 
 	@JavascriptInterface
@@ -116,15 +141,20 @@ class FrontendApi(private val noteFragment: NoteFragment, private val context: C
 	}
 
 	@JavascriptInterface
-	fun getNote(noteId: String) {
+	fun getNote(noteId: String): FrontendNote? {
+		return FrontendNote(Cache.getNoteWithContent(noteId) ?: return null)
 	}
 
 	@JavascriptInterface
-	fun getNotes(noteIds: List<String>, silentNotFoundError: Boolean = false) {
+	fun getNotes(noteIds: List<String>, silentNotFoundError: Boolean = false): List<FrontendNote> {
+		// TODO: honor silentNotFoundError
+		return noteIds.map { FrontendNote(Cache.getNoteWithContent(it) ?: return@map null) }
+			.filterNotNull().toList()
 	}
 
 	@JavascriptInterface
 	fun reloadNotes(noteIds: List<String>) {
+		/* NOOP, the app has no frontend/backend distinction */
 	}
 
 	@JavascriptInterface
@@ -133,29 +163,40 @@ class FrontendApi(private val noteFragment: NoteFragment, private val context: C
 	}
 
 	@JavascriptInterface
-	fun formatDateISO(date: Object): String {
+	fun formatDateISO(date: Any): String {
 		return "TODO"
 	}
 
 	@JavascriptInterface
-	fun parseDate(date: String): Object {
+	fun parseDate(date: String): Any {
 		return Object() // TODO
 	}
 
 	@JavascriptInterface
 	fun showMessage(message: String) {
+		mainActivity.handler.post {
+			val t = Toast(mainActivity.applicationContext)
+			t.setText(message)
+			t.show()
+		}
 	}
 
 	@JavascriptInterface
 	fun showError(message: String) {
+		mainActivity.handler.post {
+			val t = Toast(mainActivity.applicationContext)
+			t.setText(message)
+			t.duration = Toast.LENGTH_LONG
+			t.show()
+		}
 	}
 
 	@JavascriptInterface
-	fun triggerCommand(name: String, data: Object) {
+	fun triggerCommand(name: String, data: Any) {
 	}
 
 	@JavascriptInterface
-	fun triggerEvent(name: String, data: Object) {
+	fun triggerEvent(name: String, data: Any) {
 	}
 
 	// this.createLink = linkService.createLink;
@@ -164,79 +205,97 @@ class FrontendApi(private val noteFragment: NoteFragment, private val context: C
 
 	@JavascriptInterface
 	fun addTextToActiveContextEditor(text: String) {
+		// TODO
 	}
 
 	@JavascriptInterface
-	fun getActiveContextNote() {
+	fun getActiveContextNote(): FrontendNote {
+		return FrontendNote(mainActivity.getNoteLoaded())
 	}
 
 	@JavascriptInterface
-	fun getActiveContextTextEditor() {
+	fun getActiveContextTextEditor(): Any? {
+		return null /* no CKEditor here */
 	}
 
 	@JavascriptInterface
-	fun getActiveContextCodeEditor() {
+	fun getActiveContextCodeEditor(): Any? {
+		return null /* no CodeMirror here */
 	}
 
 	@JavascriptInterface
-	fun getActiveNoteDetailWidget() {
+	fun getActiveNoteDetailWidget(): Any? {
+		return null /* no widgets here */
 	}
 
 	@JavascriptInterface
 	fun getActiveContextNotePath() {
+		// TODO
 	}
 
 	@JavascriptInterface
-	fun getComponentByEl(el: Object) {
+	fun getComponentByEl(el: Any): Any? {
+		return null /* no components here */
 	}
 
 	@JavascriptInterface
-	fun setupElementTooltip(el: Object) {
+	fun setupElementTooltip(el: Any) {
+		/* NOOP: no jQuery here */
 	}
 
 	@JavascriptInterface
 	fun protectNote(noteId: String, protect: Boolean) {
+		// TODO
 	}
 
 	@JavascriptInterface
 	fun protectSubTree(noteId: String, protect: Boolean) {
+		// TODO
 	}
 
 	@JavascriptInterface
-	fun getDayNote(day: String) {
+	fun getDayNote(day: String): FrontendNote {
+		return FrontendNote(DateNotesService.getDayNote(day))
 	}
 
 	@JavascriptInterface
-	fun getWeekNote(date: String) {
+	fun getWeekNote(date: String): FrontendNote {
+		return FrontendNote(DateNotesService.getWeekNote(date))
 	}
 
 	@JavascriptInterface
-	fun getMonthNote(month: String) {
+	fun getMonthNote(month: String): FrontendNote {
+		return FrontendNote(DateNotesService.getMonthNote(month))
 	}
 
 	@JavascriptInterface
-	fun getYearNote(year: String) {
+	fun getYearNote(year: String): FrontendNote {
+		return FrontendNote(DateNotesService.getYearNote(year))
 	}
 
 	@JavascriptInterface
 	fun setHoistedNoteId(noteId: String) {
+		// TODO
 	}
 
 	@JavascriptInterface
-	fun bindGlobalShortcut(keyboardShortcut: String, handler: Object, namespace: String) {
+	fun bindGlobalShortcut(keyboardShortcut: String, handler: Any, namespace: String) {
+		// TODO: investigate usefulness
 	}
 
 	@JavascriptInterface
 	fun waitUntilSynced() {
+		/* NOOP: no frontend/backend distinction in app */
 	}
 
 	@JavascriptInterface
 	fun refreshIncludedNote(includedNoteId: String) {
+		// TODO: investigate once included notes are rendered
 	}
 
 	@JavascriptInterface
 	fun randomString(length: Int): String {
-		return "xx" // TODO
+		return (1..length).map { RANDOM_CHAR_POOL.random() }.joinToString("")
 	}
 
 	@JavascriptInterface

@@ -1,7 +1,6 @@
 package eu.fliegendewurst.triliumdroid
 
 import android.content.SharedPreferences
-import android.util.Log
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Cookie
@@ -15,7 +14,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
-import java.lang.Exception
 
 
 object ConnectionUtil {

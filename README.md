@@ -13,7 +13,7 @@ Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 - Basic Scripting
 
 ## TODO
-- Dark Theme
+- Search
 - Share target (create note from received text)
 - Folder view of child nodes
 - Jump to note dialog: smart sort
@@ -21,6 +21,8 @@ Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 - Migrating to newer database versions
 - Editing note tree
 - Advanced Scripting
+- Dark Theme
+- Included notes
 - Encrypted notes
 - Erasing notes
 - Encrypted local database (maybe): https://github.com/sqlcipher/android-database-sqlcipher
@@ -36,6 +38,8 @@ Fixes https://github.com/zadam/trilium/issues/3047 https://github.com/zadam/tril
 https://github.com/zadam/trilium/discussions/2990
 
 https://github.com/zadam/trilium/discussions/2939
+
+https://github.com/zadam/trilium/discussions/3975
 
 ## License
 

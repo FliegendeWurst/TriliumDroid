@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.os.bundleOf
@@ -14,7 +13,6 @@ class AlarmReceiver : BroadcastReceiver() {
 	companion object {
 		const val TAG: String = "AlarmReceiver"
 		const val CHANNEL_ID: String = ""
-		var notificationId: Int = 0
 	}
 
 	override fun onReceive(context: Context?, intent: Intent?) {
