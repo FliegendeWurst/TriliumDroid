@@ -4,40 +4,42 @@ import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.data.Note
 import java.time.LocalDate
 import java.time.OffsetDateTime
-import java.time.chrono.IsoChronology
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
-import java.time.format.ResolverStyle
 import java.time.format.SignStyle
 import java.time.temporal.ChronoField
-import java.time.temporal.ChronoUnit
-import java.time.temporal.Temporal
-import java.time.temporal.TemporalAccessor
-import java.time.temporal.TemporalField
-import java.time.temporal.TemporalUnit
-import java.time.temporal.ValueRange
 import java.util.Locale
 
-object DateNotesService {
-	var YEAR_MONTH: DateTimeFormatter = DateTimeFormatterBuilder()
+object DateNotes {
+	private val YEAR: DateTimeFormatter = DateTimeFormatterBuilder()
+		.appendValue(ChronoField.YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
+		.toFormatter()
+	private val YEAR_MONTH: DateTimeFormatter = DateTimeFormatterBuilder()
 			.appendValue(ChronoField.YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
 			.appendLiteral('-')
 			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
 			.toFormatter()
-	var DAY: DateTimeFormatter = DateTimeFormatterBuilder()
+
+	val MONTH: DateTimeFormatter = DateTimeFormatterBuilder()
+		.appendValue(ChronoField.MONTH_OF_YEAR, 2, 2, SignStyle.NEVER)
+		.appendLiteral(" - ")
+		.appendPattern("MMMM")
+		.toFormatter(Locale.ENGLISH)
+
+	val DAY: DateTimeFormatter = DateTimeFormatterBuilder()
 		.appendValue(ChronoField.DAY_OF_MONTH, 2, 2, SignStyle.NEVER)
 		.appendLiteral(" - ")
 		.appendPattern("EEEE")
 		.toFormatter(Locale.ENGLISH)
 
-	fun dateFromIso(isoDate: String): LocalDate {
+	private fun dateFromIso(isoDate: String): LocalDate {
 		val parts = isoDate.split("-")
 		return LocalDate.of(parts[0].toInt(), parts[1].toInt(), parts[2].toInt())
 	}
 
 	private var calendarRoot: Note? = null
 
-	fun getCalendarRoot(): Note? {
+	private fun getCalendarRoot(): Note? {
 		if (calendarRoot != null) {
 			return calendarRoot
 		}
@@ -77,7 +79,11 @@ object DateNotesService {
 			val monthNote = getMonthNote(month) ?: return null
 			val dayLabel = DAY.format(dateFromIso(isoDate))
 
-			return Cache.createChildNote(monthNote, dayLabel)
+			val dayNote = Cache.createChildNote(monthNote, dayLabel)
+
+			// TODO: set dateNote attribute
+
+			return dayNote
 		}
 	}
 
@@ -92,11 +98,37 @@ object DateNotesService {
 	 * Format expected: YYYY-MM
 	 */
 	fun getMonthNote(yearMonth: String): Note? {
-		TODO("xxx")
+		val monthNotes = Cache.getNotesWithAttribute("monthNote", yearMonth)
+		return if (monthNotes.isNotEmpty()) {
+			monthNotes[0]
+		} else {
+			// create the new month note
+			val year = YEAR.format(OffsetDateTime.now())
+			val yearNote = getYearNote(year) ?: return null
+			val monthLabel = MONTH.format(dateFromIso("$yearMonth-01"))
+
+			val monthNote = Cache.createChildNote(yearNote, monthLabel)
+
+			// TODO: set monthNote attribute
+
+			return monthNote
+		}
 	}
 
 	fun getYearNote(year: String): Note? {
-		TODO("xxx")
+		val yearNotes = Cache.getNotesWithAttribute("yearNote", year)
+		return if (yearNotes.isNotEmpty()) {
+			yearNotes[0]
+		} else {
+			// create the new year note
+			val root = getCalendarRoot() ?: return null
+
+			val yearNote = Cache.createChildNote(root, year)
+
+			// TODO: set yearNote attribute
+
+			return yearNote
+		}
 	}
 
 	// createSqlConsole

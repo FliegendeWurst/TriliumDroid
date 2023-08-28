@@ -4,7 +4,7 @@ import java.security.MessageDigest
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-object UtilService {
+object Util {
 	private val RANDOM_CHAR_POOL: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
 
 	fun randomString(length: Int): String {

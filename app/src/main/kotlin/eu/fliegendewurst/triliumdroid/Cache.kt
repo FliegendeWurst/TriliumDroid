@@ -16,7 +16,7 @@ import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
-import eu.fliegendewurst.triliumdroid.service.UtilService
+import eu.fliegendewurst.triliumdroid.service.Util
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.StrictMath.max
@@ -502,7 +502,7 @@ object Cache {
 
 	fun createChildNote(parentNote: Note, newNoteTitle: String?): Note {
 		// create entries in notes, note_contents, branches
-		var newId = UtilService.randomString(12)
+		var newId = Util.newNoteId()
 		db!!.transaction {
 			do {
 				var exists = true
@@ -514,7 +514,7 @@ object Cache {
 				if (!exists) {
 					break
 				}
-				newId = UtilService.randomString(12)
+				newId = Util.newNoteId()
 			} while (true)
 			val branchId = "${parentNote.id}_$newId"
 			val notePosition = 0 // TODO: sorting
@@ -621,7 +621,7 @@ object Cache {
 								val dateModified = it.getString(2)
 								val utcDateModified = it.getString(3)
 
-								val blobId = UtilService.contentHash(content)
+								val blobId = Util.contentHash(content)
 								if (!existingBlobIds.contains(blobId)) {
 									existingBlobIds.add(blobId)
 									execSQL(
@@ -654,7 +654,7 @@ object Cache {
 								val content = it.getBlob(1)
 								val utcDateModified = it.getString(2)
 
-								val blobId = UtilService.contentHash(content)
+								val blobId = Util.contentHash(content)
 								if (!existingBlobIds.contains(blobId)) {
 									existingBlobIds.add(blobId)
 									execSQL(

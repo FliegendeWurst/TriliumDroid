@@ -12,8 +12,8 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.os.bundleOf
 import androidx.preference.PreferenceManager
-import eu.fliegendewurst.triliumdroid.service.DateNotesService
-import eu.fliegendewurst.triliumdroid.service.UtilService
+import eu.fliegendewurst.triliumdroid.service.DateNotes
+import eu.fliegendewurst.triliumdroid.service.Util
 import org.json.JSONObject
 
 
@@ -255,22 +255,22 @@ class FrontendApi(private val noteFragment: NoteFragment, private val context: C
 
 	@JavascriptInterface
 	fun getDayNote(day: String): FrontendNote? {
-		return FrontendNote(DateNotesService.getDayNote(day) ?: return null)
+		return FrontendNote(DateNotes.getDayNote(day) ?: return null)
 	}
 
 	@JavascriptInterface
 	fun getWeekNote(date: String): FrontendNote? {
-		return FrontendNote(DateNotesService.getWeekNote(date) ?: return null)
+		return FrontendNote(DateNotes.getWeekNote(date) ?: return null)
 	}
 
 	@JavascriptInterface
 	fun getMonthNote(month: String): FrontendNote? {
-		return FrontendNote(DateNotesService.getMonthNote(month) ?: return null)
+		return FrontendNote(DateNotes.getMonthNote(month) ?: return null)
 	}
 
 	@JavascriptInterface
 	fun getYearNote(year: String): FrontendNote? {
-		return FrontendNote(DateNotesService.getYearNote(year) ?: return null)
+		return FrontendNote(DateNotes.getYearNote(year) ?: return null)
 	}
 
 	@JavascriptInterface
@@ -295,7 +295,7 @@ class FrontendApi(private val noteFragment: NoteFragment, private val context: C
 
 	@JavascriptInterface
 	fun randomString(length: Int): String {
-		return UtilService.randomString(length)
+		return Util.randomString(length)
 	}
 
 	@JavascriptInterface
