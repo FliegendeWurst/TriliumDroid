@@ -11,15 +11,16 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteQuery
 import android.icu.text.SimpleDateFormat
 import android.os.Build
+import androidx.core.database.sqlite.transaction
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
+import eu.fliegendewurst.triliumdroid.service.UtilService
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.StrictMath.max
 import java.security.MessageDigest
-import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -47,6 +48,28 @@ object Cache {
 		return branchPosition[id]
 	}
 
+	fun getNotesWithAttribute(attributeName: String, attributeValue: String?): List<Note> {
+		var query =
+			"SELECT noteId, mime, title, notes.type FROM notes INNER JOIN attributes USING (noteId) WHERE attributes.name = ?"
+		if (attributeValue != null) {
+			query += " AND attributes.value = ?"
+		}
+		db!!.rawQuery(
+			query,
+			if (attributeValue != null) {
+				arrayOf(attributeName, attributeValue)
+			} else {
+				arrayOf(attributeName)
+			}
+		).use {
+			val l = mutableListOf<Note>()
+			while (it.moveToNext()) {
+				l.add(Note(it.getString(0), it.getString(1), it.getString(2), it.getString(3)))
+			}
+			return l
+		}
+	}
+
 	fun getNoteWithContent(id: String): Note? {
 		if (notes.containsKey(id) && notes[id]!!.mime != "INVALID" && notes[id]!!.content != null) {
 			return notes[id]
@@ -60,8 +83,8 @@ object Cache {
 		}
 		val data = content.encodeToByteArray()
 		notes[id]!!.content = data
-		val date = localTime.format(Calendar.getInstance().time)
-		val utc = DateTimeFormatter.ISO_INSTANT.format(Instant.now())
+		val date = dateModified()
+		val utc = utcDateModified()
 		db!!.execSQL(
 			"UPDATE note_contents SET content = ?, dateModified = ?, utcDateModified = ? WHERE note_contents.noteId = ?",
 			arrayOf(notes[id]!!.content, date, utc, id)
@@ -138,7 +161,7 @@ object Cache {
 		CursorFactory.selectionArgs = arrayOf(id)
 		db!!.rawQueryWithFactory(
 			CursorFactory,
-			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type FROM notes, note_contents LEFT JOIN attributes USING(noteId) WHERE notes.noteId = note_contents.noteId AND notes.noteId = ?",
+			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type FROM notes LEFT JOIN note_contents USING (noteId) LEFT JOIN attributes USING(noteId) WHERE notes.noteId = ?",
 			arrayOf(id),
 			"notes"
 		).use {
@@ -146,7 +169,11 @@ object Cache {
 			val relations = mutableListOf<Relation>()
 			if (it.moveToFirst()) {
 				note = Note(id, it.getString(1), it.getString(2), it.getString(6))
-				note!!.content = it.getBlob(0)
+				note!!.content = if (!it.isNull(0)) {
+					it.getBlob(0)
+				} else {
+					ByteArray(0)
+				}
 			}
 			while (!it.isAfterLast) {
 				if (!it.isNull(3)) {
@@ -439,9 +466,7 @@ object Cache {
 					}
 				}
 				Log.i(TAG, "last entity change id: $entityChangeId")
-				val utc =
-					DateTimeFormatter.ISO_INSTANT.format(OffsetDateTime.now(ZoneOffset.UTC))
-						.replace('T', ' ')
+				val utc = utcDateModified()
 				db!!.execSQL(
 					"INSERT OR REPLACE INTO options (name, value, utcDateModified) VALUES (?, ?, ?)",
 					arrayOf("lastSyncedPull", entityChangeId, utc)
@@ -475,6 +500,82 @@ object Cache {
 		dbHelper?.close()
 	}
 
+	fun createChildNote(parentNote: Note, newNoteTitle: String?): Note {
+		// create entries in notes, note_contents, branches
+		var newId = UtilService.randomString(12)
+		db!!.transaction {
+			do {
+				var exists = true
+				rawQuery("SELECT noteId FROM notes WHERE noteId = ?", arrayOf(newId)).use {
+					if (!it.moveToNext()) {
+						exists = false
+					}
+				}
+				if (!exists) {
+					break
+				}
+				newId = UtilService.randomString(12)
+			} while (true)
+			val branchId = "${parentNote.id}_$newId"
+			val notePosition = 0 // TODO: sorting
+			val prefix = null
+			val isExpanded = 0
+			val isDeleted = 0
+			val deleteId = null
+			val dateModified = dateModified()
+			val utcDateModified = utcDateModified()
+			execSQL(
+				"INSERT INTO branches VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				arrayOf(
+					branchId,
+					newId,
+					parentNote.id,
+					notePosition,
+					prefix,
+					isExpanded,
+					isDeleted,
+					deleteId,
+					utcDateModified
+				)
+			)
+			execSQL(
+				"INSERT INTO note_contents VALUES (?, ?, ?, ?)",
+				arrayOf(
+					newId,
+					"",
+					dateModified,
+					utcDateModified
+				)
+			)
+			execSQL(
+				"INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				arrayOf(
+					newId,
+					newNoteTitle,
+					"0", // isProtected
+					"text", // type
+					"text/html", // mime
+					"0", // isDeleted
+					null, // deleteId
+					dateModified, // dateCreated
+					dateModified,
+					utcDateModified, // utcDateCreated
+					utcDateModified
+				)
+			)
+		}
+		return getNote(newId)!!
+	}
+
+	private fun dateModified(): String {
+		return localTime.format(Calendar.getInstance().time)
+	}
+
+	private fun utcDateModified(): String {
+		return DateTimeFormatter.ISO_INSTANT.format(OffsetDateTime.now(ZoneOffset.UTC))
+			.replace('T', ' ')
+	}
+
 	class CacheDbHelper(context: Context, private val sql: String) :
 		SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
@@ -496,11 +597,164 @@ object Cache {
 		}
 
 		override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-			// TODO: execute the migrations
 			try {
-				//db.execSQL("...")
+				// source: https://github.com/zadam/trilium/tree/master/db/migrations
+				db.transaction {
+					if (oldVersion < 214 && newVersion >= 214) {
+						execSQL("UPDATE branches SET notePosition = notePosition - 999899999 WHERE parentNoteId = 'root' AND notePosition > 999999999")
+					}
+					if (oldVersion < 215 && newVersion >= 215) {
+						execSQL("CREATE TABLE IF NOT EXISTS \"blobs\" (blobId TEXT NOT NULL, content TEXT DEFAULT NULL, dateModified TEXT NOT NULL, utcDateModified TEXT NOT NULL, PRIMARY KEY(blobId))")
+						execSQL("ALTER TABLE notes ADD blobId TEXT DEFAULT NULL")
+						execSQL("ALTER TABLE note_revisions ADD blobId TEXT DEFAULT NULL")
+					}
+					if (oldVersion < 216 && newVersion >= 216) {
+						val existingBlobIds = mutableSetOf<String>()
+
+						rawQuery(
+							"SELECT noteId, content, dateModified, utcDateModified FROM note_contents",
+							arrayOf()
+						).use {
+							while (it.moveToNext()) {
+								val noteId = it.getString(0)
+								val content = it.getBlob(1)
+								val dateModified = it.getString(2)
+								val utcDateModified = it.getString(3)
+
+								val blobId = UtilService.contentHash(content)
+								if (!existingBlobIds.contains(blobId)) {
+									existingBlobIds.add(blobId)
+									execSQL(
+										"INSERT INTO blobs VALUES (?, ?, ?, ?)",
+										arrayOf(blobId, content, dateModified, utcDateModified)
+									)
+									execSQL(
+										"UPDATE entity_changes SET entityName = 'blobs', entityId = ? WHERE entityName = 'note_contents' AND entityId = ?",
+										arrayOf(blobId, noteId)
+									)
+								} else {
+									execSQL(
+										"DELETE FROM entity_changes WHERE entityName = 'note_contents' AND entityId = ?",
+										arrayOf(noteId)
+									)
+								}
+								execSQL(
+									"UPDATE notes SET blobId = ? WHERE noteId = ?",
+									arrayOf(blobId, noteId)
+								)
+							}
+						}
+
+						rawQuery(
+							"SELECT noteRevisionId, content, utcDateModified FROM note_revision_contents",
+							arrayOf()
+						).use {
+							while (it.moveToNext()) {
+								val noteRevisionId = it.getString(0)
+								val content = it.getBlob(1)
+								val utcDateModified = it.getString(2)
+
+								val blobId = UtilService.contentHash(content)
+								if (!existingBlobIds.contains(blobId)) {
+									existingBlobIds.add(blobId)
+									execSQL(
+										"INSERT INTO blobs VALUES (?, ?, ?, ?)",
+										arrayOf(blobId, content, utcDateModified, utcDateModified)
+									)
+									execSQL(
+										"UPDATE entity_changes SET entityName = 'blobs', entityId = ? WHERE entityName = 'note_revision_contents' AND entityId = ?",
+										arrayOf(blobId, noteRevisionId)
+									)
+								} else {
+									execSQL(
+										"DELETE FROM entity_changes WHERE entityName = 'note_revision_contents' AND entityId = ?",
+										arrayOf(noteRevisionId)
+									)
+								}
+								execSQL(
+									"UPDATE note_revisions SET blobId = ? WHERE noteRevisionId = ?",
+									arrayOf(blobId, noteRevisionId)
+								)
+							}
+						}
+
+						// don't bother counting notes without blobs
+						// this database migration will never be used by real users anyhow...
+					}
+					if (oldVersion < 217 && newVersion >= 217) {
+						execSQL("DROP TABLE note_contents")
+						execSQL("DROP TABLE note_revision_contents")
+						execSQL("DELETE FROM entity_changes WHERE entityName IN ('note_contents', 'note_revision_contents')")
+					}
+					if (oldVersion < 218 && newVersion >= 218) {
+						execSQL(
+							"""CREATE TABLE IF NOT EXISTS "revisions" (
+							revisionId	TEXT NOT NULL PRIMARY KEY,
+                            noteId	TEXT NOT NULL,
+                            type TEXT DEFAULT '' NOT NULL,
+                            mime TEXT DEFAULT '' NOT NULL,
+                            title	TEXT NOT NULL,
+                            isProtected	INT NOT NULL DEFAULT 0,
+                            blobId TEXT DEFAULT NULL,
+                            utcDateLastEdited TEXT NOT NULL,
+                            utcDateCreated TEXT NOT NULL,
+                            utcDateModified TEXT NOT NULL,
+                            dateLastEdited TEXT NOT NULL,
+                            dateCreated TEXT NOT NULL)"""
+						)
+						execSQL(
+							"INSERT INTO revisions (revisionId, noteId, type, mime, title, isProtected, utcDateLastEdited, utcDateCreated, utcDateModified, dateLastEdited, dateCreated, blobId) "
+									+ "SELECT noteRevisionId, noteId, type, mime, title, isProtected, utcDateLastEdited, utcDateCreated, utcDateModified, dateLastEdited, dateCreated, blobId FROM note_revisions"
+						)
+						execSQL("DROP TABLE note_revisions")
+						execSQL("CREATE INDEX IDX_revisions_noteId ON revisions (noteId)")
+						execSQL("CREATE INDEX IDX_revisions_utcDateCreated ON revisions (utcDateCreated)")
+						execSQL("CREATE INDEX IDX_revisions_utcDateLastEdited ON revisions (utcDateLastEdited)")
+						execSQL("CREATE INDEX IDX_revisions_dateCreated ON revisions (dateCreated)")
+						execSQL("CREATE INDEX IDX_revisions_dateLastEdited ON revisions (dateLastEdited)")
+						execSQL("UPDATE entity_changes SET entityName = 'revisions' WHERE entityName = 'note_revisions'")
+					}
+					if (oldVersion < 219 && newVersion >= 219) {
+						execSQL(
+							"""CREATE TABLE IF NOT EXISTS "attachments"(
+    						attachmentId      TEXT not null primary key,
+    						ownerId       TEXT not null,
+    						role         TEXT not null,
+    						mime         TEXT not null,
+    						title         TEXT not null,
+    						isProtected    INT  not null DEFAULT 0,
+    						position     INT  default 0 not null,
+    						blobId    TEXT DEFAULT null,
+    						dateModified TEXT NOT NULL,
+    						utcDateModified TEXT not null,
+    						utcDateScheduledForErasureSince TEXT DEFAULT NULL,
+    						isDeleted    INT  not null,
+    						deleteId    TEXT DEFAULT NULL)"""
+						)
+						execSQL("CREATE INDEX IDX_attachments_ownerId_role ON attachments (ownerId, role)")
+						execSQL("CREATE INDEX IDX_attachments_utcDateScheduledForErasureSince ON attachments (utcDateScheduledForErasureSince)")
+					}
+					if (oldVersion < 220 && newVersion >= 220) {
+						// TODO: auto-convert images
+					}
+					if (oldVersion < 221 && newVersion >= 221) {
+						execSQL("DELETE FROM options WHERE name = 'hideIncludedImages_main'")
+						execSQL("DELETE FROM entity_changes WHERE entityName = 'options' AND entityId = 'hideIncludedImages_main'")
+					}
+					if (oldVersion < 222 && newVersion >= 222) {
+						execSQL("UPDATE options SET name = 'openNoteContexts' WHERE name = 'openTabs'")
+						execSQL("UPDATE entity_changes SET entityId = 'openNoteContexts' WHERE entityName = 'options' AND entityId = 'openTabs'")
+					}
+					// 223 is NOOP
+					// 224 is a hotfix, already fixed in 216 above
+					if (oldVersion < 225 && newVersion >= 225) {
+						execSQL("CREATE INDEX IF NOT EXISTS IDX_notes_blobId on notes (blobId)")
+						execSQL("CREATE INDEX IF NOT EXISTS IDX_revisions_blobId on revisions (blobId)")
+						execSQL("CREATE INDEX IF NOT EXISTS IDX_attachments_blobId on attachments (blobId)")
+					}
+				}
 			} catch (t: Throwable) {
-				Log.e(TAG, "fatal", t)
+				Log.e(TAG, "fatal error in database migration", t)
 			}
 		}
 
@@ -509,9 +763,12 @@ object Cache {
 		}
 
 		companion object {
-			// If you change the database schema, you must increment the database version.
-			const val DATABASE_VERSION = 1
+			const val DATABASE_VERSION = 213
 			const val DATABASE_NAME = "Document.db"
+
+			const val DATABASE_VERSION_0_59_4 = 213
+			const val DATABASE_VERSION_0_61_5 = 225
+			// sync version is largely irrelevant
 		}
 	}
 

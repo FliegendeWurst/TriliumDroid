@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.os.bundleOf
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.service.DateNotesService
+import eu.fliegendewurst.triliumdroid.service.UtilService
 import org.json.JSONObject
 
 
@@ -36,7 +37,6 @@ class FrontendApi(private val noteFragment: NoteFragment, private val context: C
 
 	companion object {
 		const val TAG: String = "ApiInterface"
-		val RANDOM_CHAR_POOL: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
 
 		@SuppressLint("SimpleDateFormat")
 		val df: DateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
@@ -254,23 +254,23 @@ class FrontendApi(private val noteFragment: NoteFragment, private val context: C
 	}
 
 	@JavascriptInterface
-	fun getDayNote(day: String): FrontendNote {
-		return FrontendNote(DateNotesService.getDayNote(day))
+	fun getDayNote(day: String): FrontendNote? {
+		return FrontendNote(DateNotesService.getDayNote(day) ?: return null)
 	}
 
 	@JavascriptInterface
-	fun getWeekNote(date: String): FrontendNote {
-		return FrontendNote(DateNotesService.getWeekNote(date))
+	fun getWeekNote(date: String): FrontendNote? {
+		return FrontendNote(DateNotesService.getWeekNote(date) ?: return null)
 	}
 
 	@JavascriptInterface
-	fun getMonthNote(month: String): FrontendNote {
-		return FrontendNote(DateNotesService.getMonthNote(month))
+	fun getMonthNote(month: String): FrontendNote? {
+		return FrontendNote(DateNotesService.getMonthNote(month) ?: return null)
 	}
 
 	@JavascriptInterface
-	fun getYearNote(year: String): FrontendNote {
-		return FrontendNote(DateNotesService.getYearNote(year))
+	fun getYearNote(year: String): FrontendNote? {
+		return FrontendNote(DateNotesService.getYearNote(year) ?: return null)
 	}
 
 	@JavascriptInterface
@@ -295,7 +295,7 @@ class FrontendApi(private val noteFragment: NoteFragment, private val context: C
 
 	@JavascriptInterface
 	fun randomString(length: Int): String {
-		return (1..length).map { RANDOM_CHAR_POOL.random() }.joinToString("")
+		return UtilService.randomString(length)
 	}
 
 	@JavascriptInterface
