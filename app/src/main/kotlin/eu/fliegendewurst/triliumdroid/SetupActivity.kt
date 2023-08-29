@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
-import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 
 class SetupActivity : AppCompatActivity() {

@@ -40,8 +40,8 @@ class FrontendNote(private val note: Note) {
 	 */
 	@JavascriptInterface
 	fun getAttributeValue(type: String?, name: String?): String? {
-		val attr = this.getAttribute(type, name);
+		val attr = this.getAttribute(type, name)
 
-		return attr?.attribute?.value();
+		return attr?.attribute?.value()
 	}
 }

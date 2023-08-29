@@ -477,12 +477,14 @@ object Cache {
 						val keys = entity.keys().asSequence().toList()
 
 						val columns = keys.joinToString(", ")
-						val questionMarks = keys.map { "?" }.joinToString(", ")
+						val questionMarks = keys.joinToString(", ") { "?" }
 
 						val query =
 							"INSERT OR REPLACE INTO $entityName ($columns) VALUES ($questionMarks)"
-						//Log.d(TAG, "sync: inserting one $entityName")
-						db!!.execSQL(query, keys.map { entity.get(it) }.toTypedArray())
+						db!!.execSQL(
+							query,
+							keys.map { fieldName -> entity.get(fieldName) }.toTypedArray()
+						)
 					}
 				}
 				Log.i(TAG, "last entity change id: $entityChangeId")

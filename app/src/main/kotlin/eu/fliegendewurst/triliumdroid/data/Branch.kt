@@ -9,5 +9,5 @@ data class Branch(
 	val position: Int,
 	val prefix: String?,
 	var expanded: Boolean,
-	public var children: SortedMap<Int, Branch>
+	var children: SortedMap<Int, Branch>
 )
