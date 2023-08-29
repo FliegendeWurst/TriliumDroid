@@ -14,14 +14,12 @@ Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 - Upgrading to newer database versions / Trilium versions
 
 ## TODO
-- Sync server compatibility check
 - Attributes / Inheritance / #sorted attribute
 - Search
 - Share target (create note from received text)
 - Folder view of child nodes
 - Jump to note dialog: smart sort
 - Modifying attributes
-- Migrating to newer database versions
 - Editing note tree
 - Advanced Scripting
 - Dark Theme

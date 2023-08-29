@@ -188,7 +188,7 @@ class MainActivity : AppCompatActivity() {
 			Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
 		snackbar.show()
 		lifecycleScope.launch(Dispatchers.IO) {
-			Cache.sync({
+			Cache.syncStart({
 				handler.post {
 					snackbar.setText("Sync: $it outstanding...")
 				}

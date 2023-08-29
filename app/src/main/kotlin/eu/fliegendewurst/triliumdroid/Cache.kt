@@ -400,7 +400,27 @@ object Cache {
 		return obj
 	}
 
-	fun sync(
+	fun syncStart(
+		callbackOutstanding: (Int) -> Unit,
+		callbackError: (Exception) -> Unit,
+		callbackDone: (Pair<Int, Int>) -> Unit
+	) {
+		// first, verify correct sync version
+		ConnectionUtil.getAppInfo {
+			if (it != null) {
+				if (it.syncVersion == CacheDbHelper.SYNC_VERSION && it.dbVersion == CacheDbHelper.DATABASE_VERSION) {
+					sync(callbackOutstanding, callbackError, callbackDone)
+				} else {
+					Log.e(TAG, "mismatched sync / database version")
+					callbackError(Exception("mismatched sync / database version"))
+				}
+			} else {
+				callbackError(NullPointerException())
+			}
+		}
+	}
+
+	private fun sync(
 		callbackOutstanding: (Int) -> Unit,
 		callbackError: (Exception) -> Unit,
 		callbackDone: (Pair<Int, Int>) -> Unit
@@ -768,6 +788,7 @@ object Cache {
 
 			const val DATABASE_VERSION_0_59_4 = 213
 			const val DATABASE_VERSION_0_61_5 = 225
+
 			// sync version is largely irrelevant
 			const val SYNC_VERSION = 29
 			const val APP_VERSION = "0.59.4"

@@ -19,7 +19,7 @@ import java.io.IOException
 object ConnectionUtil {
 	private const val TAG: String = "ConnectionUtil"
 	private var client: OkHttpClient? = null
-	var server: String = "http://0.0.0.0"
+	private var server: String = "http://0.0.0.0"
 	private var prefs: SharedPreferences? = null
 	private var csrf: String = ""
 	private var loginFails = 0
@@ -145,4 +145,47 @@ object ConnectionUtil {
 			}
 		})
 	}
+
+	/**
+	 * Get the "app info" of the connected sync server.
+	 * See <a href="https://github.com/zadam/trilium/blob/master/src/services/app_info.js">Trilium app_info service</a>.
+	 */
+	fun getAppInfo(callback: (AppInfo?) -> Unit) {
+		val req = Request.Builder()
+			.url("$server/api/app-info")
+			.build()
+		Log.i(TAG, req.url.encodedPath)
+		client!!.newCall(req).enqueue(object : Callback {
+			override fun onResponse(call: Call, response: Response) {
+				val json = JSONObject(response.body!!.string())
+				callback(
+					AppInfo(
+						json.getString("appVersion"),
+						json.getInt("dbVersion"),
+						json.getInt("syncVersion"),
+						json.getString("buildDate"),
+						json.getString("buildRevision"),
+						json.getString("dataDirectory"),
+						json.getString("clipperProtocolVersion"),
+						json.getString("utcDateTime")
+					)
+				)
+			}
+
+			override fun onFailure(call: Call, e: IOException) {
+				callback(null)
+			}
+		})
+	}
+
+	data class AppInfo(
+		val appVersion: String, // packageJson.version,
+		val dbVersion: Int, // APP_DB_VERSION,
+		val syncVersion: Int, // SYNC_VERSION,
+		val buildDate: String, // build.buildDate,
+		val buildRevision: String, // build.buildRevision,
+		val dataDirectory: String, // TRILIUM_DATA_DIR,
+		val clipperProtocolVersion: String, // CLIPPER_PROTOCOL_VERSION,
+		val utcDateTime: String, // new Date().toISOString() // for timezone inference
+	)
 }
