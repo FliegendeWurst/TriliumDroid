@@ -240,34 +240,21 @@ class MainActivity : AppCompatActivity() {
 		return true
 	}
 
+	fun setupActions(consoleLog: Boolean, execute: Boolean, share: Boolean) {
+		consoleVisible = consoleLog
+		executeVisible = execute
+		shareVisible = share
+		consoleLogMenuItem.isVisible = consoleVisible
+		executeScriptMenuItem.isVisible = executeVisible
+		shareMenuItem.isVisible = shareVisible
+		if (!consoleLog || !execute || !share) {
+			invalidateOptionsMenu()
+		}
+	}
+
 	fun enableConsoleLogAction() {
 		consoleLogMenuItem.isVisible = true
 		consoleVisible = true
-	}
-
-	fun disableConsoleLogAction() {
-		consoleVisible = false
-		invalidateOptionsMenu()
-	}
-
-	fun enableExecuteAction() {
-		executeScriptMenuItem.isVisible = true
-		executeVisible = true
-	}
-
-	fun disableExecuteAction() {
-		executeVisible = false
-		invalidateOptionsMenu()
-	}
-
-	fun enableShareAction() {
-		shareMenuItem.isVisible = true
-		shareVisible = true
-	}
-
-	fun disableShareAction() {
-		shareVisible = false
-		invalidateOptionsMenu()
 	}
 
 	@SuppressLint("SetJavaScriptEnabled")
@@ -407,7 +394,6 @@ class MainActivity : AppCompatActivity() {
 		var expandedAny = false
 		for (n in path) {
 			// expanded = the children of this note are visible
-			Log.i(TAG, "in branch ${n.note} ${n.expanded}")
 			if (!n.expanded) {
 				Cache.toggleBranch(n)
 				expandedAny = true

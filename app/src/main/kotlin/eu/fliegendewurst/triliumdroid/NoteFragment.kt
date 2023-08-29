@@ -137,7 +137,6 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 
 	@SuppressLint("MissingInflatedId")
 	fun load(id: String) {
-		(this@NoteFragment.activity as MainActivity).disableConsoleLogAction()
 		console.clear()
 		subCodeNotes = emptyList()
 
@@ -147,6 +146,10 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 		binding.textId.text = id
 		val note = Cache.getNoteWithContent(id) ?: return
 		handler!!.post {
+			val consoleLog = false
+			var execute = false
+			var share = false
+
 			val constraintLayout = binding.noteHeader
 			val flow = binding.noteHeaderAttributes
 			// remove previously shown attributes
@@ -173,16 +176,14 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 			}
 
 			if (note.mime.contains("env=frontend")) {
-				(this.activity as MainActivity).enableExecuteAction()
+				execute = true
 			}
 			if (note.content?.size?.compareTo(0).let { (it ?: 0) > 0 } && arrayOf(
 					"text",
 					"code",
 					"image"
 				).contains(note.type)) {
-				(this.activity as MainActivity).enableShareAction()
-			} else {
-				(this.activity as MainActivity).disableShareAction()
+				share = true
 			}
 
 			if (note.type == "render") {
@@ -197,17 +198,18 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 				Log.i(TAG, "updating content for $id")
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)
 			} else {
-				Log.i(TAG, "embedding img!") // TODO: figure out how to zoom to fit
 				binding.webview.settings.builtInZoomControls = true
 				binding.webview.settings.displayZoomControls = false
 				binding.webview.loadDataWithBaseURL(
 					WEBVIEW_DOMAIN,
-					"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><img src='/$id'>",
+					"<meta name='viewport' content='width=device-width, initial-scale=1'><img style='max-width: 100%' src='/$id'>",
 					"text/html; charset=UTF-8",
-					null,
+					"UTF-8",
 					null
 				)
 			}
+
+			(this@NoteFragment.activity as MainActivity).setupActions(consoleLog, execute, share)
 		}
 	}
 }
