@@ -55,7 +55,7 @@ object Cache {
 
 	fun getNotesWithAttribute(attributeName: String, attributeValue: String?): List<Note> {
 		var query =
-			"SELECT noteId, mime, title, notes.type FROM notes INNER JOIN attributes USING (noteId) WHERE attributes.name = ?"
+			"SELECT noteId FROM notes INNER JOIN attributes USING (noteId) WHERE attributes.name = ?"
 		if (attributeValue != null) {
 			query += " AND attributes.value = ?"
 		}
@@ -69,7 +69,7 @@ object Cache {
 		).use {
 			val l = mutableListOf<Note>()
 			while (it.moveToNext()) {
-				l.add(Note(it.getString(0), it.getString(1), it.getString(2), it.getString(3)))
+				l.add(getNote(it.getString(0))!!)
 			}
 			return l
 		}
@@ -206,14 +206,21 @@ object Cache {
 		CursorFactory.selectionArgs = arrayOf(id)
 		db!!.rawQueryWithFactory(
 			CursorFactory,
-			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type FROM notes LEFT JOIN note_contents USING (noteId) LEFT JOIN attributes USING(noteId) WHERE notes.noteId = ?",
+			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type, notes.dateCreated, note_contents.dateModified FROM notes LEFT JOIN note_contents USING (noteId) LEFT JOIN attributes USING(noteId) WHERE notes.noteId = ?",
 			arrayOf(id),
 			"notes"
 		).use {
 			val labels = mutableListOf<Label>()
 			val relations = mutableListOf<Relation>()
 			if (it.moveToFirst()) {
-				note = Note(id, it.getString(1), it.getString(2), it.getString(6))
+				note = Note(
+					id,
+					it.getString(1),
+					it.getString(2),
+					it.getString(6),
+					it.getString(7),
+					it.getString(8)
+				)
 				note!!.content = if (!it.isNull(0)) {
 					it.getBlob(0)
 				} else {
@@ -232,7 +239,8 @@ object Cache {
 						// value = note ID
 						val value = it.getString(5)
 						if (!notes.containsKey(value)) {
-							notes[value] = Note(value, "INVALID", "INVALID", "INVALID")
+							notes[value] =
+								Note(value, "INVALID", "INVALID", "INVALID", "INVALID", "INVALID")
 						}
 						relations.add(Relation(note!!, notes[value], name))
 					}
@@ -243,6 +251,8 @@ object Cache {
 			}
 		}
 		if (note != null) {
+			val previousBranches = notes[id]?.branches
+			note!!.branches = previousBranches ?: mutableListOf()
 			notes[id] = note!!
 		}
 		return note
@@ -255,7 +265,14 @@ object Cache {
 			arrayOf("%$input%")
 		).use {
 			while (it.moveToNext()) {
-				val note = Note(it.getString(0), it.getString(1), it.getString(2), it.getString(3))
+				val note = Note(
+					it.getString(0),
+					it.getString(1),
+					it.getString(2),
+					it.getString(3),
+					"INVALID",
+					"INVALID"
+				)
 				notes.add(note)
 			}
 		}
@@ -267,7 +284,7 @@ object Cache {
 	 */
 	fun getTreeData() {
 		db!!.rawQuery(
-			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title, notes.type FROM branches INNER JOIN notes USING (noteId)",
+			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title, notes.type, notes.dateCreated, notes.dateModified FROM branches INNER JOIN notes USING (noteId)",
 			arrayOf()
 		).use {
 			val clones = mutableListOf<Triple<String, String, Int>>()
@@ -285,6 +302,8 @@ object Cache {
 				val mime = it.getString(6)
 				val title = it.getString(7)
 				val type = it.getString(8)
+				val dateCreated = it.getString(9)
+				val dateModified = it.getString(10)
 				val b = Branch(
 					branchId,
 					noteId,
@@ -294,7 +313,16 @@ object Cache {
 					isExpanded
 				)
 				branches[branchId] = b
-				val n = notes.computeIfAbsent(noteId) { Note(noteId, mime, title, type) }
+				val n = notes.computeIfAbsent(noteId) {
+					Note(
+						noteId,
+						mime,
+						title,
+						type,
+						dateCreated,
+						dateModified
+					)
+				}
 				n.branches.add(b)
 				clones.add(Triple(parentNoteId, branchId, notePosition))
 			}

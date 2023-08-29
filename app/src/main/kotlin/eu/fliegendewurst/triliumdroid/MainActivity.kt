@@ -25,6 +25,7 @@ import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.ListView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -415,9 +416,31 @@ class MainActivity : AppCompatActivity() {
 		}
 		tree!!.select(note.id)
 		getNoteFragment().load(note.id)
+		val noteContent = Cache.getNote(note.id)!!
 		binding.drawerLayout.closeDrawers()
-		supportActionBar?.title = note.title
-		scrollTreeTo(note.id)
+		supportActionBar?.title = noteContent.title
+		scrollTreeTo(noteContent.id)
+
+		// update right drawer
+		val paths = Cache.getNotePaths(noteContent.id)!!
+		val arrayAdapter: ArrayAdapter<String> = ArrayAdapter<String>(
+			this,
+			android.R.layout.simple_list_item_1,
+			paths.map { x ->
+				x.reversed().subList(1, x.size)
+					.joinToString(" > ") { Cache.getNote(it.note)!!.title }
+			}
+		)
+		findViewById<ListView>(R.id.widget_note_paths_type_content).adapter = arrayAdapter
+
+		val noteId = findViewById<TextView>(R.id.widget_note_info_id_content)
+		noteId.text = noteContent.id
+		val noteType = findViewById<TextView>(R.id.widget_note_info_type_content)
+		noteType.text = noteContent.type
+		val noteCreated = findViewById<TextView>(R.id.widget_note_info_created_content)
+		noteCreated.text = noteContent.created.substring(0, 19)
+		val noteModified = findViewById<TextView>(R.id.widget_note_info_modified_content)
+		noteModified.text = noteContent.modified.substring(0, 19)
 	}
 
 	override fun onDestroy() {

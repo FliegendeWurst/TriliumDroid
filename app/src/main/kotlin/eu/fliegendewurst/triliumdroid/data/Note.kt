@@ -2,7 +2,7 @@ package eu.fliegendewurst.triliumdroid.data
 
 import java.util.*
 
-class Note(var id: String, val mime: String, var title: String, var type: String) {
+class Note(var id: String, val mime: String, var title: String, var type: String, val created: String, var modified: String) {
 	var content: ByteArray? = null
 	var contentFixed: Boolean = false
 	var labels: List<Label>? = null

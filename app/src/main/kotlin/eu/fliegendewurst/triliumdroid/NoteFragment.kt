@@ -195,7 +195,6 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 				subCodeNotes = note.children.orEmpty().map { Cache.getNote(it.value.note)!! }
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)
 			} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
-				Log.i(TAG, "updating content for $id")
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)
 			} else {
 				binding.webview.settings.builtInZoomControls = true
