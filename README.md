@@ -4,7 +4,7 @@ Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 
 ## Working
 - Sync with other Trilium instance (push + pull)
-- Displaying/editing note content
+- Displaying/editing/sharing note content
 - Displaying note attributes
 - Displaying/collapsing/expanding note tree
 - Navigating using internal links

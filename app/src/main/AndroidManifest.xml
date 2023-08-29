@@ -27,6 +27,17 @@
         <activity android:name="eu.fliegendewurst.triliumdroid.AboutActivity" />
 
         <receiver android:name="eu.fliegendewurst.triliumdroid.AlarmReceiver" />
+
+        <provider
+            android:name=".TriliumFileProvider"
+            android:authorities="eu.fliegendewurst.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
     </application>
 
 </manifest>

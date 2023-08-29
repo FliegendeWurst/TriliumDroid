@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.ClipData
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -28,6 +29,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.FileProvider
+import androidx.core.text.parseAsHtml
 import androidx.core.view.GravityCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
@@ -38,6 +41,9 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.writeBytes
 
 
 class MainActivity : AppCompatActivity() {
@@ -46,8 +52,10 @@ class MainActivity : AppCompatActivity() {
 	private lateinit var prefs: SharedPreferences
 	private lateinit var consoleLogMenuItem: MenuItem
 	private lateinit var executeScriptMenuItem: MenuItem
+	private lateinit var shareMenuItem: MenuItem
 	private var consoleVisible: Boolean = false
 	private var executeVisible: Boolean = false
+	private var shareVisible: Boolean = false
 	private var firstNote: String? = null
 
 	companion object {
@@ -225,8 +233,10 @@ class MainActivity : AppCompatActivity() {
 	override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
 		consoleLogMenuItem = menu?.findItem(R.id.action_console) ?: return true
 		executeScriptMenuItem = menu.findItem(R.id.action_execute) ?: return true
+		shareMenuItem = menu.findItem(R.id.action_share) ?: return true
 		consoleLogMenuItem.isVisible = consoleVisible
 		executeScriptMenuItem.isVisible = executeVisible
+		shareMenuItem.isVisible = shareVisible
 		return true
 	}
 
@@ -250,6 +260,16 @@ class MainActivity : AppCompatActivity() {
 		invalidateOptionsMenu()
 	}
 
+	fun enableShareAction() {
+		shareMenuItem.isVisible = true
+		shareVisible = true
+	}
+
+	fun disableShareAction() {
+		shareVisible = false
+		invalidateOptionsMenu()
+	}
+
 	@SuppressLint("SetJavaScriptEnabled")
 	override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
 		R.id.action_edit -> {
@@ -262,7 +282,44 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		R.id.action_share -> {
-			TODO("xxx")
+			val note = Cache.getNoteWithContent(getNoteFragment().getNoteId())!!
+			val sendIntent: Intent = Intent().apply {
+				action = Intent.ACTION_SEND
+				if (note.type == "text" || note.type == "code") {
+					if (note.mime == "text/html") {
+						val html = String(note.content!!)
+						putExtra(Intent.EXTRA_HTML_TEXT, html)
+						putExtra(Intent.EXTRA_TEXT, html.parseAsHtml())
+					} else {
+						putExtra(Intent.EXTRA_TEXT, String(note.content!!))
+					}
+				} else if (note.type == "image") {
+					var f = Path(
+						cacheDir.absolutePath,
+						"images"
+					)
+					f = f.createDirectories().resolve("${note.id}.${note.mime.split('/')[1]}")
+					f.writeBytes(note.content!!)
+					val contentUri = FileProvider.getUriForFile(
+						this@MainActivity,
+						"eu.fliegendewurst.fileprovider",
+						f.toFile()
+					)
+					clipData = ClipData.newRawUri("", contentUri)
+					putExtra(
+						Intent.EXTRA_STREAM,
+						contentUri
+					)
+					addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+				} else {
+					putExtra(Intent.EXTRA_TEXT, "(cannot share this note type)")
+				}
+				type = note.mime
+			}
+
+			val shareIntent = Intent.createChooser(sendIntent, note.title)
+			startActivity(shareIntent)
+			true
 		}
 
 		R.id.action_execute -> {

@@ -172,6 +172,11 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 			if (note.mime.contains("env=frontend")) {
 				(this.activity as MainActivity).enableExecuteAction()
 			}
+			if (note.content?.size?.compareTo(0).let { (it ?: 0) > 0 } && arrayOf("text", "code", "image").contains(note.type)) {
+				(this.activity as MainActivity).enableShareAction()
+			} else {
+				(this.activity as MainActivity).disableShareAction()
+			}
 
 			if (note.type == "render") {
 				val renderTarget = note.relations!!.find { it.name == "renderNote" } ?: return@post
