@@ -39,7 +39,7 @@ object DateNotes {
 
 	private var calendarRoot: Note? = null
 
-	private fun getCalendarRoot(): Note? {
+	fun getCalendarRoot(): Note? {
 		if (calendarRoot != null) {
 			return calendarRoot
 		}

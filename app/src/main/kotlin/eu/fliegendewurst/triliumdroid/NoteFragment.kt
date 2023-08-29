@@ -48,7 +48,7 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 	): View {
 		binding = FragmentNoteBinding.inflate(inflater, container, false)
 		binding.webview.settings.javaScriptEnabled = true
-		binding.webview.addJavascriptInterface(FrontendApi(this, this.requireContext()), "api")
+		binding.webview.addJavascriptInterface(FrontendBackendApi(this, this.requireContext()), "api")
 		binding.webview.webChromeClient = object : WebChromeClient() {
 			override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
 				(this@NoteFragment.activity as MainActivity).enableConsoleLogAction()

@@ -17,7 +17,6 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -28,7 +27,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.view.GravityCompat
 import androidx.lifecycle.lifecycleScope
@@ -311,7 +309,7 @@ class MainActivity : AppCompatActivity() {
 	private fun runScript(noteFrag: NoteFragment, script: String) {
 		val webview = WebView(this)
 		webview.settings.javaScriptEnabled = true
-		webview.addJavascriptInterface(FrontendApi(noteFrag, this), "api")
+		webview.addJavascriptInterface(FrontendBackendApi(noteFrag, this), "api")
 		webview.webChromeClient = object : WebChromeClient() {
 			override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
 				Log.i(TAG, "console message ${consoleMessage?.message()}")
@@ -325,7 +323,7 @@ class MainActivity : AppCompatActivity() {
 			Log.i(TAG, "done executing code note!")
 			webview.destroy()
 		}
-		webview.addJavascriptInterface(FrontendApi(noteFrag, this), "api")
+		webview.addJavascriptInterface(FrontendBackendApi(noteFrag, this), "api")
 	}
 
 

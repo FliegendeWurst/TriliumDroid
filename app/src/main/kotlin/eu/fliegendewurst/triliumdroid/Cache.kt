@@ -769,6 +769,8 @@ object Cache {
 			const val DATABASE_VERSION_0_59_4 = 213
 			const val DATABASE_VERSION_0_61_5 = 225
 			// sync version is largely irrelevant
+			const val SYNC_VERSION = 29
+			const val APP_VERSION = "0.59.4"
 		}
 	}
 
