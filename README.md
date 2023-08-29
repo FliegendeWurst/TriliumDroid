@@ -12,6 +12,7 @@ Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 - Jump to note dialog
 - Basic Scripting
 - Upgrading to newer database versions / Trilium versions
+- Support for Android 8.0+
 
 ## TODO
 - Attributes / Inheritance / #sorted attribute
@@ -26,6 +27,8 @@ Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 - Included notes
 - Encrypted notes
 - Erasing notes
+- Support for Android 7.1, 7.0 (likely to come eventually [1](https://stackoverflow.com/questions/57203186/datetimeformatter-is-not-working-in-android-versions-lower-than-8))
+- Support for Android <= 6.0 (unlikely, but feel free to contribute)
 - Encrypted local database (maybe): https://github.com/sqlcipher/android-database-sqlcipher
 
 ## Related issues
