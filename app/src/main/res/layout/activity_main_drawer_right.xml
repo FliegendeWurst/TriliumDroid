@@ -3,7 +3,35 @@
     android:layout_width="@dimen/drawer_size"
     android:layout_height="match_parent"
     android:layout_gravity="end"
-    android:background="@color/background">
+    android:background="@color/background"
+    android:clickable="true"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="@dimen/drawer_size"
+        android:layout_height="0dp"
+        android:layout_weight="1000">
+
+        <LinearLayout
+            android:layout_width="@dimen/drawer_size"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <include layout="@layout/widget_basic_properties" />
+
+            <include layout="@layout/widget_owned_attributes" />
+
+            <include layout="@layout/widget_inherited_attributes" />
+
+            <include layout="@layout/widget_note_paths" />
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- view to soak up vertical space -->
+    <View
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
     <include layout="@layout/widget_note_info" />
 </LinearLayout>

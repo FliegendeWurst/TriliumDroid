@@ -48,8 +48,8 @@
     <style name="WidgetTableHeaderDivider">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">2px</item>
-        <item name="android:paddingTop">@dimen/smaller_margin</item>
-        <item name="android:paddingBottom">@dimen/smaller_margin</item>
+        <item name="android:layout_marginTop">@dimen/smaller_margin</item>
+        <item name="android:layout_marginBottom">@dimen/smaller_margin</item>
     </style>
 
     <style name="WidgetTableRowLabel">

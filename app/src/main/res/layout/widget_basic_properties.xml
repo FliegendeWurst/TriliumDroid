@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Widget"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/widget_basic_properties_title"
+        style="@style/WidgetTableHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Basic Properties"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <include
+        android:id="@+id/widget_basic_properties_divider"
+        style="@style/WidgetTableHeaderDivider"
+        layout="@layout/divider"
+        app:layout_constraintBottom_toTopOf="@id/widget_basic_properties_type_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/widget_basic_properties_title" />
+
+    <TextView
+        android:id="@+id/widget_basic_properties_type_label"
+        style="@style/WidgetTableRowLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/smaller_margin"
+        android:text="Note Type"
+        app:layout_constraintBaseline_toBaselineOf="@id/widget_basic_properties_type_content"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Spinner
+        android:id="@+id/widget_basic_properties_type_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBaseline_toBaselineOf="@id/widget_basic_properties_type_label"
+        app:layout_constraintStart_toEndOf="@id/widget_basic_properties_type_label"
+        app:layout_constraintTop_toBottomOf="@id/widget_basic_properties_divider" />
+
+    <CheckBox
+        android:id="@+id/widget_basic_properties_encrypt_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Protect the note"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/widget_basic_properties_type_content" />
+
+    <CheckBox
+        android:id="@+id/widget_basic_properties_created_content"
+        style="@style/WidgetTableRowLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bookmark"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/widget_basic_properties_encrypt_content" />
+</androidx.constraintlayout.widget.ConstraintLayout>

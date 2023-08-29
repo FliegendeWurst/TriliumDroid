@@ -114,6 +114,9 @@ object Cache {
 		)
 	}
 
+	/**
+	 * Get one possible note path for the provided note id.
+	 */
 	fun getNotePath(id: String): List<Branch> {
 		val l = mutableListOf<Branch>()
 		var lastId = id
@@ -143,6 +146,36 @@ object Cache {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Return all note paths to a given note.
+	 */
+	fun getNotePaths(noteId: String): List<List<Branch>>? {
+		val branches = getNote(noteId)?.branches ?: return null
+		var possibleBranches = branches.map { x -> listOf(x) }.toMutableList()
+		while (true) {
+			val newPossibleBranches = mutableListOf<List<Branch>>()
+			var progress = false
+			for (path in possibleBranches) {
+				if (path.last().note == "root") {
+					newPossibleBranches.add(path)
+					continue
+				}
+				val note = getNote(path.last().parentNote!!)!!
+				for (branch in note.branches) {
+					val newPath = path.toMutableList()
+					newPath.add(branch)
+					newPossibleBranches.add(newPath)
+					progress = true
+				}
+			}
+			possibleBranches = newPossibleBranches
+			if (!progress) {
+				break
+			}
+		}
+		return possibleBranches
 	}
 
 	fun toggleBranch(branch: Branch) {

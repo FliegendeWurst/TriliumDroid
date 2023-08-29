@@ -21,9 +21,11 @@ import android.view.MenuItem
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebView
+import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -105,6 +107,15 @@ class MainActivity : AppCompatActivity() {
 
 		val toolbar = binding.toolbar
 		setSupportActionBar(toolbar)
+
+		ArrayAdapter.createFromResource(
+			this,
+			R.array.note_types_array,
+			android.R.layout.simple_spinner_item
+		).also { adapter ->
+			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+			findViewById<Spinner>(R.id.widget_basic_properties_type_content).adapter = adapter
+		}
 
 		Cache.initializeDatabase(applicationContext)
 
