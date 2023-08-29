@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/drawer_size"
+    android:layout_height="match_parent"
+    android:layout_gravity="end"
+    android:background="@color/background">
+
+    <include layout="@layout/widget_note_info" />
+</LinearLayout>

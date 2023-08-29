@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Widget"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/widget_note_info_title"
+        style="@style/WidgetTableHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Note Info"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <include
+        android:id="@+id/widget_note_info_divider"
+        style="@style/WidgetTableHeaderDivider"
+        layout="@layout/divider"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/widget_note_info_title" />
+
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrierVertical"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        app:barrierDirection="right"
+        app:constraint_referenced_ids="widget_note_info_id_label, widget_note_info_type_label" />
+
+    <TextView
+        android:id="@+id/widget_note_info_id_label"
+        style="@style/WidgetTableRowLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Note ID"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/widget_note_info_divider" />
+
+    <TextView
+        android:id="@+id/widget_note_info_id_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="root"
+        app:layout_constraintStart_toEndOf="@id/barrierVertical"
+        app:layout_constraintTop_toBottomOf="@id/widget_note_info_divider" />
+
+    <TextView
+        android:id="@+id/widget_note_info_type_label"
+        style="@style/WidgetTableRowLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Type"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/widget_note_info_id_label" />
+
+    <TextView
+        android:id="@+id/widget_note_info_type_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="text (text/html)"
+        app:layout_constraintStart_toEndOf="@id/barrierVertical"
+        app:layout_constraintTop_toBottomOf="@id/widget_note_info_id_content" />
+
+    <TextView
+        android:id="@+id/widget_note_info_created_label"
+        style="@style/WidgetTableRowLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Created"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/widget_note_info_type_label" />
+
+    <TextView
+        android:id="@+id/widget_note_info_created_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2023-08-29 15:35"
+        app:layout_constraintStart_toEndOf="@id/barrierVertical"
+        app:layout_constraintTop_toBottomOf="@id/widget_note_info_type_content" />
+
+    <TextView
+        android:id="@+id/widget_note_info_modified_label"
+        style="@style/WidgetTableRowLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Modified"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/widget_note_info_created_label" />
+
+    <TextView
+        android:id="@+id/widget_note_info_modified_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2023-08-29 17:00"
+        app:layout_constraintStart_toEndOf="@id/barrierVertical"
+        app:layout_constraintTop_toBottomOf="@id/widget_note_info_created_content" />
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -23,6 +23,9 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+// based on:
+// https://github.com/zadam/trilium/blob/master/src/public/app/services/frontend_script_api.js d3730ac
+// https://github.com/zadam/trilium/blob/master/src/services/backend_script_api.js d3730ac
 
 /**
  * Frontend and backend Javascript API object.

@@ -45,10 +45,10 @@
 
     <RelativeLayout
         android:id="@+id/drawer"
-        android:layout_width="250dp"
+        android:layout_width="@dimen/drawer_size"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:background="@color/white"
+        android:background="@color/background"
         android:orientation="vertical">
 
         <androidx.recyclerview.widget.RecyclerView
@@ -87,4 +87,6 @@
             </LinearLayout>
         </HorizontalScrollView>
     </RelativeLayout>
+
+    <include layout="@layout/activity_main_drawer_right" />
 </androidx.drawerlayout.widget.DrawerLayout>

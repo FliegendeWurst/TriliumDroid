@@ -21,11 +21,7 @@
     <dimen name="social_logo">40dp</dimen>
     <dimen name="color_sample_size">34dp</dimen>
     <dimen name="shortcut_size">64dp</dimen>
-    <dimen name="colorpicker_size">240dp</dimen>
-    <dimen name="colorpicker_size_with_padding">272dp</dimen>
-    <dimen name="colorpicker_hue_width">30dp</dimen>
-    <dimen name="colorpicker_items_height">30dp</dimen>
-    <dimen name="colorpicker_color_width">70dp</dimen>
+    <dimen name="drawer_size">250dp</dimen>
 
     <dimen name="normal_icon_size">48dp</dimen>
     <dimen name="fingerprint_icon_size">72dp</dimen>
