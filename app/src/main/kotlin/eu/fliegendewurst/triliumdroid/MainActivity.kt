@@ -136,6 +136,7 @@ class MainActivity : AppCompatActivity() {
 			}, {
 				handler.post {
 					handleError(it)
+					showInitialNote(true)
 				}
 			})
 		}
@@ -195,19 +196,23 @@ class MainActivity : AppCompatActivity() {
 				}
 				Cache.getTreeData()
 				handler.post {
-					refreshTree()
-					if (resetView) {
-						val n = firstNote ?: prefs.getString(LAST_NOTE, "root")!!
-						navigateTo(Cache.getNote(n) ?: return@post)
-						// first use: open the drawer
-						if (!prefs.contains(LAST_NOTE)) {
-							binding.drawerLayout.openDrawer(GravityCompat.START)
-						}
-					} else {
-						navigateTo(Cache.getNote(getNoteFragment().getNoteId()) ?: return@post)
-					}
+					showInitialNote(resetView)
 				}
 			})
+		}
+	}
+
+	private fun showInitialNote(resetView: Boolean) {
+		refreshTree()
+		if (resetView) {
+			val n = firstNote ?: prefs.getString(LAST_NOTE, "root")!!
+			navigateTo(Cache.getNote(n) ?: return)
+			// first use: open the drawer
+			if (!prefs.contains(LAST_NOTE)) {
+				binding.drawerLayout.openDrawer(GravityCompat.START)
+			}
+		} else {
+			navigateTo(Cache.getNote(getNoteFragment().getNoteId()) ?: return)
 		}
 	}
 
@@ -327,7 +332,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 
-	fun scrollTreeTo(noteId: String) {
+	private fun scrollTreeTo(noteId: String) {
 		tree!!.select(noteId)
 		val pos = Cache.getBranchPosition(noteId) ?: return
 		(binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(pos, 5)
