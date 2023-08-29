@@ -48,7 +48,10 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 	): View {
 		binding = FragmentNoteBinding.inflate(inflater, container, false)
 		binding.webview.settings.javaScriptEnabled = true
-		binding.webview.addJavascriptInterface(FrontendBackendApi(this, this.requireContext()), "api")
+		binding.webview.addJavascriptInterface(
+			FrontendBackendApi(this, this.requireContext()),
+			"api"
+		)
 		binding.webview.webChromeClient = object : WebChromeClient() {
 			override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
 				(this@NoteFragment.activity as MainActivity).enableConsoleLogAction()
@@ -172,7 +175,11 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 			if (note.mime.contains("env=frontend")) {
 				(this.activity as MainActivity).enableExecuteAction()
 			}
-			if (note.content?.size?.compareTo(0).let { (it ?: 0) > 0 } && arrayOf("text", "code", "image").contains(note.type)) {
+			if (note.content?.size?.compareTo(0).let { (it ?: 0) > 0 } && arrayOf(
+					"text",
+					"code",
+					"image"
+				).contains(note.type)) {
 				(this.activity as MainActivity).enableShareAction()
 			} else {
 				(this.activity as MainActivity).disableShareAction()
@@ -184,8 +191,7 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 			} else if (note.type == "code") {
 				// code notes automatically load all the scripts in child nodes
 				// -> modify content returned by webview interceptor
-				val branch = Cache.getBranch(note.id) ?: return@post
-				subCodeNotes = branch.children.map { Cache.getNote(it.value.note)!! }
+				subCodeNotes = note.children.orEmpty().map { Cache.getNote(it.value.note)!! }
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)
 			} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
 				Log.i(TAG, "updating content for $id")

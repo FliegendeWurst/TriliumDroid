@@ -25,6 +25,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.collections.HashMap
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -37,6 +38,10 @@ object Cache {
 	private val localTime: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
 
 	private var notes: MutableMap<String, Note> = HashMap()
+
+	/**
+	 * Branches indexed by branch id.
+	 */
 	private var branches: MutableMap<String, Branch> = HashMap()
 
 	private var branchPosition: MutableMap<String, Int> = HashMap()
@@ -114,14 +119,21 @@ object Cache {
 		var lastId = id
 		while (true) {
 			db!!.rawQuery(
-				"SELECT branchId, parentNoteId, isExpanded FROM branches WHERE noteId = ? LIMIT 1",
+				"SELECT branchId, parentNoteId, isExpanded, notePosition, prefix FROM branches WHERE noteId = ? LIMIT 1",
 				arrayOf(lastId)
 			).use {
 				if (it.moveToNext()) {
 					val branchId = it.getString(0)
 					val parentId = it.getString(1)
 					val expanded = it.getInt(2) == 1
-					l.add(Branch(branchId, lastId, parentId, 0, null, expanded, TreeMap()))
+					val notePosition = it.getInt(3)
+					val prefix = if (!it.isNull(4)) {
+						it.getString(4)
+					} else {
+						null
+					}
+					val branch = Branch(branchId, lastId, parentId, notePosition, prefix, expanded)
+					l.add(branch)
 					if (parentId == "none") {
 						return l
 					}
@@ -146,7 +158,7 @@ object Cache {
 		)
 		val newValue = !branch.expanded
 		branch.expanded = newValue
-		branches[branch.note]?.expanded = newValue
+		branches[branch.id]?.expanded = newValue
 	}
 
 	fun getNote(id: String): Note? {
@@ -222,7 +234,7 @@ object Cache {
 	 */
 	fun getTreeData() {
 		db!!.rawQuery(
-			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title, notes.type FROM branches, notes WHERE branches.noteId = notes.noteId",
+			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title, notes.type FROM branches INNER JOIN notes USING (noteId)",
 			arrayOf()
 		).use {
 			val clones = mutableListOf<Triple<String, String, Int>>()
@@ -240,44 +252,50 @@ object Cache {
 				val mime = it.getString(6)
 				val title = it.getString(7)
 				val type = it.getString(8)
-				branches[noteId] = Branch(
+				val b = Branch(
 					branchId,
 					noteId,
 					parentNoteId,
 					notePosition,
 					prefix,
-					isExpanded,
-					TreeMap()
+					isExpanded
 				)
-				notes[noteId] = Note(noteId, mime, title, type)
-				clones.add(Triple(parentNoteId, noteId, notePosition))
+				branches[branchId] = b
+				val n = notes.computeIfAbsent(noteId) { Note(noteId, mime, title, type) }
+				n.branches.add(b)
+				clones.add(Triple(parentNoteId, branchId, notePosition))
 			}
 			for (p in clones) {
-				val b = branches[p.second]!!
-				branches[p.first]?.children?.set(p.third, b)
+				val b = branches[p.second]
+				val parentNoteId = p.first
+				if (parentNoteId == "none") {
+					continue
+				}
+				if (notes[parentNoteId]?.children == null) {
+					notes[parentNoteId]?.children = TreeMap()
+				}
+				notes[parentNoteId]?.children!![p.third] = b
 			}
 		}
-	}
-
-	fun getBranch(noteId: String): Branch? {
-		return branches[noteId]
 	}
 
 	/**
 	 * Get the note tree starting at the id and level.
 	 */
-	fun getTreeList(id: String, lvl: Int): MutableList<Pair<Branch, Int>> {
+	fun getTreeList(branchId: String, lvl: Int): MutableList<Pair<Branch, Int>> {
 		val list = ArrayList<Pair<Branch, Int>>()
-		val current = branches[id] ?: return list
+		val current = branches[branchId] ?: return list
 		list.add(Pair(current, lvl))
 		if (!current.expanded) {
 			return list
 		}
-		for (children in current.children.values) {
-			list.addAll(getTreeList(children.note, lvl + 1))
+		for (children in notes[current.note]!!.children.orEmpty().values) {
+			list.addAll(getTreeList(children.id, lvl + 1))
 		}
-		for ((i, pair) in list.withIndex()) {
-			branchPosition[pair.first.note] = i
+		if (branchId == "none_root") {
+			for ((i, pair) in list.withIndex()) {
+				branchPosition[pair.first.note] = i
+			}
 		}
 		return list
 	}

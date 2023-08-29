@@ -151,7 +151,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun refreshTree() {
-		val items = Cache.getTreeList("root", 0)
+		val items = Cache.getTreeList("none_root", 0)
 		Log.i(TAG, "about to show ${items.size} tree items")
 		tree!!.submitList(items)
 	}
@@ -400,11 +400,13 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun navigateTo(note: Note) {
+		Log.i(TAG, "loading note ${note.id}")
 		prefs.edit().putString(LAST_NOTE, note.id).apply()
 		// make sure note is visible
 		val path = Cache.getNotePath(note.id)
 		var expandedAny = false
 		for (n in path) {
+			// expanded = the children of this note are visible
 			Log.i(TAG, "in branch ${n.note} ${n.expanded}")
 			if (!n.expanded) {
 				Cache.toggleBranch(n)
