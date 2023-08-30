@@ -1,12 +1,14 @@
 package eu.fliegendewurst.triliumdroid
 
 import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.content.Context
 import android.database.AbstractWindowedCursor
 import android.database.Cursor
 import android.database.CursorWindow
 import android.database.sqlite.SQLiteCursorDriver
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
 import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteQuery
 import android.icu.text.SimpleDateFormat
@@ -122,7 +124,7 @@ object Cache {
 		var lastId = id
 		while (true) {
 			db!!.rawQuery(
-				"SELECT branchId, parentNoteId, isExpanded, notePosition, prefix FROM branches WHERE noteId = ? LIMIT 1",
+				"SELECT branchId, parentNoteId, isExpanded, notePosition, prefix FROM branches WHERE noteId = ? AND isDeleted = 0 LIMIT 1",
 				arrayOf(lastId)
 			).use {
 				if (it.moveToNext()) {
@@ -284,7 +286,7 @@ object Cache {
 	 */
 	fun getTreeData() {
 		db!!.rawQuery(
-			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title, notes.type, notes.dateCreated, notes.dateModified FROM branches INNER JOIN notes USING (noteId)",
+			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title, notes.type, notes.dateCreated, notes.dateModified FROM branches INNER JOIN notes USING (noteId) WHERE branches.isDeleted = 0",
 			arrayOf()
 		).use {
 			val clones = mutableListOf<Triple<String, String, Int>>()
@@ -356,6 +358,7 @@ object Cache {
 		if (branchId == "none_root") {
 			for ((i, pair) in list.withIndex()) {
 				branchPosition[pair.first.note] = i
+				pair.first.cachedTreeIndex = i
 			}
 		}
 		return list
@@ -555,15 +558,39 @@ object Cache {
 						}
 						val keys = entity.keys().asSequence().toList()
 
-						val columns = keys.joinToString(", ")
-						val questionMarks = keys.joinToString(", ") { "?" }
+						val cv = ContentValues(entity.length())
+						keys.map { fieldName ->
+							val x = entity.get(fieldName)
+							if (x == JSONObject.NULL) {
+								cv.putNull(fieldName)
+							} else {
+								when (x) {
+									is String -> {
+										cv.put(fieldName, x)
+									}
 
-						val query =
-							"INSERT OR REPLACE INTO $entityName ($columns) VALUES ($questionMarks)"
-						db!!.execSQL(
-							query,
-							keys.map { fieldName -> entity.get(fieldName) }.toTypedArray()
-						)
+									is Int -> {
+										cv.put(fieldName, x)
+									}
+
+									is Double -> {
+										cv.put(fieldName, x)
+									}
+
+									is ByteArray -> {
+										cv.put(fieldName, x)
+									}
+
+									else -> {
+										Log.e(
+											TAG,
+											"failed to recognize sync entity value $x of type ${x.javaClass}"
+										)
+									}
+								}
+							}
+						}
+						db!!.insertWithOnConflict(entityName, null, cv, CONFLICT_REPLACE)
 					}
 				}
 				Log.i(TAG, "last entity change id: $entityChangeId")

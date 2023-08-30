@@ -151,6 +151,10 @@ object ConnectionUtil {
 	 * See <a href="https://github.com/zadam/trilium/blob/master/src/services/app_info.js">Trilium app_info service</a>.
 	 */
 	fun getAppInfo(callback: (AppInfo?) -> Unit) {
+		if (csrf == "") {
+			Log.e(TAG, "tried to sync without token")
+			return
+		}
 		val req = Request.Builder()
 			.url("$server/api/app-info")
 			.build()

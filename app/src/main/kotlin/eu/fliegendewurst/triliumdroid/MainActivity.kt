@@ -18,11 +18,9 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebView
-import android.widget.AdapterView
 import android.widget.AdapterView.OnItemClickListener
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
@@ -43,6 +41,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
+import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
@@ -157,6 +156,7 @@ class MainActivity : AppCompatActivity() {
 					startSync(handler)
 				}
 			}, {
+				Cache.getTreeData()
 				handler.post {
 					handleError(it)
 					showInitialNote(true)
@@ -210,6 +210,10 @@ class MainActivity : AppCompatActivity() {
 			}, {
 				handler.post {
 					handleError(it)
+				}
+				Cache.getTreeData()
+				handler.post {
+					showInitialNote(resetView)
 				}
 			}, {
 				handler.post {
@@ -397,23 +401,21 @@ class MainActivity : AppCompatActivity() {
 		(binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(pos, 5)
 	}
 
+	private fun scrollTreeToBranch(branch: Branch) {
+		val pos = branch.cachedTreeIndex ?: return
+		(binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(pos, 5)
+	}
+
 	fun navigateToPath(notePath: String) {
 		navigateTo(Cache.getNote(notePath.split("/").last())!!)
 	}
 
-	fun navigateTo(note: Note) {
+	fun navigateTo(note: Note, branch: Branch? = null) {
 		Log.i(TAG, "loading note ${note.id}")
 		prefs.edit().putString(LAST_NOTE, note.id).apply()
 		// make sure note is visible
 		val path = Cache.getNotePath(note.id)
-		var expandedAny = false
-		for (n in path) {
-			// expanded = the children of this note are visible
-			if (!n.expanded) {
-				Cache.toggleBranch(n)
-				expandedAny = true
-			}
-		}
+		val expandedAny = ensurePathIsExpanded(path)
 		if (expandedAny) {
 			refreshTree()
 		}
@@ -422,7 +424,11 @@ class MainActivity : AppCompatActivity() {
 		val noteContent = Cache.getNote(note.id)!!
 		binding.drawerLayout.closeDrawers()
 		supportActionBar?.title = noteContent.title
-		scrollTreeTo(noteContent.id)
+		if (branch != null) {
+			scrollTreeToBranch(branch)
+		} else {
+			scrollTreeTo(noteContent.id)
+		}
 
 		// update right drawer
 		val paths = Cache.getNotePaths(noteContent.id)!!
@@ -437,10 +443,18 @@ class MainActivity : AppCompatActivity() {
 		val notePaths = findViewById<ListView>(R.id.widget_note_paths_type_content)
 		notePaths.adapter = arrayAdapter
 		notePaths.onItemClickListener =
-			OnItemClickListener { parent, view, position, id ->
-				{
-					// switch to the note path in the tree
-					
+			OnItemClickListener { _, _, position, id ->
+				// switch to the note path in the tree
+				if (position >= 0 && position < paths.size) {
+					val pathSelected = paths[position]
+					if (ensurePathIsExpanded(pathSelected)) {
+						refreshTree()
+					}
+					if (pathSelected.first().cachedTreeIndex != null) {
+						scrollTreeToBranch(pathSelected.first())
+						binding.drawerLayout.closeDrawers()
+						binding.drawerLayout.openDrawer(GravityCompat.START)
+					}
 				}
 			}
 
@@ -452,6 +466,18 @@ class MainActivity : AppCompatActivity() {
 		noteCreated.text = noteContent.created.substring(0, 19)
 		val noteModified = findViewById<TextView>(R.id.widget_note_info_modified_content)
 		noteModified.text = noteContent.modified.substring(0, 19)
+	}
+
+	private fun ensurePathIsExpanded(path: List<Branch>): Boolean {
+		var expandedAny = false
+		for (n in path) {
+			// expanded = the children of this note are visible
+			if (!n.expanded) {
+				Cache.toggleBranch(n)
+				expandedAny = true
+			}
+		}
+		return expandedAny
 	}
 
 	override fun onDestroy() {

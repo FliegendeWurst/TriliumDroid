@@ -34,10 +34,18 @@
         <item name="android:paddingStart">@dimen/settings_label_start_margin</item>
     </style>
 
+    <!-- end derived from https://github.com/SimpleMobileTools/Simple-Commons -->
+
     <style name="Widget">
-        <item name="android:padding">@dimen/smaller_margin</item>
-        <item name="android:elevation">@dimen/medium_margin</item>
         <item name="android:layout_margin">@dimen/smaller_margin</item>
+        <item name="android:clipToPadding">false</item>
+        <item name="android:background">@color/background</item>
+    </style>
+
+    <style name="WidgetInner">
+        <item name="android:padding">@dimen/smaller_margin</item>
+        <item name="android:layout_margin">@dimen/smaller_margin</item>
+        <item name="android:elevation">@dimen/medium_margin</item>
         <item name="android:background">@color/background2</item>
     </style>
 
@@ -47,7 +55,7 @@
 
     <style name="WidgetTableHeaderDivider">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">2px</item>
+        <item name="android:layout_height">@dimen/divider_height</item>
         <item name="android:layout_marginTop">@dimen/smaller_margin</item>
         <item name="android:layout_marginBottom">@dimen/smaller_margin</item>
     </style>

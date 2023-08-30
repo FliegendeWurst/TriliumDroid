@@ -104,10 +104,8 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 					}
 					val note = Cache.getNoteWithContent(id)
 					return if (note != null) {
-						Log.d(TAG, "intercept returns data")
 						var data = note.content!!
 						if (note.id == this@NoteFragment.id && subCodeNotes != null && !note.contentFixed) {
-							Log.d(TAG, "intercept adds sub code notes")
 							// append <script> tags to load children
 							if (data.isEmpty()) {
 								data += "<!DOCTYPE html>".encodeToByteArray()
