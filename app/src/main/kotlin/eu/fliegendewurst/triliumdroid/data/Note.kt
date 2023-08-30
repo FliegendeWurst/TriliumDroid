@@ -9,4 +9,13 @@ class Note(var id: String, val mime: String, var title: String, var type: String
 	var relations: List<Relation>? = null
 	var children: SortedMap<Int, Branch>? = null
 	var branches: MutableList<Branch> = mutableListOf()
+
+	fun getLabel(name: String): String? {
+		for (label in labels.orEmpty()) {
+			if (label.name == name) {
+				return label.value
+			}
+		}
+		return null
+	}
 }

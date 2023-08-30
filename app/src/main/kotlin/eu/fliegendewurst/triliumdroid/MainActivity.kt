@@ -44,6 +44,7 @@ import com.google.android.material.snackbar.Snackbar
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
+import eu.fliegendewurst.triliumdroid.service.Icon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.io.path.Path
@@ -109,6 +110,7 @@ class MainActivity : AppCompatActivity() {
 		handler = Handler(applicationContext.mainLooper)
 
 		val toolbar = binding.toolbar
+		toolbar.title = ""
 		setSupportActionBar(toolbar)
 
 		ArrayAdapter.createFromResource(
@@ -423,7 +425,8 @@ class MainActivity : AppCompatActivity() {
 		getNoteFragment().load(note.id)
 		val noteContent = Cache.getNote(note.id)!!
 		binding.drawerLayout.closeDrawers()
-		supportActionBar?.title = noteContent.title
+		binding.toolbarTitle.text = noteContent.title
+		binding.toolbarIcon.text = Icon.getUnicodeCharacter(noteContent.getLabel("iconClass") ?: "bx bx-note")
 		if (branch != null) {
 			scrollTreeToBranch(branch)
 		} else {
