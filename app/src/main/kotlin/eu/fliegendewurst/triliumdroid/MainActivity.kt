@@ -18,9 +18,12 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebView
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemClickListener
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.ImageButton
@@ -53,9 +56,9 @@ class MainActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityMainBinding
 	internal lateinit var handler: Handler
 	private lateinit var prefs: SharedPreferences
-	private lateinit var consoleLogMenuItem: MenuItem
-	private lateinit var executeScriptMenuItem: MenuItem
-	private lateinit var shareMenuItem: MenuItem
+	private var consoleLogMenuItem: MenuItem? = null
+	private var executeScriptMenuItem: MenuItem? = null
+	private var shareMenuItem: MenuItem? = null
 	private var consoleVisible: Boolean = false
 	private var executeVisible: Boolean = false
 	private var shareVisible: Boolean = false
@@ -246,9 +249,9 @@ class MainActivity : AppCompatActivity() {
 		consoleLogMenuItem = menu?.findItem(R.id.action_console) ?: return true
 		executeScriptMenuItem = menu.findItem(R.id.action_execute) ?: return true
 		shareMenuItem = menu.findItem(R.id.action_share) ?: return true
-		consoleLogMenuItem.isVisible = consoleVisible
-		executeScriptMenuItem.isVisible = executeVisible
-		shareMenuItem.isVisible = shareVisible
+		consoleLogMenuItem?.isVisible = consoleVisible
+		executeScriptMenuItem?.isVisible = executeVisible
+		shareMenuItem?.isVisible = shareVisible
 		return true
 	}
 
@@ -256,16 +259,16 @@ class MainActivity : AppCompatActivity() {
 		consoleVisible = consoleLog
 		executeVisible = execute
 		shareVisible = share
-		consoleLogMenuItem.isVisible = consoleVisible
-		executeScriptMenuItem.isVisible = executeVisible
-		shareMenuItem.isVisible = shareVisible
+		consoleLogMenuItem?.isVisible = consoleVisible
+		executeScriptMenuItem?.isVisible = executeVisible
+		shareMenuItem?.isVisible = shareVisible
 		if (!consoleLog || !execute || !share) {
 			invalidateOptionsMenu()
 		}
 	}
 
 	fun enableConsoleLogAction() {
-		consoleLogMenuItem.isVisible = true
+		consoleLogMenuItem?.isVisible = true
 		consoleVisible = true
 	}
 
@@ -431,7 +434,15 @@ class MainActivity : AppCompatActivity() {
 					.joinToString(" > ") { Cache.getNote(it.note)!!.title }
 			}
 		)
-		findViewById<ListView>(R.id.widget_note_paths_type_content).adapter = arrayAdapter
+		val notePaths = findViewById<ListView>(R.id.widget_note_paths_type_content)
+		notePaths.adapter = arrayAdapter
+		notePaths.onItemClickListener =
+			OnItemClickListener { parent, view, position, id ->
+				{
+					// switch to the note path in the tree
+					
+				}
+			}
 
 		val noteId = findViewById<TextView>(R.id.widget_note_info_id_content)
 		noteId.text = noteContent.id

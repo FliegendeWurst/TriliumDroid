@@ -30,6 +30,7 @@ Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 - Support for Android 7.1, 7.0 (likely to come eventually [1](https://stackoverflow.com/questions/57203186/datetimeformatter-is-not-working-in-android-versions-lower-than-8))
 - Support for Android <= 6.0 (unlikely, but feel free to contribute)
 - Special layout for tablet screens
+- F-Droid compatible gradle repositories
 - Encrypted local database (maybe): https://github.com/sqlcipher/android-database-sqlcipher
 
 ## Related issues
