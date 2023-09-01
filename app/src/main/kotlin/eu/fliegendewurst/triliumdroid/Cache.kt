@@ -208,7 +208,7 @@ object Cache {
 		CursorFactory.selectionArgs = arrayOf(id)
 		db!!.rawQueryWithFactory(
 			CursorFactory,
-			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type, notes.dateCreated, note_contents.dateModified FROM notes LEFT JOIN note_contents USING (noteId) LEFT JOIN attributes USING(noteId) WHERE notes.noteId = ?",
+			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type, notes.dateCreated, note_contents.dateModified, attributes.isInheritable FROM notes LEFT JOIN note_contents USING (noteId) LEFT JOIN attributes USING(noteId) WHERE notes.noteId = ?",
 			arrayOf(id),
 			"notes"
 		).use {
@@ -232,10 +232,11 @@ object Cache {
 			while (!it.isAfterLast) {
 				if (!it.isNull(3)) {
 					val type = it.getString(3)
+					val inheritable = it.getInt(9) == 1
 					if (type == "label") {
 						val name = it.getString(4)
 						val value = it.getString(5)
-						labels.add(Label(note!!, name, value))
+						labels.add(Label(name, value, inheritable))
 					} else if (type == "relation") {
 						val name = it.getString(4)
 						// value = note ID
@@ -244,7 +245,7 @@ object Cache {
 							notes[value] =
 								Note(value, "INVALID", "INVALID", "INVALID", "INVALID", "INVALID")
 						}
-						relations.add(Relation(note!!, notes[value], name))
+						relations.add(Relation(notes[value], name, inheritable))
 					}
 				}
 				it.moveToNext()
