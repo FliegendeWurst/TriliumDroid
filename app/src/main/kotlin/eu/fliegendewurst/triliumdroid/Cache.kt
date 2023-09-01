@@ -164,7 +164,7 @@ object Cache {
 					newPossibleBranches.add(path)
 					continue
 				}
-				val note = getNote(path.last().parentNote!!)!!
+				val note = getNote(path.last().parentNote)!!
 				for (branch in note.branches) {
 					val newPath = path.toMutableList()
 					newPath.add(branch)
@@ -249,8 +249,8 @@ object Cache {
 					}
 				}
 				it.moveToNext()
-				note!!.labels = labels
-				note!!.relations = relations
+				note!!.setLabels(labels)
+				note!!.setRelations(relations)
 			}
 		}
 		if (note != null) {

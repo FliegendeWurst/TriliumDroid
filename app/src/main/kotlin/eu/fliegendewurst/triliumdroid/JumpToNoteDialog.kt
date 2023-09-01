@@ -35,7 +35,7 @@ object JumpToNoteDialog {
 			val results = Cache.getJumpToResults(searchString)
 			val stuff = results.map {
 				Pair(
-					Branch(MainActivity.JUMP_TO_NOTE_ENTRY, it.id, null, 0, null, false),
+					Branch(MainActivity.JUMP_TO_NOTE_ENTRY, it.id, it.id, 0, null, false),
 					0
 				)
 			}.toList()

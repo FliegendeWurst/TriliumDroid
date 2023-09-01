@@ -1,6 +1,6 @@
 package eu.fliegendewurst.triliumdroid.data
 
-import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.*
 import java.util.*
 
 class Note(
@@ -13,8 +13,8 @@ class Note(
 ) {
 	var content: ByteArray? = null
 	var contentFixed: Boolean = false
-	var labels: List<Label>? = null
-	var relations: List<Relation>? = null
+	private var labels: List<Label>? = null
+	private var relations: List<Relation>? = null
 	private var inheritedLabels: List<Label>? = null
 	private var inheritedRelations: List<Relation>? = null
 	var children: SortedMap<Int, Branch>? = null
@@ -61,12 +61,12 @@ class Note(
 		val allLabels = mutableListOf<Label>()
 		val allRelations = mutableListOf<Relation>()
 		for (path in paths) {
-			val parent = path[1]
+			val parent = path[0].parentNote
 			// inheritable attrs on root are typically not intended to be applied to hidden subtree #3537
-			if (parent.note == "none" || id == "root" || id == "_hidden") {
+			if (parent == "none" || id == "root" || id == "_hidden") {
 				continue
 			}
-			val parentNote = Cache.getNoteWithContent(parent.note) ?: continue
+			val parentNote = Cache.getNoteWithContent(parent) ?: continue
 			parentNote.cacheInheritableAttributes()
 			for (label in parentNote.labels.orEmpty() + parentNote.inheritedLabels.orEmpty()) {
 				if (label.inheritable) {
@@ -81,7 +81,7 @@ class Note(
 		}
 		val filteredLabels = mutableListOf<Label>()
 		for (x in allLabels.filter { !labels.orEmpty().any { label -> label.name == it.name } }) {
-			if (filteredLabels.any { it -> it.name == x.name }) {
+			if (filteredLabels.any { it.name == x.name }) {
 				continue
 			}
 			filteredLabels.add(x)
@@ -91,7 +91,7 @@ class Note(
 		for (x in allRelations.filter {
 			!relations.orEmpty().any { relation -> relation.name == it.name }
 		}) {
-			if (filteredRelations.any { it -> it.name == x.name }) {
+			if (filteredRelations.any { it.name == x.name }) {
 				continue
 			}
 			filteredRelations.add(x)
@@ -126,5 +126,20 @@ class Note(
 				}
 			}
 		}
+	}
+
+	fun getAttributes(): List<Attribute> {
+		if (!inheritableCached) {
+			cacheInheritableAttributes()
+		}
+		return labels.orEmpty() + relations.orEmpty() + inheritedLabels.orEmpty() + inheritedRelations.orEmpty()
+	}
+
+	fun setLabels(labels: List<Label>) {
+		this.labels = labels
+	}
+
+	fun setRelations(relations: List<Relation>) {
+		this.relations = relations
 	}
 }

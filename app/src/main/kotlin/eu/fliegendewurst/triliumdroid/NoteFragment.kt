@@ -158,12 +158,12 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 					}
 				}
 			}
-			for (attribute in note.labels ?: emptyList()) {
+			for (attribute in note.getAttributes()) {
 				val view =
 					LayoutInflater.from(context)
 						.inflate(R.layout.item_attribute, constraintLayout, false)
 				view.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
-				view.findViewById<TextView>(R.id.label_attribute_value).text = attribute.value
+				view.findViewById<TextView>(R.id.label_attribute_value).text = attribute.value()
 				view.layoutParams = ConstraintLayout.LayoutParams(
 					ConstraintLayout.LayoutParams.WRAP_CONTENT,
 					ConstraintLayout.LayoutParams.WRAP_CONTENT
@@ -185,8 +185,8 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 			}
 
 			if (note.type == "render") {
-				val renderTarget = note.relations!!.find { it.name == "renderNote" } ?: return@post
-				load((renderTarget.target ?: return@post).id)
+				val renderTarget = note.getRelation("renderNote") ?: return@post
+				load(renderTarget.id)
 			} else if (note.type == "code") {
 				// code notes automatically load all the scripts in child nodes
 				// -> modify content returned by webview interceptor
