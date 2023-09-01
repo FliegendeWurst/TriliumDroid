@@ -6,6 +6,7 @@ Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 - Sync with other Trilium instance (push + pull)
 - Displaying/editing/sharing note content
 - Displaying note attributes
+- Attribute inheritance and templating
 - Displaying note icon
 - Displaying note paths
 - Displaying/collapsing/expanding note tree
@@ -17,7 +18,8 @@ Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 - Support for Android 8.0+
 
 ## TODO
-- Attributes / Inheritance / #sorted attribute
+- Editing attributes
+- #sorted attribute
 - Search
 - Share target (create note from received text)
 - Folder view of child nodes
@@ -25,6 +27,7 @@ Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 - Modifying attributes, note title, note icon
 - Editing note tree
 - Advanced Scripting
+- Note map
 - Dark Theme
 - Included notes
 - Encrypted notes

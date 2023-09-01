@@ -254,8 +254,9 @@ object Cache {
 			}
 		}
 		if (note != null) {
-			val previousBranches = notes[id]?.branches
-			note!!.branches = previousBranches ?: mutableListOf()
+			val previous = notes[id]
+			note!!.branches = previous?.branches ?: mutableListOf()
+			note!!.children = previous?.children
 			notes[id] = note!!
 		}
 		return note
