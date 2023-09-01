@@ -2,12 +2,16 @@ package eu.fliegendewurst.triliumdroid
 
 import android.annotation.SuppressLint
 import android.app.AlarmManager
+import android.app.DatePickerDialog
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.icu.text.DateFormat
 import android.icu.text.SimpleDateFormat
+import android.icu.util.Calendar
+import android.os.Handler
 import android.webkit.JavascriptInterface
+import android.widget.DatePicker
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.os.bundleOf
@@ -23,18 +27,21 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+
 // based on:
 // https://github.com/zadam/trilium/blob/master/src/public/app/services/frontend_script_api.js d3730ac
 // https://github.com/zadam/trilium/blob/master/src/services/backend_script_api.js d3730ac
 
 /**
  * Frontend and backend Javascript API object.
- * Due to WebView limitations all methods are synchronous, but awaiting their result is still
- * possible.
  *
  * New methods:
- * - isMobile(): always returns true
- * - registerAlarm(...): deliver a notification at the specified time
+ * - [isMobile]: always returns true
+ * - [registerAlarm]: deliver a notification at the specified time
+ *
+ * Internal technical considerations:
+ * - All methods must be synchronous. It is possible to await plain values.
+ * - All methods must return strings. They must be wrapped when executing scripts.
  *
  * TODO:
  * - create wrapper for properties (not supported by WebView, has to be hacked via script)
@@ -42,7 +49,11 @@ import java.time.format.DateTimeFormatter
  * - create fake objects for CKEditor / CodeMirror instances (if needed)
  * - implement remaining methods
  */
-class FrontendBackendApi(private val noteFragment: NoteFragment, private val context: Context) {
+class FrontendBackendApi(
+	private val noteFragment: NoteFragment,
+	private val context: Context,
+	private val handler: Handler
+) {
 	private val mainActivity: MainActivity = noteFragment.requireActivity() as MainActivity
 
 	companion object {
@@ -55,6 +66,33 @@ class FrontendBackendApi(private val noteFragment: NoteFragment, private val con
 	@JavascriptInterface
 	fun isMobile(): Boolean {
 		return true
+	}
+
+	/**
+	 * Open a date selector. Date chosen by user will be supplied to the callback.
+	 */
+	@JavascriptInterface
+	fun openDateSelector(callback: String) {
+		val c: Calendar = Calendar.getInstance()
+		val year = c.get(Calendar.YEAR)
+		val month = c.get(Calendar.MONTH)
+		val day = c.get(Calendar.DAY_OF_MONTH)
+
+		handler.post {
+			val dpd = DatePickerDialog(
+				context,
+				{ _, year, month, dayOfMonth ->
+					(noteFragment.activity as MainActivity).runScript(
+						noteFragment,
+						"($callback)('$year-${
+							(month + 1).toString().padStart(2, '0')
+						}-${dayOfMonth.toString().padStart(2, '0')}')"
+					)
+				},
+				year, month, day
+			)
+			dpd.show()
+		}
 	}
 
 	@JavascriptInterface
@@ -220,9 +258,20 @@ class FrontendBackendApi(private val noteFragment: NoteFragment, private val con
 		TODO("xxx")
 	}
 
+	/**
+	 * Get a note by its ID.
+	 */
+	fun getNote(noteId: String): Note? {
+		return Cache.getNoteWithContent(noteId)
+	}
+
+	/**
+	 * @suppress
+	 */
 	@JavascriptInterface
-	fun getNote(noteId: String): FrontendNote? {
-		return FrontendNote(Cache.getNoteWithContent(noteId) ?: return null)
+	fun getNoteInternal(noteId: String): JSONObject? {
+		val note = getNote(noteId) ?: return null
+		return encodeNote(note)
 	}
 
 	@JavascriptInterface
@@ -423,14 +472,20 @@ class FrontendBackendApi(private val noteFragment: NoteFragment, private val con
 	/**
 	 * Returns day note for given date. If such note doesn't exist, it is created.
 	 *
-	 * @method
-	 * @param {string} date in YYYY-MM-DD format
-	 * @param {BNote} [rootNote] - specify calendar root note, normally leave empty to use the default calendar
-	 * @returns {BNote|null}
+	 * @param day date in YYYY-MM-DD format
+	 * @param rootNote specify calendar root note, normally leave empty to use the default calendar
+	 */
+	fun getDayNote(day: String, rootNote: String?): Note? {
+		// TODO: root note handling
+		return DateNotes.getDayNote(day)
+	}
+
+	/**
+	 * @suppress
 	 */
 	@JavascriptInterface
-	fun getDayNote(day: String, rootNote: String?): FrontendNote? {
-		return FrontendNote(DateNotes.getDayNote(day) ?: return null)
+	fun getDayNoteInternal(day: String, rootNote: String?): String? {
+		return encodeNote(getDayNote(day, rootNote))?.toString()
 	}
 
 	/**
@@ -601,4 +656,15 @@ class FrontendBackendApi(private val noteFragment: NoteFragment, private val con
 	}
 
 	// TODO __private.becca
+
+	private fun encodeNote(note: Note?): JSONObject? {
+		if (note == null) {
+			return null
+		}
+		val obj = JSONObject()
+		obj.put("id", note.id)
+		obj.put("title", note.title)
+		// TODO
+		return obj
+	}
 }

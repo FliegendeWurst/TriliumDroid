@@ -137,8 +137,8 @@ class MainActivity : AppCompatActivity() {
 		// add custom buttons
 		for (buttonId in prefs.all.keys.filter { it.startsWith("button") }) {
 			val view = LayoutInflater.from(this).inflate(R.layout.button, binding.buttons, true)
-			val script = prefs.getString(buttonId, "() => {}")
 			view.findViewById<ImageButton>(R.id.button_custom).setOnClickListener {
+				val script = prefs.getString(buttonId, "() => {}")
 				Log.i(TAG, "executing button script $script")
 				runScript(getNoteFragment(), "($script)()")
 			}
@@ -376,10 +376,10 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	@SuppressLint("SetJavaScriptEnabled")
-	private fun runScript(noteFrag: NoteFragment, script: String) {
+	fun runScript(noteFrag: NoteFragment, script: String) {
 		val webview = WebView(this)
 		webview.settings.javaScriptEnabled = true
-		webview.addJavascriptInterface(FrontendBackendApi(noteFrag, this), "api")
+		webview.addJavascriptInterface(FrontendBackendApi(noteFrag, this, handler), "api")
 		webview.webChromeClient = object : WebChromeClient() {
 			override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
 				Log.i(TAG, "console message ${consoleMessage?.message()}")
@@ -389,11 +389,17 @@ class MainActivity : AppCompatActivity() {
 			}
 		}
 		Log.i(TAG, "executing $script")
-		webview.evaluateJavascript(script) {
+		val modifiedScript = """(() => {
+			api.getDayNote = (day, root) => {
+				return JSON.parse(api.getDayNoteInternal(day, root));			
+			};
+			$script
+		})()""".trimIndent()
+		webview.evaluateJavascript(modifiedScript) {
 			Log.i(TAG, "done executing code note!")
 			webview.destroy()
 		}
-		webview.addJavascriptInterface(FrontendBackendApi(noteFrag, this), "api")
+		webview.addJavascriptInterface(FrontendBackendApi(noteFrag, this, handler), "api")
 	}
 
 

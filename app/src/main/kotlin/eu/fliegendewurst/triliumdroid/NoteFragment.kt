@@ -46,10 +46,12 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 		container: ViewGroup?,
 		savedInstanceState: Bundle?
 	): View {
+		handler = Handler(requireContext().mainLooper)
+
 		binding = FragmentNoteBinding.inflate(inflater, container, false)
 		binding.webview.settings.javaScriptEnabled = true
 		binding.webview.addJavascriptInterface(
-			FrontendBackendApi(this, this.requireContext()),
+			FrontendBackendApi(this, this.requireContext(), handler!!),
 			"api"
 		)
 		binding.webview.webChromeClient = object : WebChromeClient() {
@@ -72,7 +74,6 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 					Log.i(TAG, "navigating to note $id")
 					(activity as MainActivity).navigateTo(Cache.getNote(id)!!)
 				}
-				Log.i(TAG, url)
 			}
 
 			override fun shouldOverrideUrlLoading(
@@ -124,7 +125,6 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 				return null
 			}
 		}
-		handler = Handler(requireContext().mainLooper)
 
 		if (load) {
 			load(id)
