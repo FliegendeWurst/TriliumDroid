@@ -31,6 +31,7 @@ Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 - Dark Theme
 - Included notes
 - Encrypted notes
+- Undeleting content
 - Erasing notes
 - Support for Android 7.1, 7.0 (likely to come eventually [1](https://stackoverflow.com/questions/57203186/datetimeformatter-is-not-working-in-android-versions-lower-than-8))
 - Support for Android <= 6.0 (very low priority)

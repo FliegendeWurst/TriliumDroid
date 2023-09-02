@@ -1,21 +1,23 @@
 package eu.fliegendewurst.triliumdroid.data
 
-data class Label(
+class Label(
 	override val name: String,
 	val value: String,
 	val inheritable: Boolean,
-	val inherited: Boolean = false
-) : Attribute(name) {
+	promoted: Boolean,
+	val multi: Boolean,
+	val inherited: Boolean = false,
+) : Attribute(name, promoted) {
 	override fun value(): String {
 		return value
 	}
 
 	fun makeInherited(): Label {
-		return Label(name, value, inheritable, true)
+		return Label(name, value, inheritable, promoted, multi, true)
 	}
 
 	fun makeTemplated(): Label {
-		return Label(name, value, inheritable, inherited)
+		return Label(name, value, inheritable, promoted, multi, inherited)
 	}
 
 }

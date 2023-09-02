@@ -57,7 +57,7 @@ object Cache {
 
 	fun getNotesWithAttribute(attributeName: String, attributeValue: String?): List<Note> {
 		var query =
-			"SELECT noteId FROM notes INNER JOIN attributes USING (noteId) WHERE attributes.name = ?"
+			"SELECT noteId FROM notes INNER JOIN attributes USING (noteId) WHERE attributes.name = ? AND attributes.isDeleted = 0"
 		if (attributeValue != null) {
 			query += " AND attributes.value = ?"
 		}
@@ -208,7 +208,7 @@ object Cache {
 		CursorFactory.selectionArgs = arrayOf(id)
 		db!!.rawQueryWithFactory(
 			CursorFactory,
-			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type, notes.dateCreated, note_contents.dateModified, attributes.isInheritable FROM notes LEFT JOIN note_contents USING (noteId) LEFT JOIN attributes USING(noteId) WHERE notes.noteId = ?",
+			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type, notes.dateCreated, note_contents.dateModified, attributes.isInheritable FROM notes LEFT JOIN note_contents USING (noteId) LEFT JOIN attributes USING(noteId) WHERE notes.noteId = ? AND notes.isDeleted = 0 AND (attributes.isDeleted IS NULL OR attributes.isDeleted = 0)",
 			arrayOf(id),
 			"notes"
 		).use {
@@ -236,7 +236,7 @@ object Cache {
 					if (type == "label") {
 						val name = it.getString(4)
 						val value = it.getString(5)
-						labels.add(Label(name, value, inheritable))
+						labels.add(Label(name, value, inheritable, false, false))
 					} else if (type == "relation") {
 						val name = it.getString(4)
 						// value = note ID
@@ -245,7 +245,7 @@ object Cache {
 							notes[value] =
 								Note(value, "INVALID", "INVALID", "INVALID", "INVALID", "INVALID")
 						}
-						relations.add(Relation(notes[value], name, inheritable))
+						relations.add(Relation(notes[value], name, inheritable, false, false))
 					}
 				}
 				it.moveToNext()
@@ -265,7 +265,7 @@ object Cache {
 	fun getJumpToResults(input: String): List<Note> {
 		val notes = mutableListOf<Note>()
 		db!!.rawQuery(
-			"SELECT noteId, mime, title, type FROM notes WHERE title LIKE ? LIMIT 50",
+			"SELECT noteId, mime, title, type FROM notes WHERE isDeleted = 0 AND title LIKE ? LIMIT 50",
 			arrayOf("%$input%")
 		).use {
 			while (it.moveToNext()) {
@@ -288,7 +288,7 @@ object Cache {
 	 */
 	fun getTreeData() {
 		db!!.rawQuery(
-			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title, notes.type, notes.dateCreated, notes.dateModified FROM branches INNER JOIN notes USING (noteId) WHERE branches.isDeleted = 0",
+			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title, notes.type, notes.dateCreated, notes.dateModified FROM branches INNER JOIN notes USING (noteId) WHERE notes.isDeleted = 0 AND branches.isDeleted = 0",
 			arrayOf()
 		).use {
 			val clones = mutableListOf<Triple<String, String, Int>>()
@@ -893,14 +893,15 @@ object Cache {
 		}
 
 		companion object {
-			const val DATABASE_VERSION = 213
-			const val DATABASE_NAME = "Document.db"
-
 			const val DATABASE_VERSION_0_59_4 = 213
 			const val DATABASE_VERSION_0_61_5 = 225
+			const val SYNC_VERSION_0_59_4 = 29
+
+			const val DATABASE_VERSION = DATABASE_VERSION_0_59_4
+			const val DATABASE_NAME = "Document.db"
 
 			// sync version is largely irrelevant
-			const val SYNC_VERSION = 29
+			const val SYNC_VERSION = SYNC_VERSION_0_59_4
 			const val APP_VERSION = "0.59.4"
 		}
 	}

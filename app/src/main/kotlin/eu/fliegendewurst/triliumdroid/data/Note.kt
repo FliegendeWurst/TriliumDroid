@@ -79,6 +79,7 @@ class Note(
 				}
 			}
 		}
+		// TODO: make sure this filtering logic makes sense
 		val filteredLabels = mutableListOf<Label>()
 		for (x in allLabels.filter { !labels.orEmpty().any { label -> label.name == it.name } }) {
 			if (filteredLabels.any { it.name == x.name }) {
