@@ -17,6 +17,6 @@ class Relation(
 	}
 
 	fun makeTemplated(): Relation {
-		return Relation(target, name, inheritable, promoted, multi, inherited)
+		return Relation(target, name, inheritable, promoted, multi, true)
 	}
 }

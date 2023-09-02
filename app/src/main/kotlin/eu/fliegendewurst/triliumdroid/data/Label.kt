@@ -17,7 +17,7 @@ class Label(
 	}
 
 	fun makeTemplated(): Label {
-		return Label(name, value, inheritable, promoted, multi, inherited)
+		return Label(name, value, inheritable, promoted, multi, true)
 	}
 
 }

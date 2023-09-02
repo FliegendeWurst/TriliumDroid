@@ -100,8 +100,9 @@ class Note(
 		inheritedRelations = filteredRelations
 		inheritableCached = true
 		// handle templates
-		val template = getRelation("template")
+		var template = getRelation("template")
 		if (template != null) {
+			template = Cache.getNoteWithContent(template.id)!!
 			// add attributes
 			template.cacheInheritableAttributes()
 			for (label in template.labels.orEmpty()) {
