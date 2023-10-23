@@ -135,6 +135,7 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 
 	@SuppressLint("MissingInflatedId")
 	fun load(id: String) {
+		(this@NoteFragment.activity as MainActivity).addHistoryEntry(id)
 		console.clear()
 		subCodeNotes = emptyList()
 

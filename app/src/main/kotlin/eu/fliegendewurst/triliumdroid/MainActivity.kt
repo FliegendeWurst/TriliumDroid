@@ -33,6 +33,7 @@ import android.widget.ListView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -66,6 +67,7 @@ class MainActivity : AppCompatActivity() {
 	private var executeVisible: Boolean = false
 	private var shareVisible: Boolean = false
 	private var firstNote: String? = null
+	private val noteHistory: MutableList<Pair<Note, Branch?>> = mutableListOf()
 
 	companion object {
 		private const val TAG = "MainActivity"
@@ -168,6 +170,19 @@ class MainActivity : AppCompatActivity() {
 				}
 			})
 		}
+
+		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+			override fun handleOnBackPressed() {
+				if (noteHistory.size <= 1) {
+					finish()
+				} else {
+					val entry = noteHistory[noteHistory.size - 2]
+					navigateTo(entry.first, entry.second) // will add another entry
+					noteHistory.removeAt(noteHistory.size - 1)
+					noteHistory.removeAt(noteHistory.size - 1)
+				}
+			}
+		})
 	}
 
 	private fun refreshTree() {
@@ -551,5 +566,9 @@ class MainActivity : AppCompatActivity() {
 
 	fun getNoteLoaded(): Note {
 		return Cache.getNoteWithContent(getNoteFragment().getNoteId())!!
+	}
+
+	fun addHistoryEntry(id: String) {
+		noteHistory.add(Pair(Cache.getNote(id)!!, null))
 	}
 }
