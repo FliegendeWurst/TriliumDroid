@@ -150,10 +150,11 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 
 			val constraintLayout = binding.noteHeader
 			val flow = binding.noteHeaderAttributes
+			val attributeContentDesc = getString(R.string.attribute)
 			// remove previously shown attributes
 			constraintLayout.iterator().also { iterator ->
 				iterator.forEach { view ->
-					if (view.contentDescription == "Label") {
+					if (view.contentDescription == attributeContentDesc) {
 						iterator.remove()
 					}
 				}
