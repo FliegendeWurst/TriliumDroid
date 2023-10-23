@@ -220,6 +220,12 @@ class MainActivity : AppCompatActivity() {
 				handler.post {
 					showInitialNote(resetView)
 				}
+				// ensure the snackbar doesn't stay visible
+				handler.post {
+					snackbar.setText("Sync: error!")
+					snackbar.duration = Snackbar.LENGTH_SHORT
+					snackbar.show()
+				}
 			}, {
 				handler.post {
 					snackbar.setText("Sync: ${it.first} pulled, ${it.second} pushed")
