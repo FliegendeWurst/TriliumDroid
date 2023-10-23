@@ -2,12 +2,12 @@ package eu.fliegendewurst.triliumdroid.data
 
 class Relation(
 	val target: Note?,
-	override val name: String,
+	name: String,
 	val inheritable: Boolean,
 	promoted: Boolean,
 	val multi: Boolean,
-	val inherited: Boolean = false
-) : Attribute(name, promoted) {
+	inherited: Boolean = false
+) : Attribute(name, promoted, inherited) {
 	override fun value(): String {
 		return target?.id!!
 	}

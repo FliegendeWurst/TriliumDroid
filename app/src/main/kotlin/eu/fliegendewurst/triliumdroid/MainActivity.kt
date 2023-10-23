@@ -18,11 +18,14 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.widget.AdapterView.OnItemClickListener
 import android.widget.ArrayAdapter
+import android.widget.BaseAdapter
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -429,10 +432,11 @@ class MainActivity : AppCompatActivity() {
 		}
 		tree!!.select(note.id)
 		getNoteFragment().load(note.id)
-		val noteContent = Cache.getNote(note.id)!!
+		val noteContent = Cache.getNoteWithContent(note.id)!!
 		binding.drawerLayout.closeDrawers()
 		binding.toolbarTitle.text = noteContent.title
-		binding.toolbarIcon.text = Icon.getUnicodeCharacter(noteContent.getLabel("iconClass") ?: "bx bx-note")
+		binding.toolbarIcon.text =
+			Icon.getUnicodeCharacter(noteContent.getLabel("iconClass") ?: "bx bx-note")
 		if (branch != null) {
 			scrollTreeToBranch(branch)
 		} else {
@@ -440,6 +444,40 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		// update right drawer
+
+		// attributes
+		val attributes = noteContent.getAttributes()
+		val ownedAttributes = attributes.filter { x -> !x.inherited }
+		Log.i(TAG, "have ${ownedAttributes.size} owned attributes to show!")
+		val ownedAttributesList = findViewById<ListView>(R.id.widget_owned_attributes_type_content)
+		ownedAttributesList.adapter = object : BaseAdapter() {
+			override fun getCount(): Int {
+				return ownedAttributes.size
+			}
+
+			override fun getItem(position: Int): Any {
+				return ownedAttributes[position]
+			}
+
+			override fun getItemId(position: Int): Long {
+				return position.toLong()
+			}
+
+			override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+				val attribute = attributes[position]
+				var vi = convertView
+				if (vi == null) {
+					vi = layoutInflater.inflate(R.layout.item_attribute, null)
+				}
+				vi!!.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
+				vi.findViewById<TextView>(R.id.label_attribute_value).text = attribute.value()
+				return vi
+
+			}
+
+		}
+
+		// note paths
 		val paths = Cache.getNotePaths(noteContent.id)!!
 		val arrayAdapter: ArrayAdapter<String> = ArrayAdapter<String>(
 			this,

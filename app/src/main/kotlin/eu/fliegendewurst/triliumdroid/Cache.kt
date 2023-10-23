@@ -894,15 +894,17 @@ object Cache {
 
 		companion object {
 			const val DATABASE_VERSION_0_59_4 = 213
+			const val DATABASE_VERSION_0_60_4 = 214
 			const val DATABASE_VERSION_0_61_5 = 225
 			const val SYNC_VERSION_0_59_4 = 29
+			const val SYNC_VERSION_0_60_4 = 29
 
-			const val DATABASE_VERSION = DATABASE_VERSION_0_59_4
+			const val DATABASE_VERSION = DATABASE_VERSION_0_60_4
 			const val DATABASE_NAME = "Document.db"
 
 			// sync version is largely irrelevant
-			const val SYNC_VERSION = SYNC_VERSION_0_59_4
-			const val APP_VERSION = "0.59.4"
+			const val SYNC_VERSION = SYNC_VERSION_0_60_4
+			const val APP_VERSION = "0.60.4"
 		}
 	}
 
