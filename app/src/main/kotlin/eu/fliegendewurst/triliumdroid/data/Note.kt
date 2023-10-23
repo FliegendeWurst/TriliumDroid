@@ -128,6 +128,16 @@ class Note(
 				}
 			}
 		}
+		// check for (inherited) label:ABC attributes
+		for (label in getLabels()) {
+			if (label.name.startsWith("label:")) {
+				val data = label.value
+				val target = label.name.removePrefix("label:")
+				val targetLabel = getLabelValue(target) ?: continue
+				// TODO: handle e.g. "single" or "text"
+				targetLabel.promoted = targetLabel.promoted || data.contains("promoted")
+			}
+		}
 	}
 
 	fun getAttributes(): List<Attribute> {
@@ -135,6 +145,13 @@ class Note(
 			cacheInheritableAttributes()
 		}
 		return labels.orEmpty() + relations.orEmpty() + inheritedLabels.orEmpty() + inheritedRelations.orEmpty()
+	}
+
+	fun getLabels(): List<Label> {
+		if (!inheritableCached) {
+			cacheInheritableAttributes()
+		}
+		return labels.orEmpty() + inheritedLabels.orEmpty()
 	}
 
 	fun setLabels(labels: List<Label>) {

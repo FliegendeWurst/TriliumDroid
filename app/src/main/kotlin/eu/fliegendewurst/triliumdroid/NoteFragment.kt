@@ -159,6 +159,9 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 				}
 			}
 			for (attribute in note.getAttributes()) {
+				if (!attribute.promoted) {
+					continue
+				}
 				val view =
 					LayoutInflater.from(context)
 						.inflate(R.layout.item_attribute, constraintLayout, false)
