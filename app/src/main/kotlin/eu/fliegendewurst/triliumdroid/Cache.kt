@@ -9,6 +9,7 @@ import android.database.CursorWindow
 import android.database.sqlite.SQLiteCursorDriver
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
+import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteQuery
 import android.icu.text.SimpleDateFormat
@@ -19,9 +20,11 @@ import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.service.Util
+import okio.ByteString.Companion.decodeBase64
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.StrictMath.max
+import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -93,7 +96,7 @@ object Cache {
 		val date = dateModified()
 		val utc = utcDateModified()
 		db!!.execSQL(
-			"UPDATE note_contents SET content = ?, dateModified = ?, utcDateModified = ? WHERE note_contents.noteId = ?",
+			"UPDATE blobs SET content = ?, dateModified = ?, utcDateModified = ? WHERE note_contents.noteId = ?",
 			arrayOf(notes[id]!!.content, date, utc, id)
 		)
 		val md = MessageDigest.getInstance("SHA-1")
@@ -208,7 +211,10 @@ object Cache {
 		CursorFactory.selectionArgs = arrayOf(id)
 		db!!.rawQueryWithFactory(
 			CursorFactory,
-			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type, notes.dateCreated, note_contents.dateModified, attributes.isInheritable FROM notes LEFT JOIN note_contents USING (noteId) LEFT JOIN attributes USING(noteId) WHERE notes.noteId = ? AND notes.isDeleted = 0 AND (attributes.isDeleted IS NULL OR attributes.isDeleted = 0)",
+			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type, notes.dateCreated, blobs.dateModified, attributes.isInheritable " +
+					"FROM notes LEFT JOIN blobs USING (blobId) " +
+					"LEFT JOIN attributes USING(noteId)" +
+					"WHERE notes.noteId = ? AND notes.isDeleted = 0 AND (attributes.isDeleted IS NULL OR attributes.isDeleted = 0)",
 			arrayOf(id),
 			"notes"
 		).use {
@@ -224,7 +230,16 @@ object Cache {
 					it.getString(8)
 				)
 				note!!.content = if (!it.isNull(0)) {
-					it.getBlob(0)
+					val content = it.getBlob(0)
+					val base64String = content.decodeToString()
+					Log.i(TAG, base64String)
+					val trimmed = base64String.substring(0 .. base64String.length - 2)
+					Log.i(TAG, trimmed)
+					if (trimmed.isBlank()) {
+						ByteArray(0)
+					} else {
+						trimmed.decodeBase64()!!.toByteArray()
+					}
 				} else {
 					ByteArray(0)
 				}
@@ -541,6 +556,7 @@ object Cache {
 						arrayOf(changeId)
 					).use {
 						if (it.count != 0) {
+							// already applied
 							return@use
 						}
 						if (entityName == "note_reordering") {
@@ -631,8 +647,9 @@ object Cache {
 	}
 
 	fun createChildNote(parentNote: Note, newNoteTitle: String?): Note {
-		// create entries in notes, note_contents, branches
+		// create entries in notes, blobs, branches
 		var newId = Util.newNoteId()
+		var newBlobId = Util.newNoteId()
 		db!!.transaction {
 			do {
 				var exists = true
@@ -669,9 +686,9 @@ object Cache {
 				)
 			)
 			execSQL(
-				"INSERT INTO note_contents VALUES (?, ?, ?, ?)",
+				"INSERT INTO blobs VALUES (?, ?, ?, ?)",
 				arrayOf(
-					newId,
+					newBlobId,
 					"",
 					dateModified,
 					utcDateModified
@@ -685,12 +702,13 @@ object Cache {
 					"0", // isProtected
 					"text", // type
 					"text/html", // mime
+					null, // blobId
 					"0", // isDeleted
 					null, // deleteId
 					dateModified, // dateCreated
 					dateModified,
 					utcDateModified, // utcDateCreated
-					utcDateModified
+					utcDateModified,
 				)
 			)
 		}
@@ -713,7 +731,14 @@ object Cache {
 			try {
 				Log.i(TAG, "creating database ${db.attachedDbs[0].second}")
 				sql.split(';').forEach {
-					db.execSQL(it)
+					if (it.isBlank()) {
+						return@forEach
+					}
+					try {
+						db.execSQL(it)
+					} catch (e : SQLiteException) {
+						Log.e(TAG, "failure in DB creation ", e)
+					}
 				}
 				db.rawQuery(
 					"SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name != 'android_metadata' AND name != 'sqlite_sequence'",
@@ -730,15 +755,14 @@ object Cache {
 			try {
 				// source: https://github.com/zadam/trilium/tree/master/db/migrations
 				db.transaction {
-					if (oldVersion < 214 && newVersion >= 214) {
-						execSQL("UPDATE branches SET notePosition = notePosition - 999899999 WHERE parentNoteId = 'root' AND notePosition > 999999999")
-					}
 					if (oldVersion < 215 && newVersion >= 215) {
+						Log.i(TAG, "migrating to version 215")
 						execSQL("CREATE TABLE IF NOT EXISTS \"blobs\" (blobId TEXT NOT NULL, content TEXT DEFAULT NULL, dateModified TEXT NOT NULL, utcDateModified TEXT NOT NULL, PRIMARY KEY(blobId))")
 						execSQL("ALTER TABLE notes ADD blobId TEXT DEFAULT NULL")
 						execSQL("ALTER TABLE note_revisions ADD blobId TEXT DEFAULT NULL")
 					}
 					if (oldVersion < 216 && newVersion >= 216) {
+						Log.i(TAG, "migrating to version 216")
 						val existingBlobIds = mutableSetOf<String>()
 
 						rawQuery(
@@ -812,11 +836,13 @@ object Cache {
 						// this database migration will never be used by real users anyhow...
 					}
 					if (oldVersion < 217 && newVersion >= 217) {
+						Log.i(TAG, "migrating to version 217")
 						execSQL("DROP TABLE note_contents")
 						execSQL("DROP TABLE note_revision_contents")
 						execSQL("DELETE FROM entity_changes WHERE entityName IN ('note_contents', 'note_revision_contents')")
 					}
 					if (oldVersion < 218 && newVersion >= 218) {
+						Log.i(TAG, "migrating to version 218")
 						execSQL(
 							"""CREATE TABLE IF NOT EXISTS "revisions" (
 							revisionId	TEXT NOT NULL PRIMARY KEY,
@@ -845,6 +871,7 @@ object Cache {
 						execSQL("UPDATE entity_changes SET entityName = 'revisions' WHERE entityName = 'note_revisions'")
 					}
 					if (oldVersion < 219 && newVersion >= 219) {
+						Log.i(TAG, "migrating to version 219")
 						execSQL(
 							"""CREATE TABLE IF NOT EXISTS "attachments"(
     						attachmentId      TEXT not null primary key,
@@ -865,22 +892,34 @@ object Cache {
 						execSQL("CREATE INDEX IDX_attachments_utcDateScheduledForErasureSince ON attachments (utcDateScheduledForErasureSince)")
 					}
 					if (oldVersion < 220 && newVersion >= 220) {
+						Log.i(TAG, "migrating to version 220 (no-op currently)")
 						// TODO: auto-convert images
 					}
 					if (oldVersion < 221 && newVersion >= 221) {
+						Log.i(TAG, "migrating to version 221")
 						execSQL("DELETE FROM options WHERE name = 'hideIncludedImages_main'")
 						execSQL("DELETE FROM entity_changes WHERE entityName = 'options' AND entityId = 'hideIncludedImages_main'")
 					}
 					if (oldVersion < 222 && newVersion >= 222) {
+						Log.i(TAG, "migrating to version 222")
 						execSQL("UPDATE options SET name = 'openNoteContexts' WHERE name = 'openTabs'")
 						execSQL("UPDATE entity_changes SET entityId = 'openNoteContexts' WHERE entityName = 'options' AND entityId = 'openTabs'")
 					}
 					// 223 is NOOP
 					// 224 is a hotfix, already fixed in 216 above
 					if (oldVersion < 225 && newVersion >= 225) {
+						Log.i(TAG, "migrating to version 225")
 						execSQL("CREATE INDEX IF NOT EXISTS IDX_notes_blobId on notes (blobId)")
 						execSQL("CREATE INDEX IF NOT EXISTS IDX_revisions_blobId on revisions (blobId)")
 						execSQL("CREATE INDEX IF NOT EXISTS IDX_attachments_blobId on attachments (blobId)")
+					}
+					if (oldVersion < 226 && newVersion >= 226) {
+						Log.i(TAG, "migrating to version 226")
+						execSQL("UPDATE attributes SET value = 'contentAndAttachmentsAndRevisionsSize' WHERE name = 'orderBy' AND value = 'noteSize'")
+					}
+					if (oldVersion < 227 && newVersion >= 227) {
+						Log.i(TAG, "migrating to version 227")
+						execSQL("UPDATE options SET value = 'false' WHERE name = 'compressImages'")
 					}
 				}
 			} catch (t: Throwable) {
@@ -896,15 +935,17 @@ object Cache {
 			const val DATABASE_VERSION_0_59_4 = 213
 			const val DATABASE_VERSION_0_60_4 = 214
 			const val DATABASE_VERSION_0_61_5 = 225
+			const val DATABASE_VERSION_0_62_3 = 227
 			const val SYNC_VERSION_0_59_4 = 29
 			const val SYNC_VERSION_0_60_4 = 29
+			const val SYNC_VERSION_0_62_3 = 31
 
-			const val DATABASE_VERSION = DATABASE_VERSION_0_60_4
+			const val DATABASE_VERSION = DATABASE_VERSION_0_62_3
 			const val DATABASE_NAME = "Document.db"
 
 			// sync version is largely irrelevant
-			const val SYNC_VERSION = SYNC_VERSION_0_60_4
-			const val APP_VERSION = "0.60.4"
+			const val SYNC_VERSION = SYNC_VERSION_0_62_3
+			const val APP_VERSION = "0.62.3"
 		}
 	}
 
