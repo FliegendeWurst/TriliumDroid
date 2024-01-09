@@ -14,6 +14,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteQuery
 import android.icu.text.SimpleDateFormat
 import android.os.Build
+import androidx.core.database.getStringOrNull
 import androidx.core.database.sqlite.transaction
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
@@ -211,10 +212,20 @@ object Cache {
 		CursorFactory.selectionArgs = arrayOf(id)
 		db!!.rawQueryWithFactory(
 			CursorFactory,
-			"SELECT content, mime, title, attributes.type, attributes.name, attributes.value, notes.type, notes.dateCreated, blobs.dateModified, attributes.isInheritable " +
+			"SELECT content," + // 0
+					"mime," + // 1
+					"title," + // 2
+					"attributes.type," + // 3
+					"attributes.name," + // 4
+					"attributes.value," + // 5
+					"notes.type," + // 6
+					"notes.dateCreated," + // 7
+					"notes.dateModified," + // 8
+					"attributes.isInheritable," +
+					"attributes.isDeleted " +
 					"FROM notes LEFT JOIN blobs USING (blobId) " +
 					"LEFT JOIN attributes USING(noteId)" +
-					"WHERE notes.noteId = ? AND notes.isDeleted = 0 AND (attributes.isDeleted IS NULL OR attributes.isDeleted = 0)",
+					"WHERE notes.noteId = ? AND notes.isDeleted = 0",
 			arrayOf(id),
 			"notes"
 		).use {
@@ -248,19 +259,29 @@ object Cache {
 				if (!it.isNull(3)) {
 					val type = it.getString(3)
 					val inheritable = it.getInt(9) == 1
-					if (type == "label") {
-						val name = it.getString(4)
-						val value = it.getString(5)
-						labels.add(Label(name, value, inheritable, false, false))
-					} else if (type == "relation") {
-						val name = it.getString(4)
-						// value = note ID
-						val value = it.getString(5)
-						if (!notes.containsKey(value)) {
-							notes[value] =
-								Note(value, "INVALID", "INVALID", "INVALID", "INVALID", "INVALID")
+					val deleted = it.getInt(10) == 1
+					if (!deleted) {
+						if (type == "label") {
+							val name = it.getString(4)
+							val value = it.getString(5)
+							labels.add(Label(name, value, inheritable, false, false))
+						} else if (type == "relation") {
+							val name = it.getString(4)
+							// value = note ID
+							val value = it.getString(5)
+							if (!notes.containsKey(value)) {
+								notes[value] =
+									Note(
+										value,
+										"INVALID",
+										"INVALID",
+										"INVALID",
+										"INVALID",
+										"INVALID"
+									)
+							}
+							relations.add(Relation(notes[value], name, inheritable, false, false))
 						}
-						relations.add(Relation(notes[value], name, inheritable, false, false))
 					}
 				}
 				it.moveToNext()
