@@ -243,9 +243,9 @@ object Cache {
 				note!!.content = if (!it.isNull(0)) {
 					val content = it.getBlob(0)
 					val base64String = content.decodeToString()
-					Log.i(TAG, base64String)
+					//Log.i(TAG, base64String)
 					val trimmed = base64String.substring(0 .. base64String.length - 2)
-					Log.i(TAG, trimmed)
+					//Log.i(TAG, trimmed)
 					if (trimmed.isBlank()) {
 						ByteArray(0)
 					} else {
@@ -942,6 +942,19 @@ object Cache {
 						Log.i(TAG, "migrating to version 227")
 						execSQL("UPDATE options SET value = 'false' WHERE name = 'compressImages'")
 					}
+					if (oldVersion < 228 && newVersion >= 228) {
+						Log.i(TAG, "migrating to version 228")
+						execSQL("UPDATE blobs SET blobId = REPLACE(blobId, '+', 'A')")
+						execSQL("UPDATE blobs SET blobId = REPLACE(blobId, '/', 'B')")
+						execSQL("UPDATE notes SET blobId = REPLACE(blobId, '+', 'A')")
+						execSQL("UPDATE notes SET blobId = REPLACE(blobId, '/', 'B')")
+						execSQL("UPDATE attachments SET blobId = REPLACE(blobId, '+', 'A')")
+						execSQL("UPDATE attachments SET blobId = REPLACE(blobId, '/', 'B')")
+						execSQL("UPDATE revisions SET blobId = REPLACE(blobId, '+', 'A')")
+						execSQL("UPDATE revisions SET blobId = REPLACE(blobId, '/', 'B')")
+						execSQL("UPDATE entity_changes SET entityId = REPLACE(entityId, '+', 'A') WHERE entityName = 'blobs'")
+						execSQL("UPDATE entity_changes SET entityId = REPLACE(entityId, '/', 'B') WHERE entityName = 'blobs';")
+					}
 				}
 			} catch (t: Throwable) {
 				Log.e(TAG, "fatal error in database migration", t)
@@ -957,16 +970,18 @@ object Cache {
 			const val DATABASE_VERSION_0_60_4 = 214
 			const val DATABASE_VERSION_0_61_5 = 225
 			const val DATABASE_VERSION_0_62_3 = 227
+			const val DATABASE_VERSION_0_63_3 = 228
 			const val SYNC_VERSION_0_59_4 = 29
 			const val SYNC_VERSION_0_60_4 = 29
 			const val SYNC_VERSION_0_62_3 = 31
+			const val SYNC_VERSION_0_63_3 = 32
 
-			const val DATABASE_VERSION = DATABASE_VERSION_0_62_3
+			const val DATABASE_VERSION = DATABASE_VERSION_0_63_3
 			const val DATABASE_NAME = "Document.db"
 
 			// sync version is largely irrelevant
-			const val SYNC_VERSION = SYNC_VERSION_0_62_3
-			const val APP_VERSION = "0.62.3"
+			const val SYNC_VERSION = SYNC_VERSION_0_63_3
+			const val APP_VERSION = "0.63.3"
 		}
 	}
 
