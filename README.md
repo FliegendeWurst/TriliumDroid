@@ -44,20 +44,6 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 
 Please report bugs and missing features. I will soon setup a way to contribute translations. Any coding help is also welcome!
 
-## Related issues
-
-https://github.com/zadam/trilium/issues/3641
-
-https://github.com/zadam/trilium/issues/3624
-
-Fixes https://github.com/zadam/trilium/issues/3047 https://github.com/zadam/trilium/issues/2953 https://github.com/zadam/trilium/discussions/2751
-
-https://github.com/zadam/trilium/discussions/2990
-
-https://github.com/zadam/trilium/discussions/2939
-
-https://github.com/zadam/trilium/discussions/3975
-
 ## License
 
 Copyright © 2023 Arne Keller
