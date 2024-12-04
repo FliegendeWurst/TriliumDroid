@@ -1,6 +1,6 @@
 # Trilium Notes for Android
 
-Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Android.
+Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Android. Related: https://github.com/TriliumNext/Notes/issues/72
 
 ## Working
 - Support for version 0.90.12 of sync protocol + database schema
