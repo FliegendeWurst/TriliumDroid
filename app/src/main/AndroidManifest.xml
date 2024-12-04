@@ -30,7 +30,7 @@
 
         <provider
             android:name=".TriliumFileProvider"
-            android:authorities="eu.fliegendewurst.fileprovider"
+            android:authorities="${applicationId}.provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

@@ -334,7 +334,7 @@ class MainActivity : AppCompatActivity() {
 					f.writeBytes(note.content!!)
 					val contentUri = FileProvider.getUriForFile(
 						this@MainActivity,
-						"eu.fliegendewurst.fileprovider",
+						applicationContext.packageName + ".provider",
 						f.toFile()
 					)
 					clipData = ClipData.newRawUri("", contentUri)

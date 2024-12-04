@@ -8,6 +8,9 @@ import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 
 class SetupActivity : AppCompatActivity() {
+	companion object {
+		private const val TAG: String = "SetupActivity"
+	}
 	private lateinit var binding: ActivitySetupBinding
 	private lateinit var prefs: SharedPreferences
 
@@ -20,7 +23,7 @@ class SetupActivity : AppCompatActivity() {
 		binding.password.setText(
 			prefs.getString(
 				"password",
-				"UNGHXdk0Ln22nDeIy98k4pDES9FBbrry8POEMMrkx4ovZLNyFGEDxCCE0yOHwP52riSTwCP5vhU7DbOkpdUOpelQJlJVwvA1u0k63pybca1yWBQFAFqEJ1NVT8iGDrIIdRmuVsod5v7gFQGRZCnxrtle3FHDUywufUNSROxrZfeT3gzqszsmn1yHFAJh6xqqSSKT6Ako9SqeDXmRIs8rfV8NmYom5Rur3TY4IlHxE2dKmldU9V7ii8vR9mNLHX4H"
+				""
 			)
 		)
 	}
@@ -52,7 +55,8 @@ class SetupActivity : AppCompatActivity() {
 			handler.post {
 				finish()
 			}
-		}, {
+		}, { error ->
+			Log.e(TAG, "failed to connect to server", error)
 			// TODO
 		})
 	}

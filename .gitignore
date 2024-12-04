@@ -1,3 +1,4 @@
+/.idea
 *.iml
 .gradle
 /local.properties
@@ -14,3 +15,5 @@
 .cxx
 local.properties
 /gradle/wrapper/gradle-wrapper.jar
+/app/release
+/signing_key.jks
