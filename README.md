@@ -3,6 +3,7 @@
 Unofficial port of [Trilium Notes](https://github.com/zadam/trilium) to Android.
 
 ## Working
+- Support for version 0.63.6 of sync protocol + database schema
 - Sync with other Trilium instance (push + pull)
 - Displaying/editing/sharing note content
 - Displaying note attributes
