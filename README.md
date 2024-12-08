@@ -18,6 +18,23 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 - Upgrading to newer database versions / Trilium versions
 - Support for Android 8.0+
 
+## Usage
+
+1. Download the app from the [latest release](https://github.com/FliegendeWurst/TriliumDroid/releases).
+2. Install the APK. You need to enable installing apps from unknown sources.
+3. Open the app and configure your sync server (hostname, port, password).
+4. Go back, open the three-dot menu at the top and click sync.
+5. Wait until sync is finished.
+
+Then, you can:
+
+- inspect and navigate the note tree by opening the left side bar
+- inspect note attributes by opening the right side bar
+- jump to notes using the floating action button in the bottom right corner
+- edit notes using the edit button in the top action bar
+
+There is also some preliminary support for scripting, but it doesn't work exactly like the Trilium API at the moment.
+
 ## TODO
 - Editing attributes
 - #sorted attribute
