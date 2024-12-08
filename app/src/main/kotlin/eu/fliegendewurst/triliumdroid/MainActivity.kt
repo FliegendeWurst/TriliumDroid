@@ -51,6 +51,7 @@ import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.service.Icon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.Collections
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeBytes
@@ -504,7 +505,12 @@ class MainActivity : AppCompatActivity() {
 			this,
 			android.R.layout.simple_list_item_1,
 			paths.map { x ->
-				x.reversed().subList(1, x.size)
+				val notes = x.toMutableList()
+				// do not use reversed() until root cause is fixed
+				// https://github.com/FliegendeWurst/TriliumDroid/issues/6
+				Collections.reverse(notes)
+				notes
+					.subList(1, x.size)
 					.joinToString(" > ") { Cache.getNote(it.note)!!.title }
 			}
 		)
