@@ -16,6 +16,7 @@ import android.icu.text.SimpleDateFormat
 import android.os.Build
 import androidx.core.database.getStringOrNull
 import androidx.core.database.sqlite.transaction
+import eu.fliegendewurst.triliumdroid.data.Attachment
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
@@ -86,6 +87,10 @@ object Cache {
 			return notes[id]
 		}
 		return getNoteInternal(id)
+	}
+
+	fun getAttachmentWithContent(id: String): Attachment? {
+		return getAttachmentInternal(id)
 	}
 
 	fun setNoteContent(id: String, content: String) {
@@ -294,6 +299,40 @@ object Cache {
 			note!!.branches = previous?.branches ?: mutableListOf()
 			note!!.children = previous?.children
 			notes[id] = note!!
+		}
+		return note
+	}
+
+	private fun getAttachmentInternal(id: String): Attachment? {
+		var note: Attachment? = null
+		CursorFactory.selectionArgs = arrayOf(id)
+		db!!.rawQueryWithFactory(
+			CursorFactory,
+			"SELECT content," + // 0
+					"mime " + // 1
+					"FROM attachments LEFT JOIN blobs USING (blobId) " +
+					"WHERE attachments.attachmentId = ? AND attachments.isDeleted = 0",
+			arrayOf(id),
+			"notes"
+		).use {
+			if (it.moveToFirst()) {
+				note = Attachment(
+					id,
+					it.getString(1),
+				)
+				note!!.content = if (!it.isNull(0)) {
+					val content = it.getBlob(0)
+					val base64String = content.decodeToString()
+					val trimmed = base64String.substring(0 .. base64String.length - 2)
+					if (trimmed.isBlank()) {
+						ByteArray(0)
+					} else {
+						trimmed.decodeBase64()!!.toByteArray()
+					}
+				} else {
+					ByteArray(0)
+				}
+			}
 		}
 		return note
 	}

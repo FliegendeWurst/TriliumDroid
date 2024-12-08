@@ -98,15 +98,28 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 					TAG,
 					"intercept: ${request.url.host} ${request.url.query} ${request.url} ${request.url.pathSegments.size}"
 				)
-				if (request.url.host == WEBVIEW_HOST && request.url.pathSegments.size == 1) {
-					val id = request.url.lastPathSegment!!
+				if (request.url.host == WEBVIEW_HOST && (request.url.pathSegments.size == 1 || request.url.pathSegments.size == 5)) {
+					// /api/attachments/cpidMJLNYddQ/image/Trilium%20Demo_trilium-icon.png
+					val id = if (request.url.pathSegments.size == 1) {
+						request.url.lastPathSegment!!
+					} else {
+						request.url.pathSegments[2]
+					}
 					if (id == "favicon.ico") {
 						return null // TODO: catch all invalid IDs
 					}
 					val note = Cache.getNoteWithContent(id)
-					return if (note != null) {
-						var data = note.content!!
-						if (note.id == this@NoteFragment.id && subCodeNotes != null && !note.contentFixed) {
+					var content = note?.content
+					var mime = note?.mime
+					if (note == null) {
+						// try attachment
+						val attachment = Cache.getAttachmentWithContent(id)
+						content = attachment?.content
+						mime = attachment?.mime
+					}
+					return if (content != null) {
+						var data = content
+						if (note != null && note.id == this@NoteFragment.id && subCodeNotes != null && !note.contentFixed) {
 							// append <script> tags to load children
 							if (data.isEmpty()) {
 								data += "<!DOCTYPE html>".encodeToByteArray()
@@ -117,7 +130,7 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 							note.content = data
 							note.contentFixed = true
 						}
-						WebResourceResponse(note.mime, null, data.inputStream())
+						WebResourceResponse(mime, null, data.inputStream())
 					} else {
 						null
 					}
