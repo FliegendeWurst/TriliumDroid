@@ -6,7 +6,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
 import eu.fliegendewurst.triliumdroid.data.Branch
-import java.util.*
 
 object JumpToNoteDialog {
 	fun showDialog(activity: MainActivity) {

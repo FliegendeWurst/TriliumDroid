@@ -48,6 +48,7 @@ import com.google.android.material.snackbar.Snackbar
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
+import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.service.Icon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -139,6 +140,13 @@ class MainActivity : AppCompatActivity() {
 		})
 		binding.treeList.adapter = adapter
 		tree = adapter
+
+		binding.buttonNewNote.setOnClickListener {
+			CreateNewNoteDialog.showDialog(this, true, getNoteLoaded())
+		}
+		binding.buttonNewNoteSibling.setOnClickListener {
+			CreateNewNoteDialog.showDialog(this, false, getNoteLoaded())
+		}
 
 		// add custom buttons
 		for (buttonId in prefs.all.keys.filter { it.startsWith("button") }) {

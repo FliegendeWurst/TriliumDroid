@@ -16,6 +16,8 @@ import android.icu.text.SimpleDateFormat
 import android.os.Build
 import androidx.core.database.getStringOrNull
 import androidx.core.database.sqlite.transaction
+import eu.fliegendewurst.triliumdroid.Cache.db
+import eu.fliegendewurst.triliumdroid.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.data.Attachment
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
@@ -539,6 +541,8 @@ object Cache {
 		var keyName = entityName.substring(0, entityName.length - 1)
 		if (keyName == "note_content") {
 			keyName = "note"
+		} else if (keyName == "branche") {
+			keyName = "branch"
 		}
 		val obj = JSONObject()
 		db!!.rawQuery("SELECT * FROM $entityName WHERE ${keyName}Id = ?", arrayOf(entityId)).use {
@@ -728,7 +732,7 @@ object Cache {
 	fun createChildNote(parentNote: Note, newNoteTitle: String?): Note {
 		// create entries in notes, blobs, branches
 		var newId = Util.newNoteId()
-		var newBlobId = Util.newNoteId()
+		val newBlobId = Util.newNoteId()
 		db!!.transaction {
 			do {
 				var exists = true
@@ -764,6 +768,12 @@ object Cache {
 					utcDateModified
 				)
 			)
+			// hash "branchId", "noteId", "parentNoteId", "prefix"
+			registerEntityChange(
+				"branches",
+				branchId,
+				arrayOf(branchId, newId, parentNote.id, "null")
+			)
 			execSQL(
 				"INSERT INTO blobs VALUES (?, ?, ?, ?)",
 				arrayOf(
@@ -773,15 +783,16 @@ object Cache {
 					utcDateModified
 				)
 			)
+			registerEntityChange("blobs", newBlobId, arrayOf(newBlobId, ""))
 			execSQL(
-				"INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				"INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 				arrayOf(
 					newId,
 					newNoteTitle,
 					"0", // isProtected
 					"text", // type
 					"text/html", // mime
-					null, // blobId
+					newBlobId, // blobId
 					"0", // isDeleted
 					null, // deleteId
 					dateModified, // dateCreated
@@ -790,15 +801,30 @@ object Cache {
 					utcDateModified,
 				)
 			)
+			// hash ["noteId", "title", "isProtected", "type", "mime", "blobId"]
+			registerEntityChange(
+				"notes",
+				newId,
+				arrayOf(newId, newNoteTitle ?: "", "0", "text", "text/html", newBlobId)
+			)
 		}
 		return getNote(newId)!!
+	}
+
+	fun createSiblingNote(siblingNote: Note, newNoteTitle: String?): Note {
+		val parentNote = getNotePath(siblingNote.id)
+		if (parentNote.size == 1) {
+			// root note can't have siblings
+			return createChildNote(siblingNote, newNoteTitle)
+		}
+		return createChildNote(getNote(parentNote[parentNote.size - 2].note)!!, newNoteTitle)
 	}
 
 	private fun dateModified(): String {
 		return localTime.format(Calendar.getInstance().time)
 	}
 
-	private fun utcDateModified(): String {
+	fun utcDateModified(): String {
 		return DateTimeFormatter.ISO_INSTANT.format(OffsetDateTime.now(ZoneOffset.UTC))
 			.replace('T', ' ')
 	}
@@ -1069,3 +1095,34 @@ object Cache {
 
 	}
 }
+
+@OptIn(ExperimentalEncodingApi::class)
+private fun SQLiteDatabase.registerEntityChange(
+	table: String,
+	id: String,
+	toHash: Array<String>,
+) {
+	val utc = utcDateModified()
+	val md = MessageDigest.getInstance("SHA-1")
+	for (h in toHash) {
+		val x = "|${h}".encodeToByteArray()
+		md.update(x, 0, x.size)
+	}
+	val sha1hash = md.digest()
+	val hash = Base64.encode(sha1hash)
+	execSQL(
+		"INSERT OR REPLACE INTO entity_changes (entityName, entityId, hash, isErased, changeId, componentId, instanceId, isSynced, utcDateChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		arrayOf(
+			table,
+			id,
+			hash,
+			0,
+			"changeId${(1000..9999).random()}",
+			"NA",
+			"mobilemobile",
+			1,
+			utc
+		)
+	)
+}
+

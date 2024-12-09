@@ -2,6 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!--
+    <item
+        android:id="@+id/action_add"
+        android:icon="@drawable/bx_plus_circle"
+        android:title="@string/action_share"
+        app:showAsAction="ifRoom" />
+    -->
+
     <item
         android:id="@+id/action_edit"
         android:icon="@drawable/bx_edit_alt"
