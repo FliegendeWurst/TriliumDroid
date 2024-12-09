@@ -1,8 +1,11 @@
 # Trilium Notes for Android
 
+<img align="right" src="./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" />
+
 Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Android. Related: https://github.com/TriliumNext/Notes/issues/72
 
 ## Working
+
 - Support for version 0.90.12 of sync protocol + database schema
 - Sync with other Trilium instance (push + pull)
 - Displaying/editing/sharing note content
