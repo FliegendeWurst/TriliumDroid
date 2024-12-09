@@ -112,7 +112,11 @@ class FrontendBackendApi(
 			PendingIntent.FLAG_IMMUTABLE
 		)
 		val timeMs = df.parse(time).time
-		alarmMgr.setExact(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
+		try {
+			alarmMgr.setExact(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
+		} catch (e: SecurityException) {
+			alarmMgr.set(AlarmManager.RTC_WAKEUP, timeMs, pendingIntent)
+		}
 	}
 
 	@JavascriptInterface
