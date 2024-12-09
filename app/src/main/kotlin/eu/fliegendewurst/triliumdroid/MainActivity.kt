@@ -178,6 +178,17 @@ class MainActivity : AppCompatActivity() {
 
 		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
+				val hostFragment =
+					supportFragmentManager.findFragmentById(R.id.fragment_container)
+				if (hostFragment is NoteEditFragment) {
+					val frag = NoteFragment()
+					frag.loadLater(noteHistory.last().first.id)
+					supportFragmentManager.beginTransaction()
+						.replace(R.id.fragment_container, frag)
+						.addToBackStack(null)
+						.commit()
+					return
+				}
 				if (noteHistory.size <= 1) {
 					finish()
 				} else {

@@ -99,11 +99,27 @@ object Cache {
 		}
 		val data = content.encodeToByteArray()
 		notes[id]!!.content = data
+
+		var blobId = ""
+		db!!.rawQuery(
+			"SELECT blobId FROM blobs LEFT JOIN notes USING (blobId) WHERE noteId = ?",
+			arrayOf(id)
+		).use {
+			if (it.moveToNext()) {
+				blobId = it.getString(0)
+			}
+		}
+		if (blobId == "") {
+			Log.e(TAG, "failed to find blob for note")
+			return
+		}
+
 		val date = dateModified()
 		val utc = utcDateModified()
 		db!!.execSQL(
-			"UPDATE blobs SET content = ?, dateModified = ?, utcDateModified = ? WHERE note_contents.noteId = ?",
-			arrayOf(notes[id]!!.content, date, utc, id)
+			"UPDATE blobs SET content = ?, dateModified = ?, utcDateModified = ? " +
+					"WHERE blobId = ?",
+			arrayOf(Base64.encode(data), date, utc, blobId)
 		)
 		val md = MessageDigest.getInstance("SHA-1")
 		md.update(data, 0, data.size)
@@ -112,8 +128,8 @@ object Cache {
 		db!!.execSQL(
 			"INSERT OR REPLACE INTO entity_changes (entityName, entityId, hash, isErased, changeId, componentId, instanceId, isSynced, utcDateChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 			arrayOf(
-				"note_contents",
-				id,
+				"blobs",
+				blobId,
 				hash,
 				0,
 				"changeId${(1000..9999).random()}",
@@ -249,12 +265,14 @@ object Cache {
 					val content = it.getBlob(0)
 					val base64String = content.decodeToString()
 					//Log.i(TAG, base64String)
-					val trimmed = base64String.substring(0 .. base64String.length - 2)
+					val trimmed = base64String.substring(0..base64String.length - 2)
 					//Log.i(TAG, trimmed)
 					if (trimmed.isBlank()) {
 						ByteArray(0)
 					} else {
-						trimmed.decodeBase64()!!.toByteArray()
+						val decoded = trimmed.decodeBase64()
+						decoded?.toByteArray()
+							?: "failed to decode note content".encodeToByteArray()
 					}
 				} else {
 					ByteArray(0)
@@ -323,7 +341,7 @@ object Cache {
 				note!!.content = if (!it.isNull(0)) {
 					val content = it.getBlob(0)
 					val base64String = content.decodeToString()
-					val trimmed = base64String.substring(0 .. base64String.length - 2)
+					val trimmed = base64String.substring(0..base64String.length - 2)
 					if (trimmed.isBlank()) {
 						ByteArray(0)
 					} else {
@@ -797,7 +815,7 @@ object Cache {
 					}
 					try {
 						db.execSQL(it)
-					} catch (e : SQLiteException) {
+					} catch (e: SQLiteException) {
 						Log.e(TAG, "failure in DB creation ", e)
 					}
 				}

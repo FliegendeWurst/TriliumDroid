@@ -146,6 +146,11 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 		return binding.root
 	}
 
+	fun loadLater(id: String) {
+		load = true
+		this.id = id
+	}
+
 	@SuppressLint("MissingInflatedId")
 	fun load(id: String) {
 		(this@NoteFragment.activity as MainActivity).addHistoryEntry(id)
