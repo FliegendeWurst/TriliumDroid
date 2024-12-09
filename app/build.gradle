@@ -7,7 +7,7 @@ plugins {
 
 android {
     defaultConfig {
-        applicationId "kellerar.triliumdroid"
+        applicationId "eu.fliegendewurst.triliumdroid"
         minSdkVersion 26
         compileSdk 35
         targetSdkVersion 35
