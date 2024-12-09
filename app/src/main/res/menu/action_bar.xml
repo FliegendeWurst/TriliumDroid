@@ -34,6 +34,11 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_delete"
+        android:title="@string/action_delete"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_sync"
         android:title="@string/action_sync"
         app:showAsAction="never" />

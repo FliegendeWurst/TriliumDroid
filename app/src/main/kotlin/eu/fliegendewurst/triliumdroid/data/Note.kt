@@ -9,7 +9,9 @@ class Note(
 	var title: String,
 	var type: String,
 	val created: String,
-	var modified: String
+	var modified: String,
+	var isProtected: Int,
+	var blobId: String
 ) {
 	var content: ByteArray? = null
 	var contentFixed: Boolean = false
@@ -17,7 +19,7 @@ class Note(
 	private var relations: List<Relation>? = null
 	private var inheritedLabels: List<Label>? = null
 	private var inheritedRelations: List<Relation>? = null
-	var children: SortedMap<Int, Branch>? = null
+	var children: SortedMap<String, Branch>? = null
 	var branches: MutableList<Branch> = mutableListOf()
 	private var inheritableCached = false
 

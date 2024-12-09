@@ -52,7 +52,7 @@ import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.service.Icon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.Collections
+import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeBytes
@@ -65,9 +65,11 @@ class MainActivity : AppCompatActivity() {
 	private var consoleLogMenuItem: MenuItem? = null
 	private var executeScriptMenuItem: MenuItem? = null
 	private var shareMenuItem: MenuItem? = null
+	private var deleteMenuItem: MenuItem? = null
 	private var consoleVisible: Boolean = false
 	private var executeVisible: Boolean = false
 	private var shareVisible: Boolean = false
+	private var deleteVisible: Boolean = true
 	private var firstNote: String? = null
 	private val noteHistory: MutableList<Pair<Note, Branch?>> = mutableListOf()
 
@@ -175,7 +177,7 @@ class MainActivity : AppCompatActivity() {
 					startSync(handler)
 				}
 			}, {
-				Cache.getTreeData()
+				Cache.getTreeData("")
 				handler.post {
 					handleError(it)
 					showInitialNote(true)
@@ -208,7 +210,7 @@ class MainActivity : AppCompatActivity() {
 		})
 	}
 
-	private fun refreshTree() {
+	fun refreshTree() {
 		val items = Cache.getTreeList("none_root", 0)
 		Log.i(TAG, "about to show ${items.size} tree items")
 		tree!!.submitList(items)
@@ -255,7 +257,7 @@ class MainActivity : AppCompatActivity() {
 					handler.post {
 						handleError(it)
 					}
-					Cache.getTreeData()
+					Cache.getTreeData("")
 					handler.post {
 						showInitialNote(resetView)
 					}
@@ -271,13 +273,13 @@ class MainActivity : AppCompatActivity() {
 						snackbar.duration = Snackbar.LENGTH_SHORT
 						snackbar.show()
 					}
-					Cache.getTreeData()
+					Cache.getTreeData("")
 					handler.post {
 						showInitialNote(resetView)
 					}
 				})
 			}, {
-				Cache.getTreeData()
+				Cache.getTreeData("")
 				handler.post {
 					handleError(it)
 					showInitialNote(true)
@@ -310,20 +312,24 @@ class MainActivity : AppCompatActivity() {
 		consoleLogMenuItem = menu?.findItem(R.id.action_console) ?: return true
 		executeScriptMenuItem = menu.findItem(R.id.action_execute) ?: return true
 		shareMenuItem = menu.findItem(R.id.action_share) ?: return true
+		deleteMenuItem = menu.findItem(R.id.action_delete) ?: return true
 		consoleLogMenuItem?.isVisible = consoleVisible
 		executeScriptMenuItem?.isVisible = executeVisible
 		shareMenuItem?.isVisible = shareVisible
+		deleteMenuItem?.isVisible = deleteVisible
 		return true
 	}
 
-	fun setupActions(consoleLog: Boolean, execute: Boolean, share: Boolean) {
+	fun setupActions(consoleLog: Boolean, execute: Boolean, share: Boolean, isRoot: Boolean) {
 		consoleVisible = consoleLog
 		executeVisible = execute
 		shareVisible = share
+		deleteVisible = !isRoot
 		consoleLogMenuItem?.isVisible = consoleVisible
 		executeScriptMenuItem?.isVisible = executeVisible
 		shareMenuItem?.isVisible = shareVisible
-		if (!consoleLog || !execute || !share) {
+		deleteMenuItem?.isVisible = deleteVisible
+		if (!consoleLog || !execute || !share || isRoot) {
 			invalidateOptionsMenu()
 		}
 	}
@@ -391,6 +397,37 @@ class MainActivity : AppCompatActivity() {
 			val noteId = getNoteFragment().getNoteId()
 			val script = String(Cache.getNoteWithContent(noteId)!!.content!!)
 			runScript(noteFrag, script)
+			true
+		}
+
+		R.id.action_delete -> {
+			val note = getNoteLoaded()
+			if (note.id == "root") {
+				Toast.makeText(
+					this, getString(R.string.toast_cannot_delete_root),
+					Toast.LENGTH_SHORT
+				).show()
+			} else {
+				AlertDialog.Builder(this)
+					.setTitle("Delete note")
+					.setMessage("Do you really want to delete this note?")
+					.setPositiveButton(
+						android.R.string.ok
+					) { _, _ ->
+						val path = Cache.getNotePath(note.id)
+						val parent = path[1]
+						val parentId = parent.note
+						if (!Cache.deleteNote(note.id)) {
+							Toast.makeText(
+								this, getString(R.string.toast_could_not_delete),
+								Toast.LENGTH_SHORT
+							).show()
+						}
+						navigateTo(Cache.getNote(parentId)!!)
+						refreshTree()
+					}
+					.setNegativeButton(android.R.string.cancel, null).show()
+			}
 			true
 		}
 

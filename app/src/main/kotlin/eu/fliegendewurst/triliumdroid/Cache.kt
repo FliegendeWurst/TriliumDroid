@@ -230,6 +230,29 @@ object Cache {
 		return getNoteInternal(id)
 	}
 
+	fun deleteNote(id: String): Boolean {
+		if (id == "root") {
+			return false
+		}
+		val note = getNote(id) ?: return false
+		for (child in note.children ?: emptyMap()) {
+			val id2 = child.value.note
+			if (!deleteNote(id2)) {
+				return false
+			}
+		}
+		notes.remove(id)
+		db!!.execSQL("UPDATE notes SET isDeleted=1 WHERE noteId = ?", arrayOf(id))
+		db!!.registerEntityChangeNote(note)
+		// remove note from all parents
+		db!!.execSQL("UPDATE branches SET isDeleted=1 WHERE noteId = ?", arrayOf(id))
+		for (branch in note.branches) {
+			db!!.registerEntityChangeBranch(branch)
+			branches.remove(branch.id)
+		}
+		return true
+	}
+
 	private fun getNoteInternal(id: String): Note? {
 		var note: Note? = null
 		CursorFactory.selectionArgs = arrayOf(id)
@@ -244,8 +267,10 @@ object Cache {
 					"notes.type," + // 6
 					"notes.dateCreated," + // 7
 					"notes.dateModified," + // 8
-					"attributes.isInheritable," +
-					"attributes.isDeleted " +
+					"attributes.isInheritable," + // 9
+					"attributes.isDeleted, " + // 10
+					"notes.isProtected, " + // 11
+					"notes.blobId " + // 12
 					"FROM notes LEFT JOIN blobs USING (blobId) " +
 					"LEFT JOIN attributes USING(noteId)" +
 					"WHERE notes.noteId = ? AND notes.isDeleted = 0",
@@ -261,14 +286,14 @@ object Cache {
 					it.getString(2),
 					it.getString(6),
 					it.getString(7),
-					it.getString(8)
+					it.getString(8),
+					it.getInt(11),
+					it.getString(12)
 				)
 				note!!.content = if (!it.isNull(0)) {
 					val content = it.getBlob(0)
 					val base64String = content.decodeToString()
-					//Log.i(TAG, base64String)
 					val trimmed = base64String.substring(0..base64String.length - 2)
-					//Log.i(TAG, trimmed)
 					if (trimmed.isBlank()) {
 						ByteArray(0)
 					} else {
@@ -302,6 +327,8 @@ object Cache {
 										"INVALID",
 										"INVALID",
 										"INVALID",
+										"INVALID",
+										0,
 										"INVALID"
 									)
 							}
@@ -370,6 +397,8 @@ object Cache {
 					it.getString(2),
 					it.getString(3),
 					"INVALID",
+					"INVALID",
+					0,
 					"INVALID"
 				)
 				notes.add(note)
@@ -381,12 +410,25 @@ object Cache {
 	/**
 	 * Populate the tree data cache.
 	 */
-	fun getTreeData() {
+	fun getTreeData(filter: String) {
 		db!!.rawQuery(
-			"SELECT branchId, branches.noteId, parentNoteId, notePosition, prefix, isExpanded, mime, title, notes.type, notes.dateCreated, notes.dateModified FROM branches INNER JOIN notes USING (noteId) WHERE notes.isDeleted = 0 AND branches.isDeleted = 0",
+			"SELECT branchId, " +
+					"branches.noteId, " +
+					"parentNoteId, " +
+					"notePosition, " +
+					"prefix, " +
+					"isExpanded, " +
+					"mime, " +
+					"title, " +
+					"notes.type, " +
+					"notes.dateCreated, " +
+					"notes.dateModified, " +
+					"notes.isProtected, " +
+					"notes.blobId " +
+					"FROM branches INNER JOIN notes USING (noteId) WHERE notes.isDeleted = 0 AND branches.isDeleted = 0 $filter",
 			arrayOf()
 		).use {
-			val clones = mutableListOf<Triple<String, String, Int>>()
+			val clones = mutableListOf<Triple<Pair<String, String>, String, Int>>()
 			while (it.moveToNext()) {
 				val branchId = it.getString(0)
 				val noteId = it.getString(1)
@@ -403,6 +445,8 @@ object Cache {
 				val type = it.getString(8)
 				val dateCreated = it.getString(9)
 				val dateModified = it.getString(10)
+				val isProtected = it.getInt(11)
+				val blobId = it.getString(12)
 				val b = Branch(
 					branchId,
 					noteId,
@@ -419,22 +463,24 @@ object Cache {
 						title,
 						type,
 						dateCreated,
-						dateModified
+						dateModified,
+						isProtected,
+						blobId
 					)
 				}
 				n.branches.add(b)
-				clones.add(Triple(parentNoteId, branchId, notePosition))
+				clones.add(Triple(Pair(parentNoteId, noteId), branchId, notePosition))
 			}
 			for (p in clones) {
 				val b = branches[p.second]
-				val parentNoteId = p.first
+				val parentNoteId = p.first.first
 				if (parentNoteId == "none") {
 					continue
 				}
 				if (notes[parentNoteId]?.children == null) {
 					notes[parentNoteId]?.children = TreeMap()
 				}
-				notes[parentNoteId]?.children!![p.third] = b
+				notes[parentNoteId]?.children!!["${p.third}_${p.first.second}"] = b
 			}
 		}
 	}
@@ -808,6 +854,7 @@ object Cache {
 				arrayOf(newId, newNoteTitle ?: "", "0", "text", "text/html", newBlobId)
 			)
 		}
+		getTreeData("AND noteId = \"$newId\"")
 		return getNote(newId)!!
 	}
 
@@ -817,7 +864,7 @@ object Cache {
 			// root note can't have siblings
 			return createChildNote(siblingNote, newNoteTitle)
 		}
-		return createChildNote(getNote(parentNote[parentNote.size - 2].note)!!, newNoteTitle)
+		return createChildNote(getNote(parentNote[1].note)!!, newNoteTitle)
 	}
 
 	private fun dateModified(): String {
@@ -1094,6 +1141,28 @@ object Cache {
 		}
 
 	}
+}
+
+private fun SQLiteDatabase.registerEntityChangeNote(
+	note: Note,
+) {
+	// hash ["noteId", "title", "isProtected", "type", "mime", "blobId"]
+	registerEntityChange(
+		"notes",
+		note.id,
+		arrayOf(note.id, note.title, note.isProtected.toString(), note.type, note.mime, note.blobId)
+	)
+}
+
+private fun SQLiteDatabase.registerEntityChangeBranch(
+	branch: Branch,
+) {
+	// hash ["branchId", "noteId", "parentNoteId", "prefix"]
+	registerEntityChange(
+		"branches",
+		branch.id,
+		arrayOf(branch.id, branch.note, branch.parentNote, branch.prefix ?: "null")
+	)
 }
 
 @OptIn(ExperimentalEncodingApi::class)

@@ -26,25 +26,33 @@ object CreateNewNoteDialog {
 
 		input.requestFocus()
 
-		input.setOnEditorActionListener { v, actionId, event ->
+		input.setOnEditorActionListener { v, actionId, _ ->
 			if (actionId == EditorInfo.IME_ACTION_SEND) {
-				done(dialog, v.text.toString(), createAsChild, currentNote)
+				done(activity, dialog, v.text.toString(), createAsChild, currentNote)
 				return@setOnEditorActionListener true
 			}
 			false
 		}
 
 		dialog.findViewById<Button>(R.id.button_create_note)!!.setOnClickListener {
-			done(dialog, input.text.toString(), createAsChild, currentNote)
+			done(activity, dialog, input.text.toString(), createAsChild, currentNote)
 		}
 	}
 
-	private fun done(dialog: AlertDialog, title: String, createAsChild: Boolean, currentNote: Note) {
-		if (createAsChild) {
+	private fun done(
+		activity: MainActivity,
+		dialog: AlertDialog,
+		title: String,
+		createAsChild: Boolean,
+		currentNote: Note
+	) {
+		val note = if (createAsChild) {
 			Cache.createChildNote(currentNote, title)
 		} else {
 			Cache.createSiblingNote(currentNote, title)
 		}
 		dialog.dismiss()
+		activity.navigateTo(note)
+		activity.refreshTree()
 	}
 }

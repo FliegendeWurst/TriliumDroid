@@ -229,7 +229,7 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 				)
 			}
 
-			(this@NoteFragment.activity as MainActivity).setupActions(consoleLog, execute, share)
+			(this@NoteFragment.activity as MainActivity).setupActions(consoleLog, execute, share, id == "root")
 		}
 	}
 }
