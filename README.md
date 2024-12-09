@@ -4,7 +4,9 @@
 
 Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Android. Related: https://github.com/TriliumNext/Notes/issues/72
 
-## Working
+[<img src="https://github.com/user-attachments/assets/38acb15c-dbe2-4bc1-9f8b-1539654d3641" width="170">](https://apt.izzysoft.de/fdroid/index/apk/eu.fliegendewurst.triliumdroid)
+
+## Features
 
 - Support for version 0.90.12 of sync protocol + database schema
 - Sync with other Trilium instance (push + pull)
