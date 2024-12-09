@@ -67,8 +67,9 @@
         android:layout_marginTop="@dimen/normal_margin"
         android:paddingStart="@dimen/big_margin"
         android:paddingEnd="@dimen/big_margin"
-        android:text="The original version of this app has been developed by zadam since 2017. It runs on Windows, Mac and Linux."
+        android:text="The original version of this app has been developed by zadam since 2017. It runs on Windows, Mac and Linux. Starting in 2024, development has continued as part of the TriliumNext organization."
         android:textSize="@dimen/bigger_text_size"
+        app:layout_constraintBottom_toTopOf="@id/button_github"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/header_pc" />
@@ -82,9 +83,24 @@
         android:drawableStart="@drawable/bxl_github"
         android:text=" zadam / trilium"
         android:textSize="@dimen/bigger_text_size"
+        app:layout_constraintBottom_toTopOf="@id/button_github3"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/description_pc" />
+
+    <Button
+        android:id="@+id/button_github3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="@dimen/activity_margin"
+        android:drawableStart="@drawable/bxl_github"
+        android:text=" TriliumNext / Notes"
+        android:textSize="@dimen/bigger_text_size"
+        app:layout_constraintBottom_toBottomOf="@id/description_pc"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/button_github" />
 
     <ImageView
         android:id="@+id/divider2"
@@ -93,7 +109,7 @@
         android:layout_marginTop="@dimen/normal_margin"
         android:background="@color/divider_grey"
         android:importantForAccessibility="no"
-        app:layout_constraintTop_toBottomOf="@id/button_github" />
+        app:layout_constraintTop_toBottomOf="@id/button_github3" />
 
     <TextView
         android:id="@+id/header_app"
@@ -123,7 +139,7 @@
         android:layout_marginTop="@dimen/normal_margin"
         android:layout_marginBottom="@dimen/activity_margin"
         android:drawableStart="@drawable/bxl_github"
-        android:text=" FliegendeWurst / trilium-android"
+        android:text=" FliegendeWurst / TriliumDroid"
         android:textSize="@dimen/bigger_text_size"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

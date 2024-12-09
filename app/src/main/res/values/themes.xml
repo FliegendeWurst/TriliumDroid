@@ -15,6 +15,8 @@
         <item name="actionBarTheme">@style/Theme.TriliumDroid.AppBarOverlay</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:textColorTertiary">@color/black</item>
+        <!-- fix status bar overlapping toolbar -->
+        <item name="android:fitsSystemWindows">true</item>
     </style>
 
     <style name="Theme.TriliumDroid.AppBarOverlay" parent="ThemeOverlay.AppCompat.ActionBar">

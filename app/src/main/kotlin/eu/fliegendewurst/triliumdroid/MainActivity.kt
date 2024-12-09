@@ -456,7 +456,7 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		R.id.action_about -> {
-			startActivity(Intent(this, SetupActivity::class.java))
+			startActivity(Intent(this, AboutActivity::class.java))
 			true
 		}
 
