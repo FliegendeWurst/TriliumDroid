@@ -1,0 +1,7 @@
+Initial alpha release!
+
+Highlights:
+
+- Note browsing and editing
+- Note tree navigation
+- Jump to note dialog

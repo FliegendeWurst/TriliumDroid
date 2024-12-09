@@ -1,0 +1,1 @@
+Cross-platform hierarchical note taking app, for large personal knowledge bases
