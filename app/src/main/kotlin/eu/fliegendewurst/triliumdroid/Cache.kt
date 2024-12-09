@@ -635,7 +635,7 @@ object Cache {
 		// first, verify correct sync version
 		ConnectionUtil.getAppInfo {
 			if (it != null) {
-				if (it.syncVersion == CacheDbHelper.SYNC_VERSION && it.dbVersion == CacheDbHelper.DATABASE_VERSION) {
+				if ((it.syncVersion == CacheDbHelper.SYNC_VERSION || it.syncVersion == CacheDbHelper.SYNC_VERSION_0_63_3) && it.dbVersion == CacheDbHelper.DATABASE_VERSION) {
 					sync(0, callbackOutstanding, callbackError, callbackDone)
 				} else {
 					Log.e(TAG, "mismatched sync / database version")
