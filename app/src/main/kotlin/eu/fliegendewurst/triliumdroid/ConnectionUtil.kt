@@ -26,17 +26,18 @@ object ConnectionUtil {
 
 	fun setup(prefs: SharedPreferences, callback: () -> Unit, callbackError: (Exception) -> Unit) {
 		ConnectionUtil.prefs = prefs
-		server = prefs.getString("hostname", null)!!
+		server = prefs.getString("hostname", null)!!.trimEnd('/')
 		val password = prefs.getString("password", null)!!
 		connect(server, password, callback, callbackError)
 	}
 
 	fun connect(
-		server: String,
+		serverHostname: String,
 		password: String,
 		callback: () -> Unit,
 		callbackError: (Exception) -> Unit
 	) {
+		val server = serverHostname.trimEnd('/')
 		client = OkHttpClient.Builder()
 			.cookieJar(object : CookieJar {
 				// TODO: this is a terrible cookie jar
