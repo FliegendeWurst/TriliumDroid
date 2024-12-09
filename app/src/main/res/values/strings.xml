@@ -5,6 +5,7 @@
     <string name="password_placeholder">Trilium password</string>
     <string name="setup_button">Start</string>
     <string name="fab_description">Jump to note</string>
+    <string name="fab_tree_description">Jump to note</string>
     <string name="jump_to_dialog">Jump to note</string>
 
     <string name="action_about">About</string>

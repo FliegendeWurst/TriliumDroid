@@ -15,8 +15,6 @@
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
-            android:focusable="true"
-            android:clickable="true"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
@@ -52,6 +50,18 @@
             app:navGraph="@navigation/nav_graph" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab_tree"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="16dp"
+            android:backgroundTint="@color/secondary_light"
+            android:contentDescription="@string/fab_tree_description"
+            android:src="@drawable/bx_align_left"
+            app:borderWidth="0dp" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -61,7 +71,8 @@
             android:backgroundTint="@color/secondary_light"
             android:contentDescription="@string/fab_description"
             android:src="@drawable/bx_send"
-            app:borderWidth="0dp" />
+            app:borderWidth="0dp"
+            tools:ignore="RelativeOverlap" />
     </RelativeLayout>
 
     <RelativeLayout

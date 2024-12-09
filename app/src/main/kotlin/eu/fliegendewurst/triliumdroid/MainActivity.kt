@@ -119,10 +119,6 @@ class MainActivity : AppCompatActivity() {
 		toolbar.title = ""
 		setSupportActionBar(toolbar)
 
-		binding.toolbar.setOnClickListener {
-			Log.i(TAG, "testing")
-		}
-
 		ArrayAdapter.createFromResource(
 			this,
 			R.array.note_types_array,
@@ -156,6 +152,9 @@ class MainActivity : AppCompatActivity() {
 
 		binding.fab.setOnClickListener {
 			JumpToNoteDialog.showDialog(this)
+		}
+		binding.fabTree.setOnClickListener {
+			binding.drawerLayout.openDrawer(GravityCompat.START)
 		}
 
 		if (prefs.getString("hostname", null) == null) {
