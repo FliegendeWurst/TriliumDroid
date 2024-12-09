@@ -119,6 +119,10 @@ class MainActivity : AppCompatActivity() {
 		toolbar.title = ""
 		setSupportActionBar(toolbar)
 
+		binding.toolbar.setOnClickListener {
+			Log.i(TAG, "testing")
+		}
+
 		ArrayAdapter.createFromResource(
 			this,
 			R.array.note_types_array,
@@ -224,33 +228,41 @@ class MainActivity : AppCompatActivity() {
 			Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
 		snackbar.show()
 		lifecycleScope.launch(Dispatchers.IO) {
-			Cache.syncStart({
-				handler.post {
-					snackbar.setText("Sync: $it outstanding...")
-				}
+			ConnectionUtil.setup(prefs, {
+				Cache.syncStart({
+					handler.post {
+						snackbar.setText("Sync: $it outstanding...")
+					}
+				}, {
+					handler.post {
+						handleError(it)
+					}
+					Cache.getTreeData()
+					handler.post {
+						showInitialNote(resetView)
+					}
+					// ensure the snackbar doesn't stay visible
+					handler.post {
+						snackbar.setText("Sync: error!")
+						snackbar.duration = Snackbar.LENGTH_SHORT
+						snackbar.show()
+					}
+				}, {
+					handler.post {
+						snackbar.setText("Sync: ${it.first} pulled, ${it.second} pushed")
+						snackbar.duration = Snackbar.LENGTH_SHORT
+						snackbar.show()
+					}
+					Cache.getTreeData()
+					handler.post {
+						showInitialNote(resetView)
+					}
+				})
 			}, {
+				Cache.getTreeData()
 				handler.post {
 					handleError(it)
-				}
-				Cache.getTreeData()
-				handler.post {
-					showInitialNote(resetView)
-				}
-				// ensure the snackbar doesn't stay visible
-				handler.post {
-					snackbar.setText("Sync: error!")
-					snackbar.duration = Snackbar.LENGTH_SHORT
-					snackbar.show()
-				}
-			}, {
-				handler.post {
-					snackbar.setText("Sync: ${it.first} pulled, ${it.second} pushed")
-					snackbar.duration = Snackbar.LENGTH_SHORT
-					snackbar.show()
-				}
-				Cache.getTreeData()
-				handler.post {
-					showInitialNote(resetView)
+					showInitialNote(true)
 				}
 			})
 		}

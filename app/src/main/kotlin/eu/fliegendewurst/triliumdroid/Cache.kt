@@ -568,7 +568,7 @@ object Cache {
 		ConnectionUtil.getAppInfo {
 			if (it != null) {
 				if (it.syncVersion == CacheDbHelper.SYNC_VERSION && it.dbVersion == CacheDbHelper.DATABASE_VERSION) {
-					sync(callbackOutstanding, callbackError, callbackDone)
+					sync(0, callbackOutstanding, callbackError, callbackDone)
 				} else {
 					Log.e(TAG, "mismatched sync / database version")
 					callbackError(Exception("mismatched sync / database version"))
@@ -580,13 +580,14 @@ object Cache {
 	}
 
 	private fun sync(
+		alreadySynced: Int,
 		callbackOutstanding: (Int) -> Unit,
 		callbackError: (Exception) -> Unit,
 		callbackDone: (Pair<Int, Int>) -> Unit
 	) {
 		try {
 			val totalPushed = syncPush()
-			var totalSynced = 0
+			var totalSynced = alreadySynced
 			var lastSyncedPull = 0
 			db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPull"))
 				.use {
@@ -679,7 +680,7 @@ object Cache {
 				)
 				if (outstandingPullCount > 0) {
 					callbackOutstanding(outstandingPullCount)
-					sync(callbackOutstanding, callbackError, callbackDone)
+					sync(totalSynced, callbackOutstanding, callbackError, callbackDone)
 				} else {
 					callbackDone(Pair(totalSynced, totalPushed))
 				}
