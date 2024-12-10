@@ -51,7 +51,7 @@ class SetupActivity : AppCompatActivity() {
 			.apply()
 		val looper = applicationContext.mainLooper
 		val handler = Handler(looper)
-		ConnectionUtil.connect(server, password, {
+		ConnectionUtil.setup(prefs, {
 			handler.post {
 				finish()
 			}
