@@ -36,6 +36,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
 import androidx.core.text.parseAsHtml
@@ -239,13 +240,15 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun startSync(handler: Handler, resetView: Boolean = true) {
-		val contextView = binding.fragmentContainer
-
-		val snackbar = Snackbar.make(contextView, "Sync: starting...", Snackbar.LENGTH_INDEFINITE)
+		val snackbar = Snackbar.make(binding.root, "Sync: starting...", Snackbar.LENGTH_INDEFINITE)
 		snackbar.view.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
 		snackbar.view.minimumWidth = 300
 		(snackbar.view.layoutParams as FrameLayout.LayoutParams).gravity =
 			Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
+		val ts =
+			snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+		ts.textAlignment = View.TEXT_ALIGNMENT_CENTER
+		ts.gravity = Gravity.CENTER_HORIZONTAL
 		snackbar.show()
 		lifecycleScope.launch(Dispatchers.IO) {
 			ConnectionUtil.setup(prefs, {
