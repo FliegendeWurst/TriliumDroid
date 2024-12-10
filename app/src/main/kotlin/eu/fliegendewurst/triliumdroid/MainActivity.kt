@@ -189,11 +189,12 @@ class MainActivity : AppCompatActivity() {
 
 		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
-				val hostFragment =
-					supportFragmentManager.findFragmentById(R.id.fragment_container)
+				val hostFragment = getFragment()
 				if (hostFragment is NoteEditFragment) {
 					val frag = NoteFragment()
 					frag.loadLater(noteHistory.last().first.id)
+					binding.fabTree.show()
+					binding.fab.show()
 					supportFragmentManager.beginTransaction()
 						.replace(R.id.fragment_container, frag)
 						.addToBackStack(null)
@@ -346,12 +347,13 @@ class MainActivity : AppCompatActivity() {
 	@SuppressLint("SetJavaScriptEnabled")
 	override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
 		R.id.action_edit -> {
-			val fragment = getFragment()
-			when (fragment) {
+			when (val fragment = getFragment()) {
 				is NoteFragment -> {
 					val id = fragment.getNoteId()
 					val frag = NoteEditFragment()
 					frag.loadLater(id)
+					binding.fabTree.hide()
+					binding.fab.hide()
 					supportFragmentManager.beginTransaction()
 						.replace(R.id.fragment_container, frag)
 						.addToBackStack(null)
@@ -362,6 +364,8 @@ class MainActivity : AppCompatActivity() {
 					val id = fragment.getNoteId()!!
 					val frag = NoteFragment()
 					frag.loadLater(id)
+					binding.fabTree.show()
+					binding.fab.show()
 					supportFragmentManager.beginTransaction()
 						.replace(R.id.fragment_container, frag)
 						.addToBackStack(null)
