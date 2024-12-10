@@ -12,7 +12,7 @@ import org.wordpress.aztec.Aztec
 import org.wordpress.aztec.ITextFormat
 import org.wordpress.aztec.toolbar.IAztecToolbarClickListener
 
-class NoteEditFragment(private val id: String) : Fragment(R.layout.fragment_note_edit),
+class NoteEditFragment(val id: String) : Fragment(R.layout.fragment_note_edit),
 	IAztecToolbarClickListener {
 	companion object {
 		private const val TAG: String = "NoteEditFragment"

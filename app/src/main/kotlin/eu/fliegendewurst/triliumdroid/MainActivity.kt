@@ -41,6 +41,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
 import androidx.core.text.parseAsHtml
 import androidx.core.view.GravityCompat
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.preference.PreferenceManager
@@ -345,11 +346,24 @@ class MainActivity : AppCompatActivity() {
 	@SuppressLint("SetJavaScriptEnabled")
 	override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
 		R.id.action_edit -> {
-			val id = getNoteFragment().getNoteId()
-			supportFragmentManager.beginTransaction()
-				.replace(R.id.fragment_container, NoteEditFragment(id))
-				.addToBackStack(null)
-				.commit()
+			val fragment = getFragment()
+			if (fragment is NoteFragment) {
+				val id = fragment.getNoteId()
+				supportFragmentManager.beginTransaction()
+					.replace(R.id.fragment_container, NoteEditFragment(id))
+					.addToBackStack(null)
+					.commit()
+			} else if (fragment is NoteEditFragment) {
+				val id = fragment.id
+				val frag = NoteFragment()
+				frag.loadLater(id)
+				supportFragmentManager.beginTransaction()
+					.replace(R.id.fragment_container, frag)
+					.addToBackStack(null)
+					.commit()
+			} else {
+				Log.e(TAG, "failed to identify fragment " + fragment.javaClass)
+			}
 			true
 		}
 
@@ -627,6 +641,17 @@ class MainActivity : AppCompatActivity() {
 	override fun onDestroy() {
 		super.onDestroy()
 		Cache.closeDatabase()
+	}
+
+	private fun getFragment(): Fragment {
+		val hostFragment =
+			supportFragmentManager.findFragmentById(R.id.fragment_container)
+		return if (hostFragment is NoteFragment || hostFragment is NoteEditFragment) {
+			hostFragment
+		} else {
+			val frags = (hostFragment as NavHostFragment).childFragmentManager.fragments
+			frags[0]
+		}
 	}
 
 	private fun getNoteFragment(): NoteFragment {
