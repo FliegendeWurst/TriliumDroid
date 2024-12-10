@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget"
     android:layout_width="match_parent"
-    style="@style/Widget">
+    android:layout_height="wrap_content">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         style="@style/WidgetInner"
@@ -15,9 +16,22 @@
             style="@style/WidgetTableHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Owned Attributes"
+            android:text="@string/label_owned_attributes"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/button_labels_modify"
+            android:contentDescription="@string/description_add_label"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="#fff"
+            android:drawableStart="@drawable/bx_edit_alt"
+            android:paddingStart="0dp"
+            android:translationZ="@dimen/medium_margin_plus"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="RtlSymmetry" />
 
         <include
             android:id="@+id/widget_owned_attributes_divider"
@@ -27,13 +41,11 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_owned_attributes_title" />
 
-        <!-- don't ask me why marginTop has to be set ... -->
         <ListView
             android:id="@+id/widget_owned_attributes_type_content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/smaller_margin"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_owned_attributes_divider" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>

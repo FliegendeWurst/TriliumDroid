@@ -1,0 +1,153 @@
+package eu.fliegendewurst.triliumdroid.dialog
+
+import android.content.Context
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
+import android.widget.BaseAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ListView
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.MainActivity
+import eu.fliegendewurst.triliumdroid.R
+import eu.fliegendewurst.triliumdroid.data.Label
+import eu.fliegendewurst.triliumdroid.data.Note
+
+
+object ModifyLabelsDialog {
+	fun showDialog(activity: MainActivity, currentNote: Note) {
+		val dialog = AlertDialog.Builder(activity)
+			.setTitle(R.string.dialog_modify_labels)
+			.setView(R.layout.dialog_modify_labels)
+			.create()
+		dialog.window!!.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
+		dialog.show()
+
+		var requestedFocus = false
+
+		val changes = mutableMapOf<String, String>()
+		val ownedAttributes =
+			currentNote.getLabels().filter { x -> !x.inherited && !x.templated }.toMutableList()
+		// add template labels
+		for (template in currentNote.getLabels().filter { x -> x.name.startsWith("label:") }) {
+			val labelName = template.name.removePrefix("label:").removeSuffix("(inheritable)")
+			val inheritable = template.name.endsWith("(inheritable)")
+			if (ownedAttributes.any { x -> x.name == labelName }) {
+				continue
+			}
+			val settings = template.value.split(',')
+			ownedAttributes.add(
+				Label(
+					labelName,
+					"",
+					inheritable,
+					settings.contains("promoted"),
+					!settings.contains("single")
+				)
+			)
+		}
+		val ownedAttributesList = dialog.findViewById<ListView>(R.id.list_labels)!!
+		val watchers = arrayOfNulls<TextWatcher?>(ownedAttributes.size).toMutableList()
+		ownedAttributesList.itemsCanFocus = true
+		ownedAttributesList.adapter = object : BaseAdapter() {
+			override fun getCount(): Int {
+				return ownedAttributes.size
+			}
+
+			override fun getItem(position: Int): Any {
+				return ownedAttributes[position]
+			}
+
+			override fun getItemId(position: Int): Long {
+				return position.toLong()
+			}
+
+			override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+				Log.i("modifylabels", position.toString())
+				val attribute = ownedAttributes[position]
+				var vi = convertView
+				if (vi == null) {
+					vi = activity.layoutInflater.inflate(R.layout.item_label_input, null)
+				}
+				vi!!.findViewById<TextView>(R.id.label_label_title).text = attribute.name
+				val content = vi.findViewById<EditText>(R.id.edit_label_content)
+				content.setText(attribute.value())
+				if (watchers[position] != null) {
+					content.removeTextChangedListener(watchers[position])
+				}
+				watchers[position] = object : TextWatcher {
+					override fun beforeTextChanged(
+						s: CharSequence?,
+						start: Int,
+						count: Int,
+						after: Int
+					) {
+					}
+
+					override fun onTextChanged(
+						s: CharSequence?,
+						start: Int,
+						before: Int,
+						count: Int
+					) {
+					}
+
+					override fun afterTextChanged(s: Editable?) {
+						if (s == null) {
+							return
+						}
+						changes[attribute.name] = s.toString()
+					}
+
+				}
+				content.addTextChangedListener(watchers[position])
+				if (!requestedFocus && attribute.value().isEmpty()) {
+					content.requestFocus()
+					activity.handler.postDelayed({
+						val imm =
+							activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+						imm.showSoftInput(content, 0)
+					}, 200)
+					requestedFocus = true
+				}
+				return vi
+			}
+		}
+
+		dialog.findViewById<Button>(R.id.button_modify_labels)!!.setOnClickListener {
+			done(activity, dialog, changes, currentNote, ownedAttributes)
+		}
+	}
+
+	private fun done(
+		activity: MainActivity,
+		dialog: AlertDialog,
+		changes: Map<String, String>,
+		currentNote: Note,
+		labels: List<Label>
+	) {
+		val previousLabels = currentNote.getLabels().map {
+			return@map Pair(it.name, it.value)
+		}.toMap()
+		for (change in changes) {
+			val attrName = change.key
+			val attrValue = change.value
+			if (previousLabels[attrName] == attrValue) {
+				continue
+			}
+			val inheritable =
+				labels.filter { x -> x.name == attrName }.map { x -> x.inheritable }.firstOrNull()
+					?: false
+			Cache.updateLabel(currentNote, attrName, attrValue, inheritable)
+		}
+		dialog.dismiss()
+		activity.refreshWidgets(currentNote)
+	}
+}

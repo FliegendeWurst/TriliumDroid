@@ -7,17 +7,18 @@ class Label(
 	promoted: Boolean,
 	val multi: Boolean,
 	inherited: Boolean = false,
-) : Attribute(name, promoted, inherited) {
+	templated: Boolean = false,
+) : Attribute(name, promoted, inherited, templated) {
 	override fun value(): String {
 		return value
 	}
 
 	fun makeInherited(): Label {
-		return Label(name, value, inheritable, promoted, multi, true)
+		return Label(name, value, inheritable, promoted, multi, inherited = true, templated = false)
 	}
 
 	fun makeTemplated(): Label {
-		return Label(name, value, inheritable, promoted, multi, true)
+		return Label(name, value, inheritable, promoted, multi, inherited = false, templated = true)
 	}
 
 }

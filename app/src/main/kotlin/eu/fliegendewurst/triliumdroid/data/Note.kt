@@ -142,6 +142,14 @@ class Note(
 		}
 	}
 
+	fun clearAttributeCache() {
+		inheritableCached = false
+		labels = emptyList()
+		inheritedLabels = emptyList()
+		relations = emptyList()
+		inheritedRelations = emptyList()
+	}
+
 	fun getAttributes(): List<Attribute> {
 		if (!inheritableCached) {
 			cacheInheritableAttributes()

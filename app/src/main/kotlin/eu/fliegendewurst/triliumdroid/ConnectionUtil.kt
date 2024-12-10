@@ -221,7 +221,7 @@ object ConnectionUtil {
 
 	fun doSyncPushRequest(uri: String, data: JSONObject) {
 		val dataBody = data.toString(0)
-		Log.i(TAG, "syncing $data")
+		Log.i(TAG, "syncing ${data.length()} bytes of data")
 		val req = Request.Builder()
 			.header("pageCount", "1")
 			.header("pageIndex", "0")

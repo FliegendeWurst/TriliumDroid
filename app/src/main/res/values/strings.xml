@@ -35,6 +35,10 @@
     <string name="label_rename">Rename</string>
     <string name="label_note_paths">Note Paths</string>
     <string name="button_clone_note">Clone note</string>
+    <string name="label_owned_attributes">Labels</string>
+    <string name="description_add_label">add label</string>
+    <string name="dialog_modify_labels">Modify labels</string>
+    <string name="label_inherited_attributes">Inherited Labels</string>
 
     <string-array name="note_types_array">
         <item>Text</item>

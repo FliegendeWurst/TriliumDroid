@@ -26,6 +26,7 @@ import android.webkit.WebView
 import android.widget.AdapterView.OnItemClickListener
 import android.widget.ArrayAdapter
 import android.widget.BaseAdapter
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -51,6 +52,7 @@ import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
+import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
 import eu.fliegendewurst.triliumdroid.dialog.RenameNoteDialog
 import eu.fliegendewurst.triliumdroid.service.Icon
 import kotlinx.coroutines.Dispatchers
@@ -154,6 +156,9 @@ class MainActivity : AppCompatActivity() {
 		}
 		binding.buttonNewNoteSibling.setOnClickListener {
 			CreateNewNoteDialog.showDialog(this, false, getNoteLoaded())
+		}
+		binding.root.findViewById<Button>(R.id.button_labels_modify).setOnClickListener {
+			ModifyLabelsDialog.showDialog(this, getNoteLoaded())
 		}
 
 		// add custom buttons
@@ -548,44 +553,10 @@ class MainActivity : AppCompatActivity() {
 		binding.toolbarTitle.text = getNoteLoaded().title
 	}
 
-	private fun refreshWidgets(noteContent: Note) {
-		val noteId = findViewById<TextView>(R.id.widget_note_info_id_content)
-		noteId.text = noteContent.id
-		val noteType = findViewById<TextView>(R.id.widget_note_info_type_content)
-		noteType.text = noteContent.type
-		val noteCreated = findViewById<TextView>(R.id.widget_note_info_created_content)
-		noteCreated.text = noteContent.created.substring(0, 19)
-		val noteModified = findViewById<TextView>(R.id.widget_note_info_modified_content)
-		noteModified.text = noteContent.modified.substring(0, 19)
-	}
-
-	fun navigateTo(note: Note, branch: Branch? = null) {
-		Log.i(TAG, "loading note ${note.id}")
-		prefs.edit().putString(LAST_NOTE, note.id).apply()
-		// make sure note is visible
-		val path = Cache.getNotePath(note.id)
-		val expandedAny = ensurePathIsExpanded(path)
-		if (expandedAny) {
-			refreshTree()
-		}
-		tree!!.select(note.id)
-		getNoteFragment().load(note.id)
-		val noteContent = Cache.getNoteWithContent(note.id)!!
-		binding.drawerLayout.closeDrawers()
-		binding.toolbarTitle.text = noteContent.title
-		binding.toolbarIcon.text =
-			Icon.getUnicodeCharacter(noteContent.getLabel("iconClass") ?: "bx bx-note")
-		if (branch != null) {
-			scrollTreeToBranch(branch)
-		} else {
-			scrollTreeTo(noteContent.id)
-		}
-
-		// update right drawer
-
+	fun refreshWidgets(noteContent: Note) {
 		// attributes
-		val attributes = noteContent.getAttributes()
-		val ownedAttributes = attributes.filter { x -> !x.inherited }
+		val attributes = noteContent.getLabels()
+		val ownedAttributes = attributes.filter { x -> !x.inherited && !x.templated }
 		Log.i(TAG, "have ${ownedAttributes.size} owned attributes to show!")
 		val ownedAttributesList = findViewById<ListView>(R.id.widget_owned_attributes_type_content)
 		ownedAttributesList.adapter = object : BaseAdapter() {
@@ -602,7 +573,7 @@ class MainActivity : AppCompatActivity() {
 			}
 
 			override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-				val attribute = attributes[position]
+				val attribute = ownedAttributes[position]
 				var vi = convertView
 				if (vi == null) {
 					vi = layoutInflater.inflate(R.layout.item_attribute, null)
@@ -610,9 +581,7 @@ class MainActivity : AppCompatActivity() {
 				vi!!.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
 				vi.findViewById<TextView>(R.id.label_attribute_value).text = attribute.value()
 				return vi
-
 			}
-
 		}
 
 		// note paths
@@ -648,6 +617,39 @@ class MainActivity : AppCompatActivity() {
 				}
 			}
 
+		val noteId = findViewById<TextView>(R.id.widget_note_info_id_content)
+		noteId.text = noteContent.id
+		val noteType = findViewById<TextView>(R.id.widget_note_info_type_content)
+		noteType.text = noteContent.type
+		val noteCreated = findViewById<TextView>(R.id.widget_note_info_created_content)
+		noteCreated.text = noteContent.created.substring(0, 19)
+		val noteModified = findViewById<TextView>(R.id.widget_note_info_modified_content)
+		noteModified.text = noteContent.modified.substring(0, 19)
+	}
+
+	fun navigateTo(note: Note, branch: Branch? = null) {
+		Log.i(TAG, "loading note ${note.id}")
+		prefs.edit().putString(LAST_NOTE, note.id).apply()
+		// make sure note is visible
+		val path = Cache.getNotePath(note.id)
+		val expandedAny = ensurePathIsExpanded(path)
+		if (expandedAny) {
+			refreshTree()
+		}
+		tree!!.select(note.id)
+		getNoteFragment().load(note.id)
+		val noteContent = Cache.getNoteWithContent(note.id)!!
+		binding.drawerLayout.closeDrawers()
+		binding.toolbarTitle.text = noteContent.title
+		binding.toolbarIcon.text =
+			Icon.getUnicodeCharacter(noteContent.getLabel("iconClass") ?: "bx bx-note")
+		if (branch != null) {
+			scrollTreeToBranch(branch)
+		} else {
+			scrollTreeTo(noteContent.id)
+		}
+
+		// update right drawer
 		refreshWidgets(noteContent)
 	}
 

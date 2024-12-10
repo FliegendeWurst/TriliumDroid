@@ -150,6 +150,45 @@ object Cache {
 		db!!.registerEntityChangeNote(notes[id]!!)
 	}
 
+	fun updateLabel(note: Note, name: String, value: String, inheritable: Boolean) {
+		// TODO: re-fetch note from database
+		var previousId: String? = null
+		db!!.rawQuery(
+			"SELECT attributeId FROM attributes WHERE noteId = ? AND type = 'label' AND name = ?",
+			arrayOf(note.id, name)
+		).use {
+			if (it.moveToNext()) {
+				previousId = it.getString(0)
+			}
+		}
+		val utc = utcDateModified()
+		if (previousId != null) {
+			db!!.execSQL(
+				"UPDATE attributes SET value = ?, utcDateModified = ? " +
+						"WHERE noteId = ? AND type = 'label' AND name = ?",
+				arrayOf(value, utc, note.id, name)
+			)
+		} else {
+			var fresh = false
+			while (!fresh) {
+				previousId = Util.newNoteId()
+				// check if it is used
+				db!!.rawQuery("SELECT 1 FROM attributes WHERE attributeId = ?", arrayOf(previousId)).use {
+					fresh = !it.moveToNext()
+				}
+			}
+			// TODO: proper position
+			db!!.execSQL(
+				"INSERT INTO attributes (attributeId, noteId, type, name, value, position, utcDateModified, isDeleted, deleteId, isInheritable) " +
+						"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				arrayOf(previousId, note.id, "label", name, value, 10, utc, 0, null, inheritable)
+			)
+		}
+		db!!.registerEntityChangeAttribute(previousId!!, note.id, "label", name, value, inheritable)
+		note.clearAttributeCache()
+		getNoteInternal(note.id)
+	}
+
 	/**
 	 * Get one possible note path for the provided note id.
 	 */
@@ -269,6 +308,8 @@ object Cache {
 	private fun getNoteInternal(id: String): Note? {
 		var note: Note? = null
 		CursorFactory.selectionArgs = arrayOf(id)
+		val labels = mutableListOf<Label>()
+		val relations = mutableListOf<Relation>()
 		db!!.rawQueryWithFactory(
 			CursorFactory,
 			"SELECT content," + // 0
@@ -290,8 +331,6 @@ object Cache {
 			arrayOf(id),
 			"notes"
 		).use {
-			val labels = mutableListOf<Label>()
-			val relations = mutableListOf<Relation>()
 			if (it.moveToFirst()) {
 				note = Note(
 					id,
@@ -358,6 +397,8 @@ object Cache {
 			val previous = notes[id]
 			note!!.branches = previous?.branches ?: mutableListOf()
 			note!!.children = previous?.children
+			previous?.setLabels(labels)
+			previous?.setRelations(relations)
 			notes[id] = note!!
 		}
 		return note
@@ -1166,6 +1207,22 @@ private fun SQLiteDatabase.registerEntityChangeNote(
 		"notes",
 		note.id,
 		arrayOf(note.id, note.title, note.isProtected.toString(), note.type, note.mime, note.blobId)
+	)
+}
+
+private fun SQLiteDatabase.registerEntityChangeAttribute(
+	attributeId: String,
+	noteId: String,
+	type: String,
+	name: String,
+	value: String,
+	isInheritable: Boolean
+) {
+	// hash ["attributeId", "noteId", "type", "name", "value", "isInheritable"]
+	registerEntityChange(
+		"attributes",
+		attributeId,
+		arrayOf(attributeId, noteId, type, name, value, if (isInheritable) { "1" } else { "0" })
 	)
 }
 
