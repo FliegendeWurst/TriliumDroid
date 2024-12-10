@@ -153,6 +153,11 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 
 	@SuppressLint("MissingInflatedId")
 	fun load(id: String) {
+		// if called before proper creation
+		if (this.activity == null) {
+			loadLater(id)
+			return
+		}
 		(this@NoteFragment.activity as MainActivity).addHistoryEntry(id)
 		console.clear()
 		subCodeNotes = emptyList()
@@ -229,7 +234,12 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 				)
 			}
 
-			(this@NoteFragment.activity as MainActivity).setupActions(consoleLog, execute, share, id == "root")
+			(this@NoteFragment.activity as MainActivity).setupActions(
+				consoleLog,
+				execute,
+				share,
+				id == "root"
+			)
 		}
 	}
 }

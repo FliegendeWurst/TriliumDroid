@@ -195,8 +195,9 @@ class MainActivity : AppCompatActivity() {
 			override fun handleOnBackPressed() {
 				val hostFragment = getFragment()
 				if (hostFragment is NoteEditFragment) {
+					val id = noteHistory.last().first.id
 					val frag = NoteFragment()
-					frag.loadLater(noteHistory.last().first.id)
+					frag.loadLater(id)
 					binding.fabTree.show()
 					binding.fab.show()
 					supportFragmentManager.beginTransaction()
@@ -547,6 +548,17 @@ class MainActivity : AppCompatActivity() {
 		binding.toolbarTitle.text = getNoteLoaded().title
 	}
 
+	private fun refreshWidgets(noteContent: Note) {
+		val noteId = findViewById<TextView>(R.id.widget_note_info_id_content)
+		noteId.text = noteContent.id
+		val noteType = findViewById<TextView>(R.id.widget_note_info_type_content)
+		noteType.text = noteContent.type
+		val noteCreated = findViewById<TextView>(R.id.widget_note_info_created_content)
+		noteCreated.text = noteContent.created.substring(0, 19)
+		val noteModified = findViewById<TextView>(R.id.widget_note_info_modified_content)
+		noteModified.text = noteContent.modified.substring(0, 19)
+	}
+
 	fun navigateTo(note: Note, branch: Branch? = null) {
 		Log.i(TAG, "loading note ${note.id}")
 		prefs.edit().putString(LAST_NOTE, note.id).apply()
@@ -636,14 +648,7 @@ class MainActivity : AppCompatActivity() {
 				}
 			}
 
-		val noteId = findViewById<TextView>(R.id.widget_note_info_id_content)
-		noteId.text = noteContent.id
-		val noteType = findViewById<TextView>(R.id.widget_note_info_type_content)
-		noteType.text = noteContent.type
-		val noteCreated = findViewById<TextView>(R.id.widget_note_info_created_content)
-		noteCreated.text = noteContent.created.substring(0, 19)
-		val noteModified = findViewById<TextView>(R.id.widget_note_info_modified_content)
-		noteModified.text = noteContent.modified.substring(0, 19)
+		refreshWidgets(noteContent)
 	}
 
 	private fun ensurePathIsExpanded(path: List<Branch>): Boolean {
@@ -681,7 +686,16 @@ class MainActivity : AppCompatActivity() {
 			hostFragment
 		} else {
 			val frags = (hostFragment as NavHostFragment).childFragmentManager.fragments
-			frags[0] as NoteFragment
+			if (frags[0] is NoteFragment) {
+				return frags[0] as NoteFragment
+			}
+			// replace fragment
+			val frag = NoteFragment()
+			supportFragmentManager.beginTransaction()
+				.replace(R.id.fragment_container, frag)
+				.addToBackStack(null)
+				.commit()
+			return frag
 		}
 	}
 

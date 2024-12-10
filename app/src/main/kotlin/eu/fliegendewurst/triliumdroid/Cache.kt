@@ -141,6 +141,13 @@ object Cache {
 				utc
 			)
 		)
+		db!!.execSQL(
+			"UPDATE notes SET dateModified = ?, utcDateModified = ? " +
+					"WHERE noteId = ?",
+			arrayOf(date, utc, id)
+		)
+		notes[id]!!.modified = date
+		db!!.registerEntityChangeNote(notes[id]!!)
 	}
 
 	/**
