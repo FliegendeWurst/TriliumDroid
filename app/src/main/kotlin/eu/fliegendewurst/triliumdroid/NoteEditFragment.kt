@@ -15,6 +15,8 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 	IAztecToolbarClickListener {
 	companion object {
 		private const val TAG: String = "NoteEditFragment"
+		private val FIXER: Regex =
+			"\\s*(<div>|<div class=\"[^\"]+\">)(.+)</div>\\s*".toRegex(RegexOption.DOT_MATCHES_ALL)
 	}
 
 	private lateinit var binding: FragmentNoteEditBinding
@@ -41,8 +43,20 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 		super.onResume()
 
 		if (id != null) {
+			var content = Cache.getNoteWithContent(id!!)?.content?.decodeToString() ?: return
+			// fixup nested divs
+			while (true) {
+				val contentFixed = FIXER.matchEntire(content)
+				if (contentFixed != null) {
+					content = contentFixed.groups[2]!!.value
+				} else {
+					break
+				}
+			}
 			Aztec.with(binding.visual, binding.source, binding.formattingToolbar, this)
-			binding.visual.fromHtml(String(Cache.getNoteWithContent(id!!)?.content ?: return))
+			binding.visual.setCalypsoMode(false)
+			binding.source.displayStyledAndFormattedHtml(content)
+			binding.visual.fromHtml(content)
 		}
 	}
 
