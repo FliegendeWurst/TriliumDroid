@@ -31,6 +31,8 @@
     <string name="label_title">Name</string>
     <string name="toast_cannot_delete_root">Can\'t delete root note</string>
     <string name="toast_could_not_delete">Could not delete note</string>
+    <string name="dialog_rename_note">Rename note</string>
+    <string name="label_rename">Rename</string>
 
     <string-array name="note_types_array">
         <item>Text</item>

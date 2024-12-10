@@ -253,6 +253,12 @@ object Cache {
 		return true
 	}
 
+	fun renameNote(note: Note, title: String) {
+		note.title = title
+		db!!.execSQL("UPDATE notes SET title = ? WHERE noteId = ?", arrayOf(title, note.id))
+		db!!.registerEntityChangeNote(note)
+	}
+
 	private fun getNoteInternal(id: String): Note? {
 		var note: Note? = null
 		CursorFactory.selectionArgs = arrayOf(id)

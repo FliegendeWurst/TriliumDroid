@@ -51,6 +51,7 @@ import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
+import eu.fliegendewurst.triliumdroid.dialog.RenameNoteDialog
 import eu.fliegendewurst.triliumdroid.service.Icon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -123,6 +124,9 @@ class MainActivity : AppCompatActivity() {
 		val toolbar = binding.toolbar
 		toolbar.title = ""
 		setSupportActionBar(toolbar)
+		binding.toolbarTitle.setOnClickListener {
+			RenameNoteDialog.showDialog(this, getNoteLoaded())
+		}
 
 		ArrayAdapter.createFromResource(
 			this,
@@ -537,6 +541,10 @@ class MainActivity : AppCompatActivity() {
 
 	fun navigateToPath(notePath: String) {
 		navigateTo(Cache.getNote(notePath.split("/").last())!!)
+	}
+
+	fun refreshTitle() {
+		binding.toolbarTitle.text = getNoteLoaded().title
 	}
 
 	fun navigateTo(note: Note, branch: Branch? = null) {
