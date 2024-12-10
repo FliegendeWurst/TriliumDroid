@@ -33,6 +33,8 @@
     <string name="toast_could_not_delete">Could not delete note</string>
     <string name="dialog_rename_note">Rename note</string>
     <string name="label_rename">Rename</string>
+    <string name="label_note_paths">Note Paths</string>
+    <string name="button_clone_note">Clone note</string>
 
     <string-array name="note_types_array">
         <item>Text</item>

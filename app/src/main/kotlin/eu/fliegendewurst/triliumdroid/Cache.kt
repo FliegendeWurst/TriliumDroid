@@ -474,7 +474,9 @@ object Cache {
 						blobId
 					)
 				}
-				n.branches.add(b)
+				if (n.branches.none { branch -> branch.id == branchId }) {
+					n.branches.add(b)
+				}
 				clones.add(Triple(Pair(parentNoteId, noteId), branchId, notePosition))
 			}
 			for (p in clones) {

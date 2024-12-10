@@ -15,7 +15,7 @@
             style="@style/WidgetTableHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Note Paths"
+            android:text="@string/label_note_paths"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -27,20 +27,18 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_note_paths_title" />
 
-        <!-- don't ask me why marginTop has to be set ... -->
         <ListView
             android:id="@+id/widget_note_paths_type_content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/smaller_margin"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_note_paths_divider" />
 
         <Button
             android:id="@+id/widget_note_paths_create_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Clone note"
+            android:text="@string/button_clone_note"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_note_paths_type_content" />
     </androidx.constraintlayout.widget.ConstraintLayout>
