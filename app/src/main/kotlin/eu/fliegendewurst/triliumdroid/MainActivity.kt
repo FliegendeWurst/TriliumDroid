@@ -347,22 +347,30 @@ class MainActivity : AppCompatActivity() {
 	override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
 		R.id.action_edit -> {
 			val fragment = getFragment()
-			if (fragment is NoteFragment) {
-				val id = fragment.getNoteId()
-				supportFragmentManager.beginTransaction()
-					.replace(R.id.fragment_container, NoteEditFragment(id))
-					.addToBackStack(null)
-					.commit()
-			} else if (fragment is NoteEditFragment) {
-				val id = fragment.id
-				val frag = NoteFragment()
-				frag.loadLater(id)
-				supportFragmentManager.beginTransaction()
-					.replace(R.id.fragment_container, frag)
-					.addToBackStack(null)
-					.commit()
-			} else {
-				Log.e(TAG, "failed to identify fragment " + fragment.javaClass)
+			when (fragment) {
+				is NoteFragment -> {
+					val id = fragment.getNoteId()
+					val frag = NoteEditFragment()
+					frag.loadLater(id)
+					supportFragmentManager.beginTransaction()
+						.replace(R.id.fragment_container, frag)
+						.addToBackStack(null)
+						.commit()
+				}
+
+				is NoteEditFragment -> {
+					val id = fragment.getNoteId()!!
+					val frag = NoteFragment()
+					frag.loadLater(id)
+					supportFragmentManager.beginTransaction()
+						.replace(R.id.fragment_container, frag)
+						.addToBackStack(null)
+						.commit()
+				}
+
+				else -> {
+					Log.e(TAG, "failed to identify fragment " + fragment.javaClass)
+				}
 			}
 			true
 		}

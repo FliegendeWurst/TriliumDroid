@@ -1,6 +1,5 @@
 package eu.fliegendewurst.triliumdroid
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 
 import android.view.LayoutInflater
@@ -12,15 +11,23 @@ import org.wordpress.aztec.Aztec
 import org.wordpress.aztec.ITextFormat
 import org.wordpress.aztec.toolbar.IAztecToolbarClickListener
 
-class NoteEditFragment(val id: String) : Fragment(R.layout.fragment_note_edit),
+class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 	IAztecToolbarClickListener {
 	companion object {
 		private const val TAG: String = "NoteEditFragment"
 	}
 
 	private lateinit var binding: FragmentNoteEditBinding
+	private var id: String? = null
 
-	@SuppressLint("SetJavaScriptEnabled")
+	fun loadLater(id: String) {
+		this.id = id
+	}
+
+	fun getNoteId(): String? {
+		return this.id
+	}
+
 	override fun onCreateView(
 		inflater: LayoutInflater,
 		container: ViewGroup?,
@@ -33,8 +40,10 @@ class NoteEditFragment(val id: String) : Fragment(R.layout.fragment_note_edit),
 	override fun onResume() {
 		super.onResume()
 
-		Aztec.with(binding.visual, binding.source, binding.formattingToolbar, this)
-		binding.visual.fromHtml(String(Cache.getNoteWithContent(id)?.content ?: return))
+		if (id != null) {
+			Aztec.with(binding.visual, binding.source, binding.formattingToolbar, this)
+			binding.visual.fromHtml(String(Cache.getNoteWithContent(id!!)?.content ?: return))
+		}
 	}
 
 	override fun onStop() {
@@ -42,7 +51,7 @@ class NoteEditFragment(val id: String) : Fragment(R.layout.fragment_note_edit),
 
 		// save to database
 		val content = binding.visual.toFormattedHtml()
-		Cache.setNoteContent(id, content)
+		Cache.setNoteContent(id!!, content)
 	}
 
 	override fun onToolbarCollapseButtonClicked() {
