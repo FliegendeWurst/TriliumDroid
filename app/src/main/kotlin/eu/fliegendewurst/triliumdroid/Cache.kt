@@ -14,9 +14,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteQuery
 import android.icu.text.SimpleDateFormat
 import android.os.Build
-import androidx.core.database.getStringOrNull
 import androidx.core.database.sqlite.transaction
-import eu.fliegendewurst.triliumdroid.Cache.db
 import eu.fliegendewurst.triliumdroid.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.data.Attachment
 import eu.fliegendewurst.triliumdroid.data.Branch
@@ -28,7 +26,6 @@ import okio.ByteString.Companion.decodeBase64
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.StrictMath.max
-import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -151,7 +148,6 @@ object Cache {
 	}
 
 	fun updateLabel(note: Note, name: String, value: String, inheritable: Boolean) {
-		// TODO: re-fetch note from database
 		var previousId: String? = null
 		db!!.rawQuery(
 			"SELECT attributeId FROM attributes WHERE noteId = ? AND type = 'label' AND name = ?",
@@ -173,9 +169,10 @@ object Cache {
 			while (!fresh) {
 				previousId = Util.newNoteId()
 				// check if it is used
-				db!!.rawQuery("SELECT 1 FROM attributes WHERE attributeId = ?", arrayOf(previousId)).use {
-					fresh = !it.moveToNext()
-				}
+				db!!.rawQuery("SELECT 1 FROM attributes WHERE attributeId = ?", arrayOf(previousId))
+					.use {
+						fresh = !it.moveToNext()
+					}
 			}
 			// TODO: proper position
 			db!!.execSQL(
@@ -185,6 +182,34 @@ object Cache {
 			)
 		}
 		db!!.registerEntityChangeAttribute(previousId!!, note.id, "label", name, value, inheritable)
+		note.clearAttributeCache()
+		getNoteInternal(note.id)
+	}
+
+	fun deleteLabel(note: Note, name: String) {
+		Log.d(TAG, "deleting label $name in ${note.id}")
+		var previousId: String? = null
+		var inheritable = false
+		db!!.rawQuery(
+			"SELECT attributeId, isInheritable FROM attributes WHERE noteId = ? AND type = 'label' AND name = ? AND isDeleted = 0",
+			arrayOf(note.id, name)
+		).use {
+			if (it.moveToNext()) {
+				previousId = it.getString(0)
+				inheritable = it.getInt(1) == 1
+			}
+		}
+		if (previousId == null) {
+			Log.e(TAG, "failed to find label $name to delete")
+			return
+		}
+		val utc = utcDateModified()
+		db!!.execSQL(
+			"UPDATE attributes SET value = '', isDeleted = ?, utcDateModified = ? " +
+					"WHERE attributeId = ?",
+			arrayOf(1, utc, previousId)
+		)
+		db!!.registerEntityChangeAttribute(previousId!!, note.id, "label", name, "", inheritable)
 		note.clearAttributeCache()
 		getNoteInternal(note.id)
 	}
@@ -327,7 +352,7 @@ object Cache {
 					"notes.blobId " + // 12
 					"FROM notes LEFT JOIN blobs USING (blobId) " +
 					"LEFT JOIN attributes USING(noteId)" +
-					"WHERE notes.noteId = ? AND notes.isDeleted = 0",
+					"WHERE notes.noteId = ? AND notes.isDeleted = 0 AND attributes.isDeleted = 0",
 			arrayOf(id),
 			"notes"
 		).use {
@@ -1222,7 +1247,13 @@ private fun SQLiteDatabase.registerEntityChangeAttribute(
 	registerEntityChange(
 		"attributes",
 		attributeId,
-		arrayOf(attributeId, noteId, type, name, value, if (isInheritable) { "1" } else { "0" })
+		arrayOf(
+			attributeId, noteId, type, name, value, if (isInheritable) {
+				"1"
+			} else {
+				"0"
+			}
+		)
 	)
 }
 

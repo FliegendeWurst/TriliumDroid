@@ -3,7 +3,6 @@ package eu.fliegendewurst.triliumdroid.dialog
 import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -32,7 +31,7 @@ object ModifyLabelsDialog {
 
 		var requestedFocus = false
 
-		val changes = mutableMapOf<String, String>()
+		val changes = mutableMapOf<String, String?>()
 
 		val ownedAttributesList = dialog.findViewById<ListView>(R.id.list_labels)!!
 		val ownedAttributes =
@@ -99,9 +98,16 @@ object ModifyLabelsDialog {
 				}
 				vi!!.findViewById<TextView>(R.id.label_label_title).text = attribute.name
 				val content = vi.findViewById<EditText>(R.id.edit_label_content)
-				content.setText(attribute.value())
+				val deleteButton = vi.findViewById<Button>(R.id.button_delete_label)
 				if (watchers[position] != null) {
 					content.removeTextChangedListener(watchers[position])
+				}
+				content.setText(attribute.value())
+				deleteButton.setOnClickListener {
+					changes[attribute.name] = null
+					ownedAttributes.removeAt(position)
+					content.removeTextChangedListener(watchers.removeAt(position))
+					(ownedAttributesList.adapter as BaseAdapter).notifyDataSetChanged()
 				}
 				watchers[position] = object : TextWatcher {
 					override fun beforeTextChanged(
@@ -150,7 +156,7 @@ object ModifyLabelsDialog {
 	private fun done(
 		activity: MainActivity,
 		dialog: AlertDialog,
-		changes: Map<String, String>,
+		changes: Map<String, String?>,
 		currentNote: Note,
 		labels: List<Label>
 	) {
@@ -160,6 +166,10 @@ object ModifyLabelsDialog {
 		for (change in changes) {
 			val attrName = change.key
 			val attrValue = change.value
+			if (attrValue == null) {
+				Cache.deleteLabel(currentNote, attrName)
+				continue
+			}
 			if (previousLabels[attrName] == attrValue) {
 				continue
 			}

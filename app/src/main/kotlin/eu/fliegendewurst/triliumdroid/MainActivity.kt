@@ -715,22 +715,16 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun getNoteFragment(): NoteFragment {
-		val hostFragment =
-			supportFragmentManager.findFragmentById(R.id.fragment_container)
-		return if (hostFragment is NoteFragment) {
-			hostFragment
-		} else {
-			val frags = (hostFragment as NavHostFragment).childFragmentManager.fragments
-			if (frags[0] is NoteFragment) {
-				return frags[0] as NoteFragment
-			}
-			// replace fragment
-			val frag = NoteFragment()
-			supportFragmentManager.beginTransaction()
-				.replace(R.id.fragment_container, frag)
-				.commit()
+		var frag = getFragment()
+		if (frag is NoteFragment) {
 			return frag
 		}
+		// replace fragment
+		frag = NoteFragment()
+		supportFragmentManager.beginTransaction()
+			.replace(R.id.fragment_container, frag)
+			.commit()
+		return frag
 	}
 
 	fun getNoteLoaded(): Note {

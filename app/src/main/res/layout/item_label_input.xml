@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -8,18 +9,33 @@
         style="@style/SettingsTextLabelStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/edit_label_content"
         android:labelFor="@id/edit_label_content"
         android:text="@string/label_title" />
 
     <EditText
         android:id="@+id/edit_label_content"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
+        android:layout_toEndOf="@id/label_label_title"
         android:focusable="true"
         android:imeOptions="actionNext"
         android:importantForAutofill="no"
         android:inputType="text"
-        android:minWidth="90dp" />
-</LinearLayout>
+        android:minWidth="90dp"
+        tools:ignore="RelativeOverlap" />
+
+    <Button
+        android:id="@+id/button_delete_label"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_alignParentEnd="true"
+        android:contentDescription="@string/description_delete_label"
+        android:drawableStart="@drawable/bx_trash"
+        android:paddingStart="4dp"
+        android:paddingTop="0dp"
+        android:paddingEnd="0dp"
+        android:paddingBottom="0dp" />
+</RelativeLayout>

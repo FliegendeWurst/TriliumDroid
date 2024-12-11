@@ -41,6 +41,7 @@
     <string name="label_inherited_attributes">Inherited Labels</string>
     <string name="button_add_label">Add</string>
     <string name="dialog_add_label">Add label</string>
+    <string name="description_delete_label">delete label</string>
 
     <string-array name="note_types_array">
         <item>Text</item>
