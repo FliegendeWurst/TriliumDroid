@@ -220,13 +220,19 @@ class MainActivity : AppCompatActivity() {
 						.commit()
 					return
 				}
-				if (noteHistory.size <= 1) {
-					finish()
-				} else {
-					val entry = noteHistory[noteHistory.size - 2]
-					navigateTo(entry.first, entry.second) // will add another entry
-					noteHistory.removeAt(noteHistory.size - 1)
-					noteHistory.removeAt(noteHistory.size - 1)
+				while (true) {
+					if (noteHistory.size <= 1) {
+						finish()
+					} else {
+						val entry = noteHistory[noteHistory.size - 2]
+						if (entry.first.id == "DELETED") {
+							noteHistory.removeAt(noteHistory.size - 2)
+							continue
+						}
+						navigateTo(entry.first, entry.second) // will add another entry
+						noteHistory.removeAt(noteHistory.size - 1)
+						noteHistory.removeAt(noteHistory.size - 1)
+					}
 				}
 			}
 		})
@@ -479,6 +485,7 @@ class MainActivity : AppCompatActivity() {
 
 		R.id.action_delete -> {
 			val note = getNoteLoaded()
+			val path = getNotePathLoaded() ?: Cache.getNotePath(note.id)[0]
 			if (note.id == "root") {
 				Toast.makeText(
 					this, getString(R.string.toast_cannot_delete_root),
@@ -491,16 +498,13 @@ class MainActivity : AppCompatActivity() {
 					.setPositiveButton(
 						android.R.string.ok
 					) { _, _ ->
-						val path = Cache.getNotePath(note.id)
-						val parent = path[1]
-						val parentId = parent.note
-						if (!Cache.deleteNote(note.id)) {
+						if (!Cache.deleteNote(path)) {
 							Toast.makeText(
 								this, getString(R.string.toast_could_not_delete),
 								Toast.LENGTH_SHORT
 							).show()
 						}
-						navigateTo(Cache.getNote(parentId)!!)
+						navigateTo(Cache.getNote(path.parentNote)!!)
 						refreshTree()
 					}
 					.setNegativeButton(android.R.string.cancel, null).show()
@@ -766,6 +770,10 @@ class MainActivity : AppCompatActivity() {
 
 	fun getNoteLoaded(): Note {
 		return Cache.getNoteWithContent(getNoteFragment().getNoteId())!!
+	}
+
+	fun getNotePathLoaded(): Branch? {
+		return noteHistory.last().second
 	}
 
 	fun addHistoryEntry(id: String) {

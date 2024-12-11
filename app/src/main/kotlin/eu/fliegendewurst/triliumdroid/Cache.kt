@@ -387,26 +387,32 @@ object Cache {
 		return getNoteInternal(id)
 	}
 
-	fun deleteNote(id: String): Boolean {
-		if (id == "root") {
+	fun deleteNote(branch: Branch): Boolean {
+		if (branch.note == "root") {
 			return false
 		}
-		val note = getNote(id) ?: return false
-		for (child in note.children ?: emptyMap()) {
-			val id2 = child.value.note
-			if (!deleteNote(id2)) {
-				return false
+		val note = getNote(branch.note) ?: return false
+		Log.i(TAG, "deleting note ${branch.note}")
+		// delete child notes if this is the last branch of this note
+		if (note.branches.size == 1) {
+			for (child in note.children ?: emptyMap()) {
+				val id2 = child.value.note
+				val note2 = getNote(id2)!!
+				if (note2.branches.size == 1) {
+					if (!deleteNote(note2.branches[0])) {
+						return false
+					}
+				}
 			}
+			notes.remove(branch.note)
+			note.id = "DELETED"
+			db!!.execSQL("UPDATE notes SET isDeleted=1 WHERE noteId = ?", arrayOf(branch.note))
+			db!!.registerEntityChangeNote(note)
 		}
-		notes.remove(id)
-		db!!.execSQL("UPDATE notes SET isDeleted=1 WHERE noteId = ?", arrayOf(id))
-		db!!.registerEntityChangeNote(note)
-		// remove note from all parents
-		db!!.execSQL("UPDATE branches SET isDeleted=1 WHERE noteId = ?", arrayOf(id))
-		for (branch in note.branches) {
-			db!!.registerEntityChangeBranch(branch)
-			branches.remove(branch.id)
-		}
+		// remove branches
+		db!!.execSQL("UPDATE branches SET isDeleted=1 WHERE branchId = ?", arrayOf(branch.id))
+		db!!.registerEntityChangeBranch(branch)
+		note.branches.remove(branch)
 		return true
 	}
 

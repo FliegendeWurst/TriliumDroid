@@ -20,6 +20,9 @@ class Note(
 	private var inheritedLabels: List<Label>? = null
 	private var inheritedRelations: List<Relation>? = null
 	var children: SortedMap<String, Branch>? = null
+	/**
+	 * Note clones for this note.
+	 */
 	var branches: MutableList<Branch> = mutableListOf()
 	private var inheritableCached = false
 
