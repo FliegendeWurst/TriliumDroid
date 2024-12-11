@@ -53,6 +53,7 @@ import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
 import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
+import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.service.Icon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -211,7 +212,6 @@ class MainActivity : AppCompatActivity() {
 					binding.fab.show()
 					supportFragmentManager.beginTransaction()
 						.replace(R.id.fragment_container, frag)
-						.addToBackStack(null)
 						.commit()
 					return
 				}
@@ -225,6 +225,37 @@ class MainActivity : AppCompatActivity() {
 				}
 			}
 		})
+	}
+
+	private var loadedNoteId: String? = null
+
+	override fun onPause() {
+		super.onPause()
+		// TODO: maybe save the edited content somewhere
+		when (val fragment = getFragment()) {
+			is NoteFragment -> {
+				loadedNoteId = fragment.getNoteId()
+				supportFragmentManager.beginTransaction()
+					.replace(R.id.fragment_container, EmptyFragment())
+					.commit()
+			}
+		}
+	}
+
+	override fun onResume() {
+		super.onResume()
+		if (loadedNoteId == null) {
+			return
+		}
+		when (getFragment()) {
+			is EmptyFragment -> {
+				val frag = NoteFragment()
+				frag.loadLater(loadedNoteId!!)
+				supportFragmentManager.beginTransaction()
+					.replace(R.id.fragment_container, frag)
+					.commit()
+			}
+		}
 	}
 
 	fun refreshTree() {
@@ -370,7 +401,6 @@ class MainActivity : AppCompatActivity() {
 					binding.fab.hide()
 					supportFragmentManager.beginTransaction()
 						.replace(R.id.fragment_container, frag)
-						.addToBackStack(null)
 						.commit()
 				}
 
@@ -382,7 +412,6 @@ class MainActivity : AppCompatActivity() {
 					binding.fab.show()
 					supportFragmentManager.beginTransaction()
 						.replace(R.id.fragment_container, frag)
-						.addToBackStack(null)
 						.commit()
 				}
 
@@ -677,7 +706,7 @@ class MainActivity : AppCompatActivity() {
 	private fun getFragment(): Fragment {
 		val hostFragment =
 			supportFragmentManager.findFragmentById(R.id.fragment_container)
-		return if (hostFragment is NoteFragment || hostFragment is NoteEditFragment) {
+		return if (hostFragment is NoteFragment || hostFragment is NoteEditFragment || hostFragment is EmptyFragment) {
 			hostFragment
 		} else {
 			val frags = (hostFragment as NavHostFragment).childFragmentManager.fragments
@@ -699,7 +728,6 @@ class MainActivity : AppCompatActivity() {
 			val frag = NoteFragment()
 			supportFragmentManager.beginTransaction()
 				.replace(R.id.fragment_container, frag)
-				.addToBackStack(null)
 				.commit()
 			return frag
 		}
