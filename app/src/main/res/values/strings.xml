@@ -42,6 +42,13 @@
     <string name="button_add_label">Add</string>
     <string name="dialog_add_label">Add label</string>
     <string name="description_delete_label">delete label</string>
+    <string name="dialog_modify_relations">Modify relations</string>
+    <string name="description_delete_relation">delete relation</string>
+    <string name="dialog_add_relation">Add relation</string>
+    <string name="dialog_select_note">Select note</string>
+    <string name="label_owned_relations">Relations</string>
+    <string name="description_modify_relations">modify relations</string>
+    <string name="description_open_target_note">open target note</string>
 
     <string-array name="note_types_array">
         <item>Text</item>

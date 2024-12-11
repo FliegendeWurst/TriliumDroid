@@ -82,6 +82,7 @@ object Cache {
 	}
 
 	fun getNoteWithContent(id: String): Note? {
+		Log.d(TAG, "fetching note $id")
 		if (notes.containsKey(id) && notes[id]!!.mime != "INVALID" && notes[id]!!.content != null) {
 			return notes[id]
 		}
@@ -150,7 +151,7 @@ object Cache {
 	fun updateLabel(note: Note, name: String, value: String, inheritable: Boolean) {
 		var previousId: String? = null
 		db!!.rawQuery(
-			"SELECT attributeId FROM attributes WHERE noteId = ? AND type = 'label' AND name = ?",
+			"SELECT attributeId FROM attributes WHERE noteId = ? AND type = 'label' AND name = ? AND isDeleted = 0",
 			arrayOf(note.id, name)
 		).use {
 			if (it.moveToNext()) {
@@ -161,8 +162,8 @@ object Cache {
 		if (previousId != null) {
 			db!!.execSQL(
 				"UPDATE attributes SET value = ?, utcDateModified = ? " +
-						"WHERE noteId = ? AND type = 'label' AND name = ?",
-				arrayOf(value, utc, note.id, name)
+						"WHERE attributeId = ?",
+				arrayOf(value, utc, previousId)
 			)
 		} else {
 			var fresh = false
@@ -182,6 +183,63 @@ object Cache {
 			)
 		}
 		db!!.registerEntityChangeAttribute(previousId!!, note.id, "label", name, value, inheritable)
+		note.clearAttributeCache()
+		getNoteInternal(note.id)
+	}
+
+	fun updateRelation(note: Note, name: String, value: Note, inheritable: Boolean) {
+		var previousId: String? = null
+		db!!.rawQuery(
+			"SELECT attributeId FROM attributes WHERE noteId = ? AND type = 'relation' AND name = ? AND isDeleted = 0",
+			arrayOf(note.id, name)
+		).use {
+			if (it.moveToNext()) {
+				previousId = it.getString(0)
+			}
+		}
+		val utc = utcDateModified()
+		if (previousId != null) {
+			db!!.execSQL(
+				"UPDATE attributes SET value = ?, utcDateModified = ? " +
+						"WHERE attributeId = ?",
+				arrayOf(value, utc, previousId)
+			)
+		} else {
+			var fresh = false
+			while (!fresh) {
+				previousId = Util.newNoteId()
+				// check if it is used
+				db!!.rawQuery("SELECT 1 FROM attributes WHERE attributeId = ?", arrayOf(previousId))
+					.use {
+						fresh = !it.moveToNext()
+					}
+			}
+			// TODO: proper position
+			db!!.execSQL(
+				"INSERT INTO attributes (attributeId, noteId, type, name, value, position, utcDateModified, isDeleted, deleteId, isInheritable) " +
+						"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				arrayOf(
+					previousId,
+					note.id,
+					"relation",
+					name,
+					value.id,
+					10,
+					utc,
+					0,
+					null,
+					inheritable
+				)
+			)
+		}
+		db!!.registerEntityChangeAttribute(
+			previousId!!,
+			note.id,
+			"relation",
+			name,
+			value.id,
+			inheritable
+		)
 		note.clearAttributeCache()
 		getNoteInternal(note.id)
 	}
@@ -210,6 +268,34 @@ object Cache {
 			arrayOf(1, utc, previousId)
 		)
 		db!!.registerEntityChangeAttribute(previousId!!, note.id, "label", name, "", inheritable)
+		note.clearAttributeCache()
+		getNoteInternal(note.id)
+	}
+
+	fun deleteRelation(note: Note, name: String) {
+		Log.d(TAG, "deleting relation $name in ${note.id}")
+		var previousId: String? = null
+		var inheritable = false
+		db!!.rawQuery(
+			"SELECT attributeId, isInheritable FROM attributes WHERE noteId = ? AND type = 'relation' AND name = ? AND isDeleted = 0",
+			arrayOf(note.id, name)
+		).use {
+			if (it.moveToNext()) {
+				previousId = it.getString(0)
+				inheritable = it.getInt(1) == 1
+			}
+		}
+		if (previousId == null) {
+			Log.e(TAG, "failed to find relation $name to delete")
+			return
+		}
+		val utc = utcDateModified()
+		db!!.execSQL(
+			"UPDATE attributes SET value = '', isDeleted = ?, utcDateModified = ? " +
+					"WHERE attributeId = ?",
+			arrayOf(1, utc, previousId)
+		)
+		db!!.registerEntityChangeAttribute(previousId!!, note.id, "relation", name, "", inheritable)
 		note.clearAttributeCache()
 		getNoteInternal(note.id)
 	}
@@ -352,7 +438,7 @@ object Cache {
 					"notes.blobId " + // 12
 					"FROM notes LEFT JOIN blobs USING (blobId) " +
 					"LEFT JOIN attributes USING(noteId)" +
-					"WHERE notes.noteId = ? AND notes.isDeleted = 0 AND attributes.isDeleted = 0",
+					"WHERE notes.noteId = ? AND notes.isDeleted = 0 AND (attributes.isDeleted = 0 OR attributes.isDeleted IS NULL)",
 			arrayOf(id),
 			"notes"
 		).use {

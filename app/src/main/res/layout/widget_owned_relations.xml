@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        style="@style/WidgetInner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/widget_owned_relations_title"
+            style="@style/WidgetTableHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_owned_relations"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/button_relations_edit"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="#fff"
+            android:contentDescription="@string/description_modify_relations"
+            android:drawableStart="@drawable/bx_edit_alt"
+            android:paddingStart="0dp"
+            android:translationZ="@dimen/medium_margin_plus"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="RtlSymmetry" />
+
+        <include
+            android:id="@+id/widget_owned_relations_divider"
+            style="@style/WidgetTableHeaderDivider"
+            layout="@layout/divider"
+            app:layout_constraintBottom_toTopOf="@id/widget_owned_relations_type_content"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/widget_owned_relations_title" />
+
+        <ListView
+            android:id="@+id/widget_owned_relations_type_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/widget_owned_relations_divider" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

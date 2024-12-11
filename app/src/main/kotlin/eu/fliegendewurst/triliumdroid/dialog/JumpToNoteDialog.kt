@@ -1,16 +1,26 @@
-package eu.fliegendewurst.triliumdroid
+package eu.fliegendewurst.triliumdroid.dialog
 
 import android.view.WindowManager
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
+import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.MainActivity
+import eu.fliegendewurst.triliumdroid.R
+import eu.fliegendewurst.triliumdroid.TreeItemAdapter
 import eu.fliegendewurst.triliumdroid.data.Branch
 
 object JumpToNoteDialog {
 	fun showDialog(activity: MainActivity) {
+		showDialogReturningNote(activity, R.string.jump_to_dialog) {
+			activity.navigateTo(Cache.getNote(it.note)!!)
+		}
+	}
+
+	fun showDialogReturningNote(activity: MainActivity, title: Int, callback: (Branch) -> Unit) {
 		val dialog = AlertDialog.Builder(activity)
-			.setTitle(R.string.jump_to_dialog)
+			.setTitle(title)
 			.setView(R.layout.dialog_jump)
 			.create()
 		dialog.window!!.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
@@ -19,7 +29,7 @@ object JumpToNoteDialog {
 		val list = dialog.findViewById<RecyclerView>(R.id.jump_to_list)!!
 		val adapter2 = TreeItemAdapter({
 			dialog.dismiss()
-			activity.navigateTo(Cache.getNote(it.note)!!)
+			callback.invoke(it)
 		}, {
 			// long click has no effect
 		})

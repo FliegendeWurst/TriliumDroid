@@ -168,6 +168,13 @@ class Note(
 		this.labels = labels
 	}
 
+	fun getRelations(): List<Relation> {
+		if (!inheritableCached) {
+			cacheInheritableAttributes()
+		}
+		return relations.orEmpty() + inheritedRelations.orEmpty()
+	}
+
 	fun setRelations(relations: List<Relation>) {
 		this.relations = relations
 	}

@@ -53,6 +53,8 @@ import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
 import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
+import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
+import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.service.Icon
 import kotlinx.coroutines.Dispatchers
@@ -164,6 +166,9 @@ class MainActivity : AppCompatActivity() {
 		}
 		binding.root.findViewById<Button>(R.id.button_labels_modify).setOnClickListener {
 			ModifyLabelsDialog.showDialog(this, getNoteLoaded())
+		}
+		binding.root.findViewById<Button>(R.id.button_relations_edit).setOnClickListener {
+			ModifyRelationsDialog.showDialog(this, getNoteLoaded())
 		}
 
 		// add custom buttons
@@ -614,6 +619,38 @@ class MainActivity : AppCompatActivity() {
 				vi!!.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
 				vi.findViewById<TextView>(R.id.label_attribute_value).text = attribute.value()
 				return vi
+			}
+		}
+		// relations
+		val relations = noteContent.getRelations()
+		val ownedRelations = relations.filter { x -> !x.inherited && !x.templated }
+		val ownedRelationsList = findViewById<ListView>(R.id.widget_owned_relations_type_content)
+		ownedRelationsList.adapter = object : BaseAdapter() {
+			override fun getCount(): Int {
+				return ownedRelations.size
+			}
+
+			override fun getItem(position: Int): Any {
+				return ownedRelations[position]
+			}
+
+			override fun getItemId(position: Int): Long {
+				return position.toLong()
+			}
+
+			override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+				val attribute = ownedRelations[position]
+				var vi = convertView
+				if (vi == null) {
+					vi = layoutInflater.inflate(R.layout.item_relation, ownedRelationsList, false)
+				}
+				vi!!.findViewById<TextView>(R.id.label_relation_name).text = attribute.name
+				val button = vi!!.findViewById<Button>(R.id.button_relation_target)
+				button.text = attribute.target?.title ?: "none"
+				button.setOnClickListener {
+					navigateTo(attribute.target ?: return@setOnClickListener)
+				}
+				return vi!!
 			}
 		}
 
