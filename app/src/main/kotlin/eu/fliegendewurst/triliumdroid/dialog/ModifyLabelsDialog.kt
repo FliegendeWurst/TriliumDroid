@@ -33,8 +33,28 @@ object ModifyLabelsDialog {
 		var requestedFocus = false
 
 		val changes = mutableMapOf<String, String>()
+
+		val ownedAttributesList = dialog.findViewById<ListView>(R.id.list_labels)!!
 		val ownedAttributes =
 			currentNote.getLabels().filter { x -> !x.inherited && !x.templated }.toMutableList()
+		val watchers = arrayOfNulls<TextWatcher?>(ownedAttributes.size).toMutableList()
+
+		dialog.findViewById<Button>(R.id.button_add_label)!!.setOnClickListener {
+			AskForNameDialog.showDialog(activity, R.string.dialog_add_label, "") {
+				ownedAttributes.add(
+					Label(
+						it.trim(),
+						"",
+						inheritable = false,
+						promoted = true,
+						multi = false
+					)
+				)
+				watchers.add(null)
+				(ownedAttributesList.adapter as BaseAdapter).notifyDataSetChanged()
+			}
+		}
+
 		// add template labels
 		for (template in currentNote.getLabels().filter { x -> x.name.startsWith("label:") }) {
 			val labelName = template.name.removePrefix("label:").removeSuffix("(inheritable)")
@@ -53,8 +73,6 @@ object ModifyLabelsDialog {
 				)
 			)
 		}
-		val ownedAttributesList = dialog.findViewById<ListView>(R.id.list_labels)!!
-		val watchers = arrayOfNulls<TextWatcher?>(ownedAttributes.size).toMutableList()
 		ownedAttributesList.itemsCanFocus = true
 		ownedAttributesList.adapter = object : BaseAdapter() {
 			override fun getCount(): Int {
@@ -70,11 +88,14 @@ object ModifyLabelsDialog {
 			}
 
 			override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-				Log.i("modifylabels", position.toString())
 				val attribute = ownedAttributes[position]
 				var vi = convertView
 				if (vi == null) {
-					vi = activity.layoutInflater.inflate(R.layout.item_label_input, null)
+					vi = activity.layoutInflater.inflate(
+						R.layout.item_label_input,
+						ownedAttributesList,
+						false
+					)
 				}
 				vi!!.findViewById<TextView>(R.id.label_label_title).text = attribute.name
 				val content = vi.findViewById<EditText>(R.id.edit_label_content)

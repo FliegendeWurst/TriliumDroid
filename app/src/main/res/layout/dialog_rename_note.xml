@@ -42,6 +42,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:layout_margin="@dimen/activity_margin"
-        android:text="@string/label_rename" />
+        android:text="@android:string/ok" />
 
 </LinearLayout>

@@ -39,6 +39,8 @@
     <string name="description_add_label">add label</string>
     <string name="dialog_modify_labels">Modify labels</string>
     <string name="label_inherited_attributes">Inherited Labels</string>
+    <string name="button_add_label">Add</string>
+    <string name="dialog_add_label">Add label</string>
 
     <string-array name="note_types_array">
         <item>Text</item>

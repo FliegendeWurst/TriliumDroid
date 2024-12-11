@@ -20,5 +20,6 @@
         android:focusable="true"
         android:imeOptions="actionNext"
         android:importantForAutofill="no"
-        android:inputType="text" />
+        android:inputType="text"
+        android:minWidth="90dp" />
 </LinearLayout>

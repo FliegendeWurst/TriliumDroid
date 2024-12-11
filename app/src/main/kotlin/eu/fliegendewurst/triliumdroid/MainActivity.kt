@@ -37,7 +37,6 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
 import androidx.core.text.parseAsHtml
@@ -53,7 +52,7 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
-import eu.fliegendewurst.triliumdroid.dialog.RenameNoteDialog
+import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
 import eu.fliegendewurst.triliumdroid.service.Icon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -127,7 +126,12 @@ class MainActivity : AppCompatActivity() {
 		toolbar.title = ""
 		setSupportActionBar(toolbar)
 		binding.toolbarTitle.setOnClickListener {
-			RenameNoteDialog.showDialog(this, getNoteLoaded())
+			val note = getNoteLoaded()
+			AskForNameDialog.showDialog(this, R.string.dialog_rename_note, note.title) {
+				Cache.renameNote(note, it)
+				refreshTree()
+				refreshTitle()
+			}
 		}
 
 		ArrayAdapter.createFromResource(
@@ -549,7 +553,7 @@ class MainActivity : AppCompatActivity() {
 		navigateTo(Cache.getNote(notePath.split("/").last())!!)
 	}
 
-	fun refreshTitle() {
+	private fun refreshTitle() {
 		binding.toolbarTitle.text = getNoteLoaded().title
 	}
 
@@ -576,7 +580,7 @@ class MainActivity : AppCompatActivity() {
 				val attribute = ownedAttributes[position]
 				var vi = convertView
 				if (vi == null) {
-					vi = layoutInflater.inflate(R.layout.item_attribute, null)
+					vi = layoutInflater.inflate(R.layout.item_attribute, ownedAttributesList, false)
 				}
 				vi!!.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
 				vi.findViewById<TextView>(R.id.label_attribute_value).text = attribute.value()
@@ -602,7 +606,7 @@ class MainActivity : AppCompatActivity() {
 		val notePaths = findViewById<ListView>(R.id.widget_note_paths_type_content)
 		notePaths.adapter = arrayAdapter
 		notePaths.onItemClickListener =
-			OnItemClickListener { _, _, position, id ->
+			OnItemClickListener { _, _, position, _ ->
 				// switch to the note path in the tree
 				if (position >= 0 && position < paths.size) {
 					val pathSelected = paths[position]

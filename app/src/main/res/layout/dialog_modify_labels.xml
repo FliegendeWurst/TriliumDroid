@@ -8,7 +8,9 @@
     <ListView
         android:id="@+id/list_labels"
         android:layout_width="wrap_content"
-        android:layout_height="130dp" />
+        android:layout_height="130dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp" />
 
     <!-- mysterious EditText to make text input work... -->
     <EditText
@@ -18,12 +20,27 @@
         android:visibility="gone"
         tools:ignore="Autofill,LabelFor,TextFields" />
 
-    <Button
-        android:id="@+id/button_modify_labels"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:layout_margin="@dimen/activity_margin"
-        android:text="@android:string/ok" />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/button_add_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/activity_margin"
+            android:layout_toStartOf="@id/button_modify_labels"
+            android:text="@string/button_add_label" />
+
+        <Button
+            android:id="@+id/button_modify_labels"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_margin="@dimen/activity_margin"
+            android:text="@android:string/ok" />
+
+    </RelativeLayout>
 
 </LinearLayout>
