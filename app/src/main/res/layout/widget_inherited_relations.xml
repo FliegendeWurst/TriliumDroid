@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Widget"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        style="@style/WidgetInner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/widget_inherited_relations_title"
+            style="@style/WidgetTableHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_inherited_relations"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <include
+            android:id="@+id/widget_inherited_relations_divider"
+            style="@style/WidgetTableHeaderDivider"
+            layout="@layout/divider"
+            app:layout_constraintBottom_toTopOf="@id/widget_inherited_relations_type_content"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/widget_inherited_relations_title" />
+
+        <ListView
+            android:id="@+id/widget_inherited_relations_type_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/widget_inherited_relations_divider" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

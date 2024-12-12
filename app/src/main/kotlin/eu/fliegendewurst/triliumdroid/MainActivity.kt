@@ -48,7 +48,9 @@ import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import eu.fliegendewurst.triliumdroid.data.Branch
+import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
@@ -57,6 +59,7 @@ import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.service.Icon
+import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
@@ -223,6 +226,7 @@ class MainActivity : AppCompatActivity() {
 				while (true) {
 					if (noteHistory.size <= 1) {
 						finish()
+						break
 					} else {
 						val entry = noteHistory[noteHistory.size - 2]
 						if (entry.first.id == "DELETED") {
@@ -232,6 +236,7 @@ class MainActivity : AppCompatActivity() {
 						navigateTo(entry.first, entry.second) // will add another entry
 						noteHistory.removeAt(noteHistory.size - 1)
 						noteHistory.removeAt(noteHistory.size - 1)
+						break
 					}
 				}
 			}
@@ -303,10 +308,6 @@ class MainActivity : AppCompatActivity() {
 		snackbar.view.minimumWidth = 300
 		(snackbar.view.layoutParams as FrameLayout.LayoutParams).gravity =
 			Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
-		val ts =
-			snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-		ts.textAlignment = View.TEXT_ALIGNMENT_CENTER
-		ts.gravity = Gravity.CENTER_HORIZONTAL
 		snackbar.show()
 		lifecycleScope.launch(Dispatchers.IO) {
 			ConnectionUtil.setup(prefs, {
@@ -599,54 +600,63 @@ class MainActivity : AppCompatActivity() {
 		// attributes
 		val attributes = noteContent.getLabels()
 		val ownedAttributes = attributes.filter { x -> !x.inherited && !x.templated }
-		Log.i(TAG, "have ${ownedAttributes.size} owned attributes to show!")
 		val ownedAttributesList = findViewById<ListView>(R.id.widget_owned_attributes_type_content)
-		ownedAttributesList.adapter = object : BaseAdapter() {
-			override fun getCount(): Int {
-				return ownedAttributes.size
-			}
-
-			override fun getItem(position: Int): Any {
-				return ownedAttributes[position]
-			}
-
-			override fun getItemId(position: Int): Long {
-				return position.toLong()
-			}
-
-			override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-				val attribute = ownedAttributes[position]
+		ownedAttributesList.adapter =
+			ListAdapter(
+				ownedAttributes
+			) { attribute: Label, convertView: View? ->
 				var vi = convertView
 				if (vi == null) {
-					vi = layoutInflater.inflate(R.layout.item_attribute, ownedAttributesList, false)
+					vi = layoutInflater.inflate(
+						R.layout.item_attribute,
+						ownedAttributesList,
+						false
+					)
 				}
 				vi!!.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
 				vi.findViewById<TextView>(R.id.label_attribute_value).text = attribute.value()
-				return vi
+				return@ListAdapter vi
 			}
+		val inheritedAttributes = attributes.filter { x -> x.inherited || x.templated }
+		val inheritedAttributesList =
+			findViewById<ListView>(R.id.widget_inherited_attributes_type_content)
+		if (inheritedAttributes.isEmpty()) {
+			findViewById<View>(R.id.widget_inherited_attributes).visibility = View.GONE
+		} else {
+			findViewById<View>(R.id.widget_inherited_attributes).visibility = View.VISIBLE
+			inheritedAttributesList.adapter =
+				ListAdapter(
+					inheritedAttributes
+				) { attribute: Label, convertView: View? ->
+					var vi = convertView
+					if (vi == null) {
+						vi = layoutInflater.inflate(
+							R.layout.item_attribute,
+							inheritedAttributesList,
+							false
+						)
+					}
+					vi!!.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
+					vi!!.findViewById<TextView>(R.id.label_attribute_value).text = attribute.value()
+					return@ListAdapter vi!!
+				}
 		}
+
 		// relations
 		val relations = noteContent.getRelations()
 		val ownedRelations = relations.filter { x -> !x.inherited && !x.templated }
 		val ownedRelationsList = findViewById<ListView>(R.id.widget_owned_relations_type_content)
-		ownedRelationsList.adapter = object : BaseAdapter() {
-			override fun getCount(): Int {
-				return ownedRelations.size
-			}
-
-			override fun getItem(position: Int): Any {
-				return ownedRelations[position]
-			}
-
-			override fun getItemId(position: Int): Long {
-				return position.toLong()
-			}
-
-			override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-				val attribute = ownedRelations[position]
+		ownedRelationsList.adapter =
+			ListAdapter(
+				ownedRelations
+			) { attribute: Relation, convertView: View? ->
 				var vi = convertView
 				if (vi == null) {
-					vi = layoutInflater.inflate(R.layout.item_relation, ownedRelationsList, false)
+					vi = layoutInflater.inflate(
+						R.layout.item_relation,
+						ownedRelationsList,
+						false
+					)
 				}
 				vi!!.findViewById<TextView>(R.id.label_relation_name).text = attribute.name
 				val button = vi!!.findViewById<Button>(R.id.button_relation_target)
@@ -654,8 +664,35 @@ class MainActivity : AppCompatActivity() {
 				button.setOnClickListener {
 					navigateTo(attribute.target ?: return@setOnClickListener)
 				}
-				return vi!!
+				return@ListAdapter vi!!
 			}
+		val inheritedRelations = relations.filter { x -> x.inherited || x.templated }
+		val inheritedRelationsList =
+			findViewById<ListView>(R.id.widget_inherited_relations_type_content)
+		if (inheritedRelations.isEmpty()) {
+			findViewById<View>(R.id.widget_inherited_relations).visibility = View.GONE
+		} else {
+			findViewById<View>(R.id.widget_inherited_relations).visibility = View.VISIBLE
+			inheritedRelationsList.adapter =
+				ListAdapter(
+					inheritedRelations
+				) { attribute: Relation, convertView: View? ->
+					var vi = convertView
+					if (vi == null) {
+						vi = layoutInflater.inflate(
+							R.layout.item_relation,
+							inheritedRelationsList,
+							false
+						)
+					}
+					vi!!.findViewById<TextView>(R.id.label_relation_name).text = attribute.name
+					val button = vi!!.findViewById<Button>(R.id.button_relation_target)
+					button.text = attribute.target?.title ?: "none"
+					button.setOnClickListener {
+						navigateTo(attribute.target ?: return@setOnClickListener)
+					}
+					return@ListAdapter vi!!
+				}
 		}
 
 		// note paths
@@ -675,21 +712,20 @@ class MainActivity : AppCompatActivity() {
 		)
 		val notePaths = findViewById<ListView>(R.id.widget_note_paths_type_content)
 		notePaths.adapter = arrayAdapter
-		notePaths.onItemClickListener =
-			OnItemClickListener { _, _, position, _ ->
-				// switch to the note path in the tree
-				if (position >= 0 && position < paths.size) {
-					val pathSelected = paths[position]
-					if (ensurePathIsExpanded(pathSelected)) {
-						refreshTree()
-					}
-					if (pathSelected.first().cachedTreeIndex != null) {
-						scrollTreeToBranch(pathSelected.first())
-						binding.drawerLayout.closeDrawers()
-						binding.drawerLayout.openDrawer(GravityCompat.START)
-					}
+		notePaths.onItemClickListener = OnItemClickListener { _, _, position, _ ->
+			// switch to the note path in the tree
+			if (position >= 0 && position < paths.size) {
+				val pathSelected = paths[position]
+				if (ensurePathIsExpanded(pathSelected)) {
+					refreshTree()
+				}
+				if (pathSelected.first().cachedTreeIndex != null) {
+					scrollTreeToBranch(pathSelected.first())
+					binding.drawerLayout.closeDrawers()
+					binding.drawerLayout.openDrawer(GravityCompat.START)
 				}
 			}
+		}
 
 		val noteId = findViewById<TextView>(R.id.widget_note_info_id_content)
 		noteId.text = noteContent.id
@@ -772,7 +808,7 @@ class MainActivity : AppCompatActivity() {
 		return Cache.getNoteWithContent(getNoteFragment().getNoteId())!!
 	}
 
-	fun getNotePathLoaded(): Branch? {
+	private fun getNotePathLoaded(): Branch? {
 		return noteHistory.last().second
 	}
 

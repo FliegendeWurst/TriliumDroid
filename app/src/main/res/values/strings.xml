@@ -49,6 +49,7 @@
     <string name="label_owned_relations">Relations</string>
     <string name="description_modify_relations">modify relations</string>
     <string name="description_open_target_note">open target note</string>
+    <string name="label_inherited_relations">Inherited relations</string>
 
     <string-array name="note_types_array">
         <item>Text</item>
