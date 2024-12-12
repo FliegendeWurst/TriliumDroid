@@ -150,6 +150,7 @@ object Cache {
 
 	fun updateLabel(note: Note, name: String, value: String, inheritable: Boolean) {
 		var previousId: String? = null
+		// TODO: multi labels
 		db!!.rawQuery(
 			"SELECT attributeId FROM attributes WHERE noteId = ? AND type = 'label' AND name = ? AND isDeleted = 0",
 			arrayOf(note.id, name)
@@ -160,6 +161,7 @@ object Cache {
 		}
 		val utc = utcDateModified()
 		if (previousId != null) {
+			Log.i(TAG, "updating label $note / $name = ${value.length} characters")
 			db!!.execSQL(
 				"UPDATE attributes SET value = ?, utcDateModified = ? " +
 						"WHERE attributeId = ?",

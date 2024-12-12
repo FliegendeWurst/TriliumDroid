@@ -735,6 +735,11 @@ class MainActivity : AppCompatActivity() {
 		noteCreated.text = noteContent.created.substring(0, 19)
 		val noteModified = findViewById<TextView>(R.id.widget_note_info_modified_content)
 		noteModified.text = noteContent.modified.substring(0, 19)
+
+		val frag = getFragment()
+		if (frag is NoteFragment) {
+			frag.refreshHeader(noteContent)
+		}
 	}
 
 	fun navigateTo(note: Note, branch: Branch? = null) {

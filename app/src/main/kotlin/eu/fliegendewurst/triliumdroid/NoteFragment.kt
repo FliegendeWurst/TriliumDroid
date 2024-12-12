@@ -17,6 +17,7 @@ import android.webkit.WebViewClient
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.iterator
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteBinding
@@ -172,34 +173,7 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 			var execute = false
 			var share = false
 
-			val constraintLayout = binding.noteHeader
-			val flow = binding.noteHeaderAttributes
-			val attributeContentDesc = getString(R.string.attribute)
-			// remove previously shown attributes
-			constraintLayout.iterator().also { iterator ->
-				iterator.forEach { view ->
-					if (view.contentDescription == attributeContentDesc) {
-						iterator.remove()
-					}
-				}
-			}
-			for (attribute in note.getAttributes()) {
-				if (!attribute.promoted) {
-					continue
-				}
-				val view =
-					LayoutInflater.from(context)
-						.inflate(R.layout.item_attribute, constraintLayout, false)
-				view.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
-				view.findViewById<TextView>(R.id.label_attribute_value).text = attribute.value()
-				view.layoutParams = ConstraintLayout.LayoutParams(
-					ConstraintLayout.LayoutParams.WRAP_CONTENT,
-					ConstraintLayout.LayoutParams.WRAP_CONTENT
-				)
-				view.id = View.generateViewId()
-				constraintLayout.addView(view)
-				flow.addView(view)
-			}
+			refreshHeader(note)
 
 			if (note.mime.contains("env=frontend")) {
 				execute = true
@@ -240,6 +214,55 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 				share,
 				id == "root"
 			)
+		}
+	}
+
+	fun refreshHeader(note: Note) {
+		if (!this.load) {
+			return
+		}
+		val constraintLayout = binding.noteHeader
+		val flow = binding.noteHeaderAttributes
+		val attributeContentDesc = getString(R.string.attribute)
+		// remove previously shown attributes
+		constraintLayout.iterator().also { iterator ->
+			iterator.forEach { view ->
+				if (view.contentDescription == attributeContentDesc) {
+					iterator.remove()
+				}
+			}
+		}
+		for (attribute in note.getLabels()) {
+			if (!attribute.promoted) {
+				continue
+			}
+			val view =
+				LayoutInflater.from(context)
+					.inflate(R.layout.item_attribute, constraintLayout, false)
+			view.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
+			val textInput = view.findViewById<TextView>(R.id.label_attribute_value)
+			textInput.text = attribute.value()
+			textInput.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+				if (hasFocus) {
+					return@OnFocusChangeListener
+				}
+				val newValue = textInput.text
+				if (newValue != attribute.value) {
+					Cache.updateLabel(
+						note,
+						attribute.name,
+						newValue.toString(),
+						attribute.inheritable
+					)
+				}
+			}
+			view.layoutParams = ConstraintLayout.LayoutParams(
+				ConstraintLayout.LayoutParams.WRAP_CONTENT,
+				ConstraintLayout.LayoutParams.WRAP_CONTENT
+			)
+			view.id = View.generateViewId()
+			constraintLayout.addView(view)
+			flow.addView(view)
 		}
 	}
 }

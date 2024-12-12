@@ -181,4 +181,8 @@ class Note(
 	fun setRelations(relations: List<Relation>) {
 		this.relations = relations
 	}
+
+	override fun toString(): String {
+		return "Note($id)"
+	}
 }
