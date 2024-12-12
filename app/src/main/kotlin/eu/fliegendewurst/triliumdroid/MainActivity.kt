@@ -351,6 +351,9 @@ class MainActivity : AppCompatActivity() {
 				handler.post {
 					handleError(it)
 					showInitialNote(true)
+					snackbar.setText("Sync: error!")
+					snackbar.duration = Snackbar.LENGTH_SHORT
+					snackbar.show()
 				}
 			})
 		}
