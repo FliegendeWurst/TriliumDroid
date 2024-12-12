@@ -173,6 +173,12 @@ class MainActivity : AppCompatActivity() {
 		binding.root.findViewById<Button>(R.id.button_relations_edit).setOnClickListener {
 			ModifyRelationsDialog.showDialog(this, getNoteLoaded())
 		}
+		binding.root.findViewById<Button>(R.id.button_note_paths_add).setOnClickListener {
+			val loaded = getNoteLoaded()
+			JumpToNoteDialog.showDialogReturningNote(this, R.string.dialog_select_note) {
+				Cache.cloneNote(it, loaded)
+			}
+		}
 
 		// add custom buttons
 		for (buttonId in prefs.all.keys.filter { it.startsWith("button") }) {
@@ -229,7 +235,7 @@ class MainActivity : AppCompatActivity() {
 						break
 					} else {
 						val entry = noteHistory[noteHistory.size - 2]
-						if (entry.first.id == "DELETED") {
+						if (entry.first.id == "DELETED" || entry.first.id == loadedNoteId) {
 							noteHistory.removeAt(noteHistory.size - 2)
 							continue
 						}

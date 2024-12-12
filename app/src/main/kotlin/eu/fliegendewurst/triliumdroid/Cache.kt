@@ -302,6 +302,32 @@ object Cache {
 		getNoteInternal(note.id)
 	}
 
+	fun cloneNote(parentBranch: Branch, note: Note) {
+		val parentNote = parentBranch.note
+		// first, make sure we aren't creating a cycle
+		val paths = getNotePaths(parentNote) ?: return
+		if (paths.any { it.any { otherBranch -> otherBranch.note == note.id } }) {
+			return
+		}
+		// create new branch
+		val branchId = "${parentNote}_${note.id}"
+		// check if it is used
+		db!!.rawQuery("SELECT 1 FROM branches WHERE branchId = ?", arrayOf(branchId))
+			.use {
+				if (it.moveToNext()) {
+					return
+				}
+			}
+		// TODO: proper position
+		val utc = utcDateModified()
+		db!!.execSQL(
+			"INSERT INTO branches (branchId, noteId, parentNoteId, notePosition, prefix, isExpanded, isDeleted, deleteId, utcDateModified) " +
+					"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			arrayOf(branchId, note.id, parentNote, 0, null, 0, 0, null, utc)
+		)
+		db!!.registerEntityChangeBranch(Branch(branchId, note.id, parentNote, 0, null, false))
+	}
+
 	/**
 	 * Get one possible note path for the provided note id.
 	 */

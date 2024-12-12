@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     style="@style/Widget"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -19,6 +20,19 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <Button
+            android:id="@+id/button_note_paths_add"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="#fff"
+            android:contentDescription="@string/description_clone_note"
+            android:drawableStart="@drawable/bx_plus_circle"
+            android:paddingStart="0dp"
+            android:translationZ="@dimen/medium_margin_plus"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="RtlSymmetry" />
+
         <include
             android:id="@+id/widget_note_paths_divider"
             style="@style/WidgetTableHeaderDivider"
@@ -33,13 +47,5 @@
             android:layout_height="wrap_content"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_note_paths_divider" />
-
-        <Button
-            android:id="@+id/widget_note_paths_create_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/button_clone_note"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/widget_note_paths_type_content" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>

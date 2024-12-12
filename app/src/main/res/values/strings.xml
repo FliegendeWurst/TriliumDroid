@@ -50,6 +50,7 @@
     <string name="description_modify_relations">modify relations</string>
     <string name="description_open_target_note">open target note</string>
     <string name="label_inherited_relations">Inherited relations</string>
+    <string name="description_clone_note">clone note</string>
 
     <string-array name="note_types_array">
         <item>Text</item>
