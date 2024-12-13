@@ -58,6 +58,7 @@ import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
+import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import kotlinx.coroutines.Dispatchers
@@ -252,7 +253,6 @@ class MainActivity : AppCompatActivity() {
 	private var loadedNoteId: String? = null
 
 	override fun onPause() {
-		super.onPause()
 		// TODO: maybe save the edited content somewhere
 		when (val fragment = getFragment()) {
 			is NoteFragment -> {
@@ -262,6 +262,7 @@ class MainActivity : AppCompatActivity() {
 					.commit()
 			}
 		}
+		super.onPause()
 	}
 
 	override fun onResume() {
@@ -524,6 +525,30 @@ class MainActivity : AppCompatActivity() {
 
 		R.id.action_sync -> {
 			startSync(handler, false)
+			true
+		}
+
+		R.id.action_note_map -> {
+			var frag = getFragment()
+			if (frag is NoteMapFragment) {
+				val id = frag.noteId!!
+				frag = NoteFragment()
+				frag.loadLater(id)
+				binding.fabTree.show()
+				binding.fab.show()
+				supportFragmentManager.beginTransaction()
+					.replace(R.id.fragment_container, frag)
+					.commit()
+			} else if (frag is NoteFragment) {
+				val id = frag.getNoteId()
+				frag = NoteMapFragment()
+				frag.loadLater(id)
+				binding.fabTree.hide()
+				binding.fab.hide()
+				supportFragmentManager.beginTransaction()
+					.replace(R.id.fragment_container, frag)
+					.commit()
+			}
 			true
 		}
 
@@ -797,7 +822,7 @@ class MainActivity : AppCompatActivity() {
 	private fun getFragment(): Fragment {
 		val hostFragment =
 			supportFragmentManager.findFragmentById(R.id.fragment_container)
-		return if (hostFragment is NoteFragment || hostFragment is NoteEditFragment || hostFragment is EmptyFragment) {
+		return if (hostFragment is NoteFragment || hostFragment is NoteEditFragment || hostFragment is EmptyFragment || hostFragment is NoteMapFragment) {
 			hostFragment
 		} else {
 			val frags = (hostFragment as NavHostFragment).childFragmentManager.fragments
@@ -812,6 +837,8 @@ class MainActivity : AppCompatActivity() {
 		}
 		// replace fragment
 		frag = NoteFragment()
+		binding.fab.show()
+		binding.fabTree.show()
 		supportFragmentManager.beginTransaction()
 			.replace(R.id.fragment_container, frag)
 			.commit()

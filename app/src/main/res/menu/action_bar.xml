@@ -29,6 +29,11 @@
         app:showAsAction="always" />
 
     <item
+        android:id="@+id/action_note_map"
+        android:title="@string/action_note_map"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_console"
         android:title="@string/action_console_log"
         app:showAsAction="never" />
