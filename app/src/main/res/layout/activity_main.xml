@@ -34,10 +34,10 @@
 
             <TextView
                 android:id="@+id/toolbar_title"
-                android:clickable="true"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
+                android:clickable="true"
                 android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
         </androidx.appcompat.widget.Toolbar>
@@ -77,7 +77,7 @@
             tools:ignore="RelativeOverlap" />
     </RelativeLayout>
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/drawer"
         android:layout_width="@dimen/drawer_size"
         android:layout_height="match_parent"
@@ -85,42 +85,20 @@
         android:background="@color/background"
         android:orientation="vertical">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/tree_list"
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/pager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_above="@id/list_buttons"
-            android:layout_alignParentTop="true"
-            app:layoutManager="LinearLayoutManager" />
+            app:tabIndicatorGravity="top" />
 
-        <HorizontalScrollView
-            android:id="@+id/list_buttons"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true">
+    </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/buttons"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <ImageButton
-                    android:id="@+id/button_new_note"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/button_new_note"
-                    android:src="@drawable/bx_file_blank_child" />
-
-                <ImageButton
-                    android:id="@+id/button_new_note_sibling"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/button_new_note_sibling"
-                    android:src="@drawable/bx_file_blank_next" />
-            </LinearLayout>
-        </HorizontalScrollView>
-    </RelativeLayout>
 
     <include layout="@layout/activity_main_drawer_right" />
 </androidx.drawerlayout.widget.DrawerLayout>

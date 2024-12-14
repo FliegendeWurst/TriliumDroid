@@ -12,7 +12,7 @@ class Note(
 	var modified: String,
 	var isProtected: Int,
 	var blobId: String
-) {
+): Comparable<Note> {
 	var content: ByteArray? = null
 	var contentFixed: Boolean = false
 	private var labels: List<Label>? = null
@@ -25,6 +25,11 @@ class Note(
 	 */
 	var branches: MutableList<Branch> = mutableListOf()
 	private var inheritableCached = false
+
+	/**
+	 * Relations with target = this. Only available when constructing global notes map.
+	 */
+	var incomingRelations: List<Relation>? = null
 
 	fun getLabel(name: String): String? {
 		return getLabelValue(name)?.value
@@ -178,8 +183,16 @@ class Note(
 		return relations.orEmpty() + inheritedRelations.orEmpty()
 	}
 
+	fun getRelationsBypassCache(): List<Relation> {
+		return relations.orEmpty() + inheritedRelations.orEmpty()
+	}
+
 	fun setRelations(relations: List<Relation>) {
 		this.relations = relations
+	}
+
+	override fun compareTo(other: Note): Int {
+		return id.compareTo(other.id)
 	}
 
 	override fun toString(): String {

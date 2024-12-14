@@ -1068,6 +1068,70 @@ object Cache {
 		return createChildNote(getNote(parentNote[1].note)!!, newNoteTitle)
 	}
 
+	fun getAllNotesWithRelations(): List<Note> {
+		val list = mutableListOf<Note>()
+		val relations = mutableListOf<Triple<String, String, String>>()
+		db!!.rawQuery(
+			"SELECT " +
+					"noteId, " + // 0
+					"title," + // 1
+					"attributes.name," + // 2
+					"attributes.value," + // 3
+					"attributes.type " + // 4
+					"FROM notes " +
+					"LEFT JOIN attributes USING(noteId) " +
+					"WHERE notes.isDeleted = 0 AND SUBSTR(noteId, 1, 1) != '_'",
+			arrayOf()
+		).use {
+			var currentNote: Note? = null
+			// source, target, name
+			while (it.moveToNext()) {
+				val id = it.getString(0)
+				val title = it.getString(1)
+				val attrName = it.getString(2)
+				val attrValue = it.getString(3)
+				val attrType = it.getString(4)
+				if (currentNote == null || currentNote.title != title) {
+					if (currentNote != null) {
+						list.add(currentNote)
+					}
+					currentNote = Note(id, "", title, "", "", "", 0, "")
+				}
+				if (attrType == "relation" && attrValue != null && !attrValue.startsWith('_') && !attrName.startsWith(
+						"child:"
+					)
+				) {
+					relations.add(Triple(id, attrValue, attrName))
+				}
+			}
+			list.add(currentNote!!)
+		}
+		val notesById = list.associateBy { x -> x.id }
+		val relationsById = mutableMapOf<String, MutableList<Relation>>()
+		val relationsByIdIncoming = mutableMapOf<String, MutableList<Relation>>()
+		for (rel in relations) {
+			if (relationsById[rel.first] == null) {
+				relationsById[rel.first] = mutableListOf()
+			}
+			if (relationsByIdIncoming[rel.second] == null) {
+				relationsByIdIncoming[rel.second] = mutableListOf()
+			}
+			val relation = Relation(
+				notesById[rel.second]!!, rel.third,
+				inheritable = false,
+				promoted = false,
+				multi = false
+			)
+			relationsById[rel.first]!!.add(relation)
+			relationsByIdIncoming[rel.second]!!.add(relation)
+		}
+		for (v in relationsById) {
+			notesById[v.key]!!.setRelations(v.value)
+			notesById[v.key]!!.incomingRelations = relationsByIdIncoming[v.key]
+		}
+		return list
+	}
+
 	private fun dateModified(): String {
 		return localTime.format(Calendar.getInstance().time)
 	}

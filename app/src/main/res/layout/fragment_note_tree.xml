@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:orientation="vertical">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/tree_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/list_buttons"
+        android:layout_alignParentTop="true"
+        app:layoutManager="LinearLayoutManager" />
+
+    <ListView
+        android:id="@+id/tree_list_simple"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/list_buttons"
+        android:layout_alignParentTop="true"
+        android:visibility="gone"
+        app:layoutManager="LinearLayoutManager" />
+
+    <HorizontalScrollView
+        android:id="@+id/list_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <LinearLayout
+            android:id="@+id/buttons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/button_new_note"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/button_new_note"
+                android:src="@drawable/bx_file_blank_child" />
+
+            <ImageButton
+                android:id="@+id/button_new_note_sibling"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/button_new_note_sibling"
+                android:src="@drawable/bx_file_blank_next" />
+        </LinearLayout>
+    </HorizontalScrollView>
+</RelativeLayout>

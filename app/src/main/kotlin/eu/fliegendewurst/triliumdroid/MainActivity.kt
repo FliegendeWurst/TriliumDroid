@@ -46,7 +46,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.tabs.TabLayoutMediator
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
@@ -59,6 +61,7 @@ import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
+import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import kotlinx.coroutines.Dispatchers
@@ -141,6 +144,91 @@ class MainActivity : AppCompatActivity() {
 			}
 		}
 
+		tree = TreeItemAdapter({
+			navigateTo(Cache.getNote(it.note)!!)
+		}, {
+			Cache.toggleBranch(it)
+			refreshTree()
+		})
+
+		binding.pager.adapter = object : FragmentStateAdapter(this) {
+			override fun getItemCount(): Int {
+				return 2
+			}
+
+			override fun createFragment(position: Int): Fragment {
+				if (position == 0) {
+					val frag = NoteTreeFragment()
+					frag.initLater {
+						it.binding.treeList.adapter = tree
+						it.binding.buttonNewNote.setOnClickListener {
+							CreateNewNoteDialog.showDialog(this@MainActivity, true, getNoteLoaded())
+						}
+						it.binding.buttonNewNoteSibling.setOnClickListener {
+							CreateNewNoteDialog.showDialog(
+								this@MainActivity,
+								false,
+								getNoteLoaded()
+							)
+						}
+						for (buttonId in prefs.all.keys.filter { pref -> pref.startsWith("button") }) {
+							val view = LayoutInflater.from(this@MainActivity)
+								.inflate(R.layout.button, it.binding.buttons, true)
+							view.findViewById<ImageButton>(R.id.button_custom).setOnClickListener {
+								val script = prefs.getString(buttonId, "() => {}")
+								Log.i(TAG, "executing button script $script")
+								runScript(getNoteFragment(), "($script)()")
+							}
+						}
+					}
+					return frag
+				} else if (position == 1) {
+					val frag = NoteTreeFragment()
+					frag.initLater {
+						it.binding.treeList.visibility = View.GONE
+						it.binding.treeListSimple.visibility = View.VISIBLE
+						it.binding.treeListSimple.adapter =
+							ListAdapter(listOf("Note Map")) { type, convertView ->
+								var vi = convertView
+								if (vi == null) {
+									vi = layoutInflater.inflate(
+										R.layout.item_tree_note,
+										it.binding.treeListSimple,
+										false
+									)
+								}
+								val button = vi!!.findViewById<Button>(R.id.label)
+								button.text = type
+								button.setOnClickListener {
+									if (type == "Note Map") {
+										val fragMap = NoteMapFragment()
+										fragMap.loadLaterGlobal()
+										showFragment(fragMap)
+									}
+								}
+								return@ListAdapter vi
+							}
+						it.binding.buttons.visibility = View.GONE
+					}
+					return frag
+				}
+				throw IllegalArgumentException("wrong position $position")
+			}
+		}
+		val tabLayout = binding.tabLayout
+		TabLayoutMediator(tabLayout, binding.pager) { tab, position ->
+			when (position) {
+				0 -> {
+					tab.text = "NOTES"
+				}
+
+				1 -> {
+					tab.text = "SPECIAL"
+				}
+			}
+		}.attach()
+
+
 		ArrayAdapter.createFromResource(
 			this,
 			R.array.note_types_array,
@@ -153,21 +241,7 @@ class MainActivity : AppCompatActivity() {
 		Cache.initializeDatabase(applicationContext)
 
 		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
-		val adapter = TreeItemAdapter({
-			navigateTo(Cache.getNote(it.note)!!)
-		}, {
-			Cache.toggleBranch(it)
-			refreshTree()
-		})
-		binding.treeList.adapter = adapter
-		tree = adapter
 
-		binding.buttonNewNote.setOnClickListener {
-			CreateNewNoteDialog.showDialog(this, true, getNoteLoaded())
-		}
-		binding.buttonNewNoteSibling.setOnClickListener {
-			CreateNewNoteDialog.showDialog(this, false, getNoteLoaded())
-		}
 		binding.root.findViewById<Button>(R.id.button_labels_modify).setOnClickListener {
 			ModifyLabelsDialog.showDialog(this, getNoteLoaded())
 		}
@@ -178,16 +252,6 @@ class MainActivity : AppCompatActivity() {
 			val loaded = getNoteLoaded()
 			JumpToNoteDialog.showDialogReturningNote(this, R.string.dialog_select_note) {
 				Cache.cloneNote(it, loaded)
-			}
-		}
-
-		// add custom buttons
-		for (buttonId in prefs.all.keys.filter { it.startsWith("button") }) {
-			val view = LayoutInflater.from(this).inflate(R.layout.button, binding.buttons, true)
-			view.findViewById<ImageButton>(R.id.button_custom).setOnClickListener {
-				val script = prefs.getString(buttonId, "() => {}")
-				Log.i(TAG, "executing button script $script")
-				runScript(getNoteFragment(), "($script)()")
 			}
 		}
 
@@ -419,11 +483,7 @@ class MainActivity : AppCompatActivity() {
 					val id = fragment.getNoteId()
 					val frag = NoteEditFragment()
 					frag.loadLater(id)
-					binding.fabTree.hide()
-					binding.fab.hide()
-					supportFragmentManager.beginTransaction()
-						.replace(R.id.fragment_container, frag)
-						.commit()
+					showFragment(frag)
 				}
 
 				is NoteEditFragment -> {
@@ -543,11 +603,7 @@ class MainActivity : AppCompatActivity() {
 				val id = frag.getNoteId()
 				frag = NoteMapFragment()
 				frag.loadLater(id)
-				binding.fabTree.hide()
-				binding.fab.hide()
-				supportFragmentManager.beginTransaction()
-					.replace(R.id.fragment_container, frag)
-					.commit()
+				showFragment(frag)
 			}
 			true
 		}
@@ -583,6 +639,14 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
+	private fun showFragment(frag: Fragment) {
+		binding.fabTree.hide()
+		binding.fab.hide()
+		supportFragmentManager.beginTransaction()
+			.replace(R.id.fragment_container, frag)
+			.commit()
+	}
+
 	@SuppressLint("SetJavaScriptEnabled")
 	fun runScript(noteFrag: NoteFragment, script: String) {
 		val webview = WebView(this)
@@ -614,12 +678,20 @@ class MainActivity : AppCompatActivity() {
 	private fun scrollTreeTo(noteId: String) {
 		tree!!.select(noteId)
 		val pos = Cache.getBranchPosition(noteId) ?: return
-		(binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(pos, 5)
+		val frag = supportFragmentManager.findFragmentByTag("f0") as NoteTreeFragment
+		(frag.binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
+			pos,
+			5
+		)
 	}
 
 	private fun scrollTreeToBranch(branch: Branch) {
 		val pos = branch.cachedTreeIndex ?: return
-		(binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(pos, 5)
+		val frag = supportFragmentManager.findFragmentByTag("f0") as NoteTreeFragment
+		(frag.binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
+			pos,
+			5
+		)
 	}
 
 	fun navigateToPath(notePath: String) {
