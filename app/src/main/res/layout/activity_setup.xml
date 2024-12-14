@@ -74,6 +74,7 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <!--
         <include layout="@layout/divider" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -102,6 +103,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/label_interval" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
+        -->
 
         <include
             layout="@layout/divider"
@@ -114,7 +116,9 @@
             style="@style/SettingsSectionLabelStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Interface" />
+            android:text="@string/label_interface" />
+
+        <!--
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/settings_theme"
@@ -145,6 +149,8 @@
 
         <include layout="@layout/divider" />
 
+-->
+
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/settings_fab"
             style="@style/SettingsHolderTextViewOneLinerStyle"
@@ -156,19 +162,32 @@
                 style="@style/SettingsTextLabelStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Floating action (not yet configurable)"
+                android:text="@string/label_floating_action_buttons"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <EditText
+            <TextView
                 android:id="@+id/input_fab"
-                android:layout_width="200dp"
+                android:layout_width="wrap_content"
                 android:layout_height="45dp"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:text="Jump to note"
+                android:paddingTop="@dimen/medium_margin"
+                android:text="@string/jump_to_dialog"
+                android:textSize="@dimen/bigger_text_size"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/label_fab" />
+
+            <Button
+                android:id="@+id/button_configure_fabs"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="4dp"
+                android:contentDescription="@string/description_modify_fabs"
+                android:drawableStart="@drawable/bx_cog"
+                android:padding="0dp"
+                android:paddingStart="6dp"
+                app:layout_constraintBaseline_toBaselineOf="@id/input_fab"
+                app:layout_constraintStart_toEndOf="@id/input_fab"
+                tools:ignore="RtlSymmetry" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -178,6 +197,7 @@
             android:layout_height="@dimen/divider_height"
             android:layout_marginBottom="2dp" />
 
+        <!--
         <TextView
             style="@style/SettingsSectionLabelStyle"
             android:layout_width="match_parent"
@@ -245,6 +265,8 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/divider_height"
             android:layout_marginBottom="2dp" />
+
+            -->
 
         <!-- TODO: backup -->
 

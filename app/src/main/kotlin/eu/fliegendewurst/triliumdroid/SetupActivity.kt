@@ -6,11 +6,13 @@ import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 
 class SetupActivity : AppCompatActivity() {
 	companion object {
 		private const val TAG: String = "SetupActivity"
 	}
+
 	private lateinit var binding: ActivitySetupBinding
 	private lateinit var prefs: SharedPreferences
 
@@ -19,13 +21,38 @@ class SetupActivity : AppCompatActivity() {
 		binding = ActivitySetupBinding.inflate(layoutInflater)
 		prefs = PreferenceManager.getDefaultSharedPreferences(this)
 		setContentView(binding.root)
-		binding.server.setText(prefs.getString("hostname", "http://192.168.178.21:12783"))
+		binding.server.setText(prefs.getString("hostname", ""))
 		binding.password.setText(
 			prefs.getString(
 				"password",
 				""
 			)
 		)
+		ConfigureFabsDialog.init(prefs)
+		setText()
+		binding.buttonConfigureFabs.setOnClickListener {
+			ConfigureFabsDialog.showDialog(this, prefs) {
+				setText()
+			}
+		}
+	}
+
+	private fun setText() {
+		var x = ""
+		val labels = resources.getStringArray(R.array.fabs)
+		for (action in ConfigureFabsDialog.actions) {
+			if (ConfigureFabsDialog.getPref(prefs, action)!!.first) {
+				val label = labels[ConfigureFabsDialog.actions.indexOf(action)]
+				x = label
+			}
+		}
+		for (action in ConfigureFabsDialog.actions) {
+			if (ConfigureFabsDialog.getPref(prefs, action)!!.second) {
+				val label = labels[ConfigureFabsDialog.actions.indexOf(action)]
+				x = "$x, $label"
+			}
+		}
+		binding.inputFab.text = x
 	}
 
 	override fun onStop() {

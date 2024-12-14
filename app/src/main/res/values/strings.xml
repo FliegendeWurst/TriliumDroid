@@ -14,7 +14,7 @@
     <string name="action_sync">Sync</string>
     <string name="settings_sync_server_header">Sync server</string>
     <string name="password_label">Password</string>
-    <string name="server_label">Server instance address</string>
+    <string name="server_label">Server instance address (host + port)</string>
     <string name="action_share">Share</string>
     <string name="action_add">Create new note</string>
     <string name="button_new_note">Create new child note</string>
@@ -52,7 +52,23 @@
     <string name="label_inherited_relations">Inherited relations</string>
     <string name="description_clone_note">clone note</string>
     <string name="action_note_map">Note Map</string>
-
+    <string name="label_fab_action">Action</string>
+    <string name="label_fab_left">L</string>
+    <string name="label_fab_right">R</string>
+    <string name="label_interface">Interface</string>
+    <string name="label_floating_action_buttons">Floating action buttons</string>
+    <string name="description_modify_fabs">modify floating action buttons</string>
+    <string name="dialog_configure_fabs">Configure floating actions</string>
+    <!-- FAB IDs: showNoteTree", "jumpToNote", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
+    <string-array name="fabs">
+        <item>Show note tree sidebar</item>
+        <item>Jump to note</item>
+        <item>Edit note</item>
+        <item>Share note</item>
+        <item>Delete note</item>
+        <item>Show local note map</item>
+        <item>Synchronize</item>
+    </string-array>
     <string-array name="note_types_array">
         <item>Text</item>
         <item>Code</item>

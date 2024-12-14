@@ -19,13 +19,11 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.widget.AdapterView.OnItemClickListener
 import android.widget.ArrayAdapter
-import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageButton
@@ -54,10 +52,11 @@ import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
-import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
-import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
 import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
+import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
+import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
@@ -203,7 +202,7 @@ class MainActivity : AppCompatActivity() {
 									if (type == "Note Map") {
 										val fragMap = NoteMapFragment()
 										fragMap.loadLaterGlobal()
-										showFragment(fragMap)
+										showFragment(fragMap, true)
 									}
 								}
 								return@ListAdapter vi
@@ -256,10 +255,12 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		binding.fab.setOnClickListener {
-			JumpToNoteDialog.showDialog(this)
+			val action = ConfigureFabsDialog.getRightAction(prefs)
+			performAction(action ?: return@setOnClickListener)
 		}
 		binding.fabTree.setOnClickListener {
-			binding.drawerLayout.openDrawer(GravityCompat.START)
+			val action = ConfigureFabsDialog.getLeftAction(prefs)
+			performAction(action ?: return@setOnClickListener)
 		}
 
 		if (prefs.getString("hostname", null) == null) {
@@ -312,6 +313,56 @@ class MainActivity : AppCompatActivity() {
 				}
 			}
 		})
+	}
+
+	override fun onStart() {
+		super.onStart()
+		binding.fab.setImageResource(
+			ConfigureFabsDialog.getIcon(
+				ConfigureFabsDialog.getRightAction(
+					prefs
+				)
+			)
+		)
+		binding.fabTree.setImageResource(
+			ConfigureFabsDialog.getIcon(
+				ConfigureFabsDialog.getLeftAction(
+					prefs
+				)
+			)
+		)
+	}
+
+	private fun performAction(action: String) {
+		when (action) {
+			"showNoteTree" -> {
+				binding.drawerLayout.openDrawer(GravityCompat.START)
+			}
+
+			"jumpToNote" -> {
+				JumpToNoteDialog.showDialog(this)
+			}
+
+			"editNote" -> {
+				doMenuAction(R.id.action_edit)
+			}
+
+			"shareNote" -> {
+				doMenuAction(R.id.action_share)
+			}
+
+			"deleteNote" -> {
+				doMenuAction(R.id.action_delete)
+			}
+
+			"noteMap" -> {
+				doMenuAction(R.id.action_note_map)
+			}
+
+			"sync" -> {
+				doMenuAction(R.id.action_sync)
+			}
+		}
 	}
 
 	private var loadedNoteId: String? = null
@@ -476,25 +527,25 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	@SuppressLint("SetJavaScriptEnabled")
-	override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+	override fun onOptionsItemSelected(item: MenuItem): Boolean {
+		return doMenuAction(item.itemId) || super.onOptionsItemSelected(item)
+	}
+
+	private fun doMenuAction(actionId: Int) = when (actionId) {
 		R.id.action_edit -> {
 			when (val fragment = getFragment()) {
 				is NoteFragment -> {
 					val id = fragment.getNoteId()
 					val frag = NoteEditFragment()
 					frag.loadLater(id)
-					showFragment(frag)
+					showFragment(frag, true)
 				}
 
 				is NoteEditFragment -> {
 					val id = fragment.getNoteId()!!
 					val frag = NoteFragment()
 					frag.loadLater(id)
-					binding.fabTree.show()
-					binding.fab.show()
-					supportFragmentManager.beginTransaction()
-						.replace(R.id.fragment_container, frag)
-						.commit()
+					showFragment(frag, false)
 				}
 
 				else -> {
@@ -594,16 +645,12 @@ class MainActivity : AppCompatActivity() {
 				val id = frag.noteId!!
 				frag = NoteFragment()
 				frag.loadLater(id)
-				binding.fabTree.show()
-				binding.fab.show()
-				supportFragmentManager.beginTransaction()
-					.replace(R.id.fragment_container, frag)
-					.commit()
+				showFragment(frag, false)
 			} else if (frag is NoteFragment) {
 				val id = frag.getNoteId()
 				frag = NoteMapFragment()
 				frag.loadLater(id)
-				showFragment(frag)
+				showFragment(frag, true)
 			}
 			true
 		}
@@ -635,13 +682,18 @@ class MainActivity : AppCompatActivity() {
 		else -> {
 			// If we got here, the user's action was not recognized.
 			// Invoke the superclass to handle it.
-			super.onOptionsItemSelected(item)
+			false
 		}
 	}
 
-	private fun showFragment(frag: Fragment) {
-		binding.fabTree.hide()
-		binding.fab.hide()
+	private fun showFragment(frag: Fragment, hideFabs: Boolean) {
+		if (hideFabs) {
+			binding.fabTree.hide()
+			binding.fab.hide()
+		} else {
+			binding.fabTree.show()
+			binding.fab.show()
+		}
 		supportFragmentManager.beginTransaction()
 			.replace(R.id.fragment_container, frag)
 			.commit()
@@ -909,11 +961,7 @@ class MainActivity : AppCompatActivity() {
 		}
 		// replace fragment
 		frag = NoteFragment()
-		binding.fab.show()
-		binding.fabTree.show()
-		supportFragmentManager.beginTransaction()
-			.replace(R.id.fragment_container, frag)
-			.commit()
+		showFragment(frag, false)
 		return frag
 	}
 
