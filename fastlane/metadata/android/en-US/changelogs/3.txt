@@ -1,0 +1,21 @@
+New features:
+
+- sync with both Trilium Notes 0.60.3 and TriliumNext 0.90.12
+- note rename dialog
+- note labels dialog
+- note cloning
+- note map (local and global)
+- customizable floating action buttons
+- welcome screen (introduction + button to settings)
+- about screen with Github links
+
+Bugfixes:
+
+- optimized app startup time
+- update to latest AztecEditor (fixes formatting issues)
+- fixed crash when clicking edit twice
+- fixed status bar overlapping action bar / FABs overlapping editor bar
+- fixed crash when resuming app with editor open
+- use /api/login/sync instead of /login to authenticate
+- optimized memory usage when app is suspended
+- only delete one note clone when deleting note

@@ -7,6 +7,7 @@ These features of the original are implemented:
 - Rich WYSIWYG note editing
 - Notes can be arranged into arbitrarily deep tree
 - Fast and easy navigation between notes
+- Single note can be placed into multiple places in the tree (cloning)
 - Note attributes can be used for note organization, querying and advanced scripting
 - Scripting
 - Scales well in both usability and performance upwards of 10000 notes
@@ -14,7 +15,6 @@ These features of the original are implemented:
 The following features are only available in the desktop client.
 They will be implemented in the app at a later time.
 
-- Single note can be placed into multiple places in the tree (cloning)
 - Support for editing notes with source code, including syntax highlighting
 - Full text search
 - Seamless note versioning

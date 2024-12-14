@@ -11,12 +11,12 @@ android {
         minSdkVersion 26
         compileSdk 35
         targetSdkVersion 35
-        versionCode 2
-        versionName "0.90.12-alpha1"
+        versionCode 3
+        versionName "0.90.12-alpha2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField "long", "TIMESTAMP", "1693308057660L"
+        buildConfigField "long", "TIMESTAMP", "1734200570000L"
     }
 
     buildTypes {
