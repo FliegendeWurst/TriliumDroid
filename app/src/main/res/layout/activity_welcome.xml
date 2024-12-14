@@ -18,7 +18,7 @@
             android:layout_height="@dimen/extra_big_text_icon_size"
             android:layout_gravity="center"
             android:layout_marginEnd="@dimen/normal_margin"
-            android:contentDescription="app icon"
+            android:contentDescription="@string/description_app_icon"
             android:scaleType="center"
             android:src="@drawable/icon_color" />
 
@@ -35,7 +35,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/normal_margin"
-        android:text="Welcome to Trilium Notes!"
+        android:text="@string/label_welcome_to_trilium_notes"
         android:textSize="@dimen/extra_big_text_size"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -57,22 +57,24 @@
         android:layout_marginTop="@dimen/normal_margin"
         android:paddingStart="@dimen/activity_margin"
         android:paddingEnd="@dimen/activity_margin"
-        android:text="If this is your first time using Trilium Notes, get started with a new note collection."
+        android:text="@string/text_first_time_user"
         android:textSize="@dimen/big_text_size"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/divider" />
 
+    <!--
     <Button
         android:id="@+id/button_setup_demo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/normal_margin"
-        android:text="Create new note collection"
+        android:text="@string/button_create_new_note_collection"
         android:textSize="@dimen/big_text_size"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/text_header2" />
+        -->
 
     <ImageView
         android:id="@+id/divider2"
@@ -81,7 +83,7 @@
         android:layout_marginTop="@dimen/normal_margin"
         android:background="@color/divider_grey"
         android:importantForAccessibility="no"
-        app:layout_constraintTop_toBottomOf="@id/button_setup_demo" />
+        app:layout_constraintTop_toBottomOf="@id/text_header2" />
 
     <TextView
         android:id="@+id/text_header3"
@@ -90,7 +92,7 @@
         android:layout_marginTop="@dimen/normal_margin"
         android:paddingStart="@dimen/activity_margin"
         android:paddingEnd="@dimen/activity_margin"
-        android:text="If you are already using the PC version, you may synchronize your existing data."
+        android:text="@string/text_existing_user"
         android:textSize="@dimen/big_text_size"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -101,7 +103,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/normal_margin"
-        android:text="Synchronize existing data"
+        android:text="@string/button_synchronize_existing_data"
         android:textSize="@dimen/big_text_size"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

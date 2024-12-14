@@ -25,13 +25,13 @@ import eu.fliegendewurst.triliumdroid.service.Util
 import okio.ByteString.Companion.decodeBase64
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.lang.StrictMath.max
 import java.security.MessageDigest
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -54,6 +54,8 @@ object Cache {
 
 	private var dbHelper: CacheDbHelper? = null
 	private var db: SQLiteDatabase? = null
+
+	var lastSync: Long? = null
 
 	fun getBranchPosition(id: String): Int? {
 		return branchPosition[id]
@@ -833,6 +835,7 @@ object Cache {
 		callbackError: (Exception) -> Unit,
 		callbackDone: (Pair<Int, Int>) -> Unit
 	) {
+		lastSync = System.currentTimeMillis()
 		// first, verify correct sync version
 		ConnectionUtil.getAppInfo {
 			if (it != null) {
@@ -960,7 +963,15 @@ object Cache {
 		}
 	}
 
+	fun haveDatabase(context: Context): Boolean {
+		val file = File(context.filesDir.parent, "databases/Document.db")
+		return file.exists()
+	}
+
 	fun initializeDatabase(context: Context) {
+		if (db != null && db!!.isOpen) {
+			return
+		}
 		try {
 			val sql = context.resources.openRawResource(R.raw.schema).bufferedReader()
 				.use { it.readText() }

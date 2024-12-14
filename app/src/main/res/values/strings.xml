@@ -59,6 +59,12 @@
     <string name="label_floating_action_buttons">Floating action buttons</string>
     <string name="description_modify_fabs">modify floating action buttons</string>
     <string name="dialog_configure_fabs">Configure floating actions</string>
+    <string name="description_app_icon">app icon</string>
+    <string name="label_welcome_to_trilium_notes">Welcome to Trilium Notes!</string>
+    <string name="text_first_time_user">If this is your first time using Trilium Notes, you must first use the desktop app and set up a sync server. (This requirement will be lifted in a future update.)</string>
+    <string name="button_create_new_note_collection">Create new note collection</string>
+    <string name="text_existing_user">If you are already using the PC version, you may synchronize your existing data.</string>
+    <string name="button_synchronize_existing_data">Synchronize existing data</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

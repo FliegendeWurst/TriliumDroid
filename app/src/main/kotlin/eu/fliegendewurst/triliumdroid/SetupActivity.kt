@@ -2,17 +2,12 @@ package eu.fliegendewurst.triliumdroid
 
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 
 class SetupActivity : AppCompatActivity() {
-	companion object {
-		private const val TAG: String = "SetupActivity"
-	}
-
 	private lateinit var binding: ActivitySetupBinding
 	private lateinit var prefs: SharedPreferences
 
@@ -55,36 +50,13 @@ class SetupActivity : AppCompatActivity() {
 		binding.inputFab.text = x
 	}
 
-	override fun onStop() {
-		super.onStop()
+	override fun onPause() {
+		super.onPause()
 		val server = binding.server.text.toString().trimEnd('/')
 		val password = binding.password.text.toString()
 		prefs.edit()
 			.putString("hostname", server)
 			.putString("password", password)
 			.apply()
-	}
-
-	private fun setup() {
-		val server = binding.server.text.toString().trimEnd('/')
-		val password = binding.password.text.toString()
-		if (server == "" || password == "") {
-			return
-		}
-		val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-		prefs.edit()
-			.putString("hostname", server)
-			.putString("password", password)
-			.apply()
-		val looper = applicationContext.mainLooper
-		val handler = Handler(looper)
-		ConnectionUtil.setup(prefs, {
-			handler.post {
-				finish()
-			}
-		}, { error ->
-			Log.e(TAG, "failed to connect to server", error)
-			// TODO
-		})
 	}
 }

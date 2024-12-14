@@ -58,6 +58,7 @@ import eu.fliegendewurst.triliumdroid.NoteFragment
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.SetupActivity
 import eu.fliegendewurst.triliumdroid.TreeItemAdapter
+import eu.fliegendewurst.triliumdroid.activity.WelcomeActivity
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
@@ -247,8 +248,6 @@ class MainActivity : AppCompatActivity() {
 			findViewById<Spinner>(R.id.widget_basic_properties_type_content).adapter = adapter
 		}
 
-		Cache.initializeDatabase(applicationContext)
-
 		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 
 		binding.root.findViewById<Button>(R.id.button_labels_modify).setOnClickListener {
@@ -273,22 +272,9 @@ class MainActivity : AppCompatActivity() {
 			performAction(action ?: return@setOnClickListener)
 		}
 
-		if (prefs.getString("hostname", null) == null) {
-			Log.i(TAG, "starting setup!")
-			val intent = Intent(this, SetupActivity::class.java)
+		if (!Cache.haveDatabase(this)) {
+			val intent = Intent(this, WelcomeActivity::class.java)
 			startActivity(intent)
-		} else {
-			ConnectionUtil.setup(prefs, {
-				handler.post {
-					startSync(handler)
-				}
-			}, {
-				Cache.getTreeData("")
-				handler.post {
-					handleError(it)
-					showInitialNote(true)
-				}
-			})
 		}
 
 		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -311,10 +297,34 @@ class MainActivity : AppCompatActivity() {
 				}
 			}
 		})
+
+		if (Cache.haveDatabase(this)) {
+			Cache.initializeDatabase(applicationContext)
+		}
 	}
 
 	override fun onStart() {
 		super.onStart()
+		if (Cache.haveDatabase(this)) {
+			Cache.initializeDatabase(applicationContext)
+			if (prefs.getString("hostname", null) == null) {
+				Log.i(TAG, "starting setup!")
+				val intent = Intent(this, SetupActivity::class.java)
+				startActivity(intent)
+			} else if (Cache.lastSync == null) {
+				ConnectionUtil.setup(prefs, {
+					handler.post {
+						startSync(handler)
+					}
+				}, {
+					Cache.getTreeData("")
+					handler.post {
+						handleError(it)
+						showInitialNote(true)
+					}
+				})
+			}
+		}
 		binding.fab.setImageResource(
 			ConfigureFabsDialog.getIcon(
 				ConfigureFabsDialog.getRightAction(
