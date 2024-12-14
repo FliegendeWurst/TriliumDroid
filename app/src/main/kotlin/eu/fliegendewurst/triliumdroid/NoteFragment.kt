@@ -19,6 +19,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.iterator
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteBinding
 
@@ -159,7 +160,6 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 			loadLater(id)
 			return
 		}
-		(this@NoteFragment.activity as MainActivity).addHistoryEntry(id)
 		console.clear()
 		subCodeNotes = emptyList()
 

@@ -6,9 +6,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
 import eu.fliegendewurst.triliumdroid.Cache
-import eu.fliegendewurst.triliumdroid.MainActivity
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.TreeItemAdapter
+import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Branch
 
 object JumpToNoteDialog {

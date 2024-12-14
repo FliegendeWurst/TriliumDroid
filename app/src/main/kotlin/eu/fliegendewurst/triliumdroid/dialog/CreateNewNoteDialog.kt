@@ -5,12 +5,9 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
-import androidx.core.widget.addTextChangedListener
-import androidx.recyclerview.widget.RecyclerView
 import eu.fliegendewurst.triliumdroid.Cache
-import eu.fliegendewurst.triliumdroid.MainActivity
 import eu.fliegendewurst.triliumdroid.R
-import eu.fliegendewurst.triliumdroid.data.Branch
+import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
 import java.util.*
 

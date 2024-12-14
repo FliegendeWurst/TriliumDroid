@@ -1,4 +1,4 @@
-package eu.fliegendewurst.triliumdroid
+package eu.fliegendewurst.triliumdroid.activity.main
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -14,6 +14,7 @@ import android.os.Handler
 import android.os.StrictMode
 import android.system.ErrnoException
 import android.system.OsConstants
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
@@ -47,6 +48,16 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayoutMediator
+import eu.fliegendewurst.triliumdroid.AboutActivity
+import eu.fliegendewurst.triliumdroid.AlarmReceiver
+import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.ConnectionUtil
+import eu.fliegendewurst.triliumdroid.FrontendBackendApi
+import eu.fliegendewurst.triliumdroid.NoteEditFragment
+import eu.fliegendewurst.triliumdroid.NoteFragment
+import eu.fliegendewurst.triliumdroid.R
+import eu.fliegendewurst.triliumdroid.SetupActivity
+import eu.fliegendewurst.triliumdroid.TreeItemAdapter
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
@@ -73,7 +84,7 @@ import kotlin.io.path.writeBytes
 
 class MainActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityMainBinding
-	internal lateinit var handler: Handler
+	lateinit var handler: Handler
 	private lateinit var prefs: SharedPreferences
 	private var consoleLogMenuItem: MenuItem? = null
 	private var executeScriptMenuItem: MenuItem? = null
@@ -84,7 +95,7 @@ class MainActivity : AppCompatActivity() {
 	private var shareVisible: Boolean = false
 	private var deleteVisible: Boolean = true
 	private var firstNote: String? = null
-	private val noteHistory: MutableList<Pair<Note, Branch?>> = mutableListOf()
+	private val noteHistory: MutableList<HistoryItem> = mutableListOf()
 
 	companion object {
 		private const val TAG = "MainActivity"
@@ -200,9 +211,8 @@ class MainActivity : AppCompatActivity() {
 								button.text = type
 								button.setOnClickListener {
 									if (type == "Note Map") {
-										val fragMap = NoteMapFragment()
-										fragMap.loadLaterGlobal()
-										showFragment(fragMap, true)
+										noteHistory.add(NoteMapItem(null))
+										noteHistory.last().restore(this@MainActivity)
 									}
 								}
 								return@ListAdapter vi
@@ -283,32 +293,20 @@ class MainActivity : AppCompatActivity() {
 
 		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
-				val hostFragment = getFragment()
-				if (hostFragment is NoteEditFragment) {
-					val id = noteHistory.last().first.id
-					val frag = NoteFragment()
-					frag.loadLater(id)
-					binding.fabTree.show()
-					binding.fab.show()
-					supportFragmentManager.beginTransaction()
-						.replace(R.id.fragment_container, frag)
-						.commit()
-					return
+				if (noteHistory.isNotEmpty()) {
+					noteHistory.removeAt(noteHistory.size - 1)
 				}
 				while (true) {
-					if (noteHistory.size <= 1) {
+					if (noteHistory.isEmpty()) {
 						finish()
 						break
 					} else {
-						val entry = noteHistory[noteHistory.size - 2]
-						if (entry.first.id == "DELETED" || entry.first.id == loadedNoteId) {
-							noteHistory.removeAt(noteHistory.size - 2)
-							continue
+						val entry = noteHistory[noteHistory.size - 1]
+						if (entry.restore(this@MainActivity)) {
+							return
+						} else {
+							noteHistory.removeAt(noteHistory.size - 1)
 						}
-						navigateTo(entry.first, entry.second) // will add another entry
-						noteHistory.removeAt(noteHistory.size - 1)
-						noteHistory.removeAt(noteHistory.size - 1)
-						break
 					}
 				}
 			}
@@ -536,16 +534,13 @@ class MainActivity : AppCompatActivity() {
 			when (val fragment = getFragment()) {
 				is NoteFragment -> {
 					val id = fragment.getNoteId()
-					val frag = NoteEditFragment()
-					frag.loadLater(id)
-					showFragment(frag, true)
+					noteHistory.add(NoteEditItem(Cache.getNote(id)!!))
+					noteHistory.last().restore(this)
 				}
 
 				is NoteEditFragment -> {
-					val id = fragment.getNoteId()!!
-					val frag = NoteFragment()
-					frag.loadLater(id)
-					showFragment(frag, false)
+					noteHistory.removeAt(noteHistory.size - 1)
+					noteHistory.last().restore(this)
 				}
 
 				else -> {
@@ -640,17 +635,14 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		R.id.action_note_map -> {
-			var frag = getFragment()
+			val frag = getFragment()
 			if (frag is NoteMapFragment) {
-				val id = frag.noteId!!
-				frag = NoteFragment()
-				frag.loadLater(id)
-				showFragment(frag, false)
+				noteHistory.removeAt(noteHistory.size - 1)
+				noteHistory.last().restore(this)
 			} else if (frag is NoteFragment) {
 				val id = frag.getNoteId()
-				frag = NoteMapFragment()
-				frag.loadLater(id)
-				showFragment(frag, true)
+				noteHistory.add(NoteMapItem(Cache.getNote(id)!!))
+				noteHistory.last().restore(this)
 			}
 			true
 		}
@@ -686,7 +678,7 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun showFragment(frag: Fragment, hideFabs: Boolean) {
+	fun showFragment(frag: Fragment, hideFabs: Boolean) {
 		if (hideFabs) {
 			binding.fabTree.hide()
 			binding.fab.hide()
@@ -901,6 +893,11 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun navigateTo(note: Note, branch: Branch? = null) {
+		noteHistory.add(NoteItem(note, branch))
+		load(note, branch)
+	}
+
+	fun load(note: Note, branch: Branch?) {
 		Log.i(TAG, "loading note ${note.id}")
 		prefs.edit().putString(LAST_NOTE, note.id).apply()
 		// make sure note is visible
@@ -970,10 +967,6 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun getNotePathLoaded(): Branch? {
-		return noteHistory.last().second
-	}
-
-	fun addHistoryEntry(id: String) {
-		noteHistory.add(Pair(Cache.getNote(id)!!, null))
+		return noteHistory.last().branch()
 	}
 }

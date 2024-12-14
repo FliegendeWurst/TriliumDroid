@@ -16,7 +16,7 @@
         android:theme="@style/Theme.TriliumDroid"
         android:usesCleartextTraffic="true">
         <activity
-            android:name="eu.fliegendewurst.triliumdroid.MainActivity"
+            android:name="eu.fliegendewurst.triliumdroid.activity.main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

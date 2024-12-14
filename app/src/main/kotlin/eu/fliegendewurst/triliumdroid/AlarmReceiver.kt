@@ -7,6 +7,7 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.os.bundleOf
+import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 
 
 class AlarmReceiver : BroadcastReceiver() {

@@ -14,8 +14,8 @@ import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import eu.fliegendewurst.triliumdroid.Cache
-import eu.fliegendewurst.triliumdroid.MainActivity
 import eu.fliegendewurst.triliumdroid.R
+import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 

@@ -8,14 +8,13 @@ import android.widget.ListView
 import android.widget.RadioButton
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import eu.fliegendewurst.triliumdroid.MainActivity
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.SetupActivity
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 
 object ConfigureFabsDialog {
 	/**
-	 * See [MainActivity.performAction].
+	 * See [eu.fliegendewurst.triliumdroid.activity.main.MainActivity.performAction].
 	 */
 	val actions = listOf(
 		"showNoteTree",

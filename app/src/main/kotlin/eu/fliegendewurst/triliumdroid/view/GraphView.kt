@@ -16,8 +16,8 @@ import android.view.View
 import androidx.core.graphics.withScale
 import androidx.core.graphics.withTranslation
 import eu.fliegendewurst.triliumdroid.Log
-import eu.fliegendewurst.triliumdroid.MainActivity
 import eu.fliegendewurst.triliumdroid.R
+import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.util.Graph

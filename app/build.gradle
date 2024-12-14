@@ -30,6 +30,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 
     // see https://android.izzysoft.de/articles/named/iod-scan-apkchecks#blobs

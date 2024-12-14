@@ -5,8 +5,8 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
-import eu.fliegendewurst.triliumdroid.MainActivity
 import eu.fliegendewurst.triliumdroid.R
+import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 
 object AskForNameDialog {
 	fun showDialog(
