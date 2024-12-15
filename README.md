@@ -8,10 +8,10 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 
 ## Features
 
-- Support for version 0.90.12 of sync protocol + database schema
+- Support for version 0.90.12 and 0.63.7 of sync protocol + database schema
 - Sync with other Trilium instance (push + pull)
 - Displaying/editing/sharing note content
-- Displaying note attributes
+- Displaying/editing note attributes (labels and relations)
 - Attribute inheritance and templating
 - Displaying note icon
 - Displaying note paths
@@ -19,6 +19,7 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 - Navigating using internal links
 - Browsing external links
 - Jump to note dialog
+- Local/global note map view
 - Basic Scripting
 - Upgrading to newer database versions / Trilium versions
 - Support for Android 8.0+
@@ -28,29 +29,26 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 1. Download the app from the [latest release](https://github.com/FliegendeWurst/TriliumDroid/releases).
 2. Install the APK. You need to enable installing apps from unknown sources.
 3. Open the app and configure your sync server (hostname, port, password).
-4. Go back, open the three-dot menu at the top and click sync.
-5. Wait until sync is finished.
+4. Go back, wait until sync is finished.
 
 Then, you can:
 
 - inspect and navigate the note tree by opening the left side bar
-- inspect note attributes by opening the right side bar
+- view and modify note attributes by opening the right side bar
 - jump to notes using the floating action button in the bottom right corner
 - edit notes using the edit button in the top action bar
 
 There is also some preliminary support for scripting, but it doesn't work exactly like the Trilium API at the moment.
 
 ## TODO
-- Editing attributes
 - #sorted attribute
 - Search
 - Share target (create note from received text)
 - Folder view of child nodes
 - Jump to note dialog: smart sort
-- Modifying attributes, note title, note icon
+- Modifying note icon
 - Editing note tree
 - Advanced Scripting
-- Note map
 - Dark Theme
 - Included notes
 - Encrypted notes
