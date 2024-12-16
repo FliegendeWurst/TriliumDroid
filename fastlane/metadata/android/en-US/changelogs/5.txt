@@ -1,0 +1,1 @@
+Fixed sync with Trilium 0.63.

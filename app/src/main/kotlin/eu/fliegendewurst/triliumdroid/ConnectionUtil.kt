@@ -195,7 +195,13 @@ object ConnectionUtil {
 					Log.e(TAG, "login received response $resp")
 					try {
 						val json = JSONObject(resp)
-						callbackError(IllegalStateException(json.getString("message")))
+						val msg = json.getString("message")
+						if (msg.startsWith("Non-matching sync versions, local is version 32, remote is 33.")) {
+							prefs?.edit()?.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_63_3)?.apply()
+							connect(server, callback, callbackError)
+							return
+						}
+						callbackError(IllegalStateException())
 						return
 					} catch (_: Exception) {
 					}
