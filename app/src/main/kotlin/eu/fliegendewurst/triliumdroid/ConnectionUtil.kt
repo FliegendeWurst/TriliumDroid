@@ -1,6 +1,7 @@
 package eu.fliegendewurst.triliumdroid
 
 import android.content.SharedPreferences
+import androidx.preference.PreferenceManager
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Cookie
@@ -85,7 +86,8 @@ object ConnectionUtil {
 					val name = opt.getString("name")
 					val value = opt.getString("value")
 					if (name == "documentSecret") {
-						prefs.edit().putString("documentSecret", value).apply()
+						prefs.edit().putString("documentSecret", value)
+							.putInt("syncVersion", syncVersion).apply()
 						connect(server, callback, callbackError)
 						return@fetch
 					}
@@ -179,6 +181,7 @@ object ConnectionUtil {
 		val jsonObject = JSONObject()
 		jsonObject.put("timestamp", utc)
 		jsonObject.put("hash", hash)
+		syncVersion = prefs?.getInt("syncVersion", syncVersion) ?: syncVersion
 		jsonObject.put("syncVersion", syncVersion)
 		val req = Request.Builder()
 			.url("$server/api/login/sync")
