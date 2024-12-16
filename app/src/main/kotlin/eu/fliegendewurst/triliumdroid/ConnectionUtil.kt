@@ -129,6 +129,10 @@ object ConnectionUtil {
 					response.use {
 						val resp = response.body!!.string()
 						val obj = JSONObject(resp)
+						if (response.code != 200) {
+							callbackError(IllegalStateException("bad response code"))
+							return
+						}
 						callbackOk(obj)
 					}
 				}
@@ -184,6 +188,18 @@ object ConnectionUtil {
 		client!!.newCall(req).enqueue(object : Callback {
 			override fun onResponse(call: Call, response: Response) {
 				val resp = response.body!!.string()
+				if (response.code != 200) {
+					Log.e(TAG, "login received response $resp")
+					try {
+						val json = JSONObject(resp)
+						callbackError(IllegalStateException(json.getString("message")))
+						return
+					} catch (_: Exception) {
+					}
+					Log.e(TAG, "login received response $resp")
+					callbackError(IllegalStateException("bad response code for login"))
+					return
+				}
 				Log.d(TAG, "login received response $resp")
 				response.use {
 					loginFails = 0

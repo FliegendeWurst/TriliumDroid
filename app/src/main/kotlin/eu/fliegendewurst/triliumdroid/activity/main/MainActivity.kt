@@ -323,6 +323,8 @@ class MainActivity : AppCompatActivity() {
 						showInitialNote(true)
 					}
 				})
+			} else if (noteHistory.isEmpty()) {
+				showInitialNote(true)
 			}
 		}
 		binding.fab.setImageResource(
@@ -426,6 +428,7 @@ class MainActivity : AppCompatActivity() {
 		if (toastText == null) {
 			toastText = it.toString()
 		}
+		Log.e(TAG, "error ", it)
 		Toast.makeText(
 			this, toastText,
 			Toast.LENGTH_LONG
@@ -732,8 +735,8 @@ class MainActivity : AppCompatActivity() {
 	private fun scrollTreeTo(noteId: String) {
 		tree!!.select(noteId)
 		val pos = Cache.getBranchPosition(noteId) ?: return
-		val frag = supportFragmentManager.findFragmentByTag("f0") as NoteTreeFragment
-		(frag.binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
+		val frag = supportFragmentManager.findFragmentByTag("f0") ?: return
+		((frag as NoteTreeFragment).binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
 			pos,
 			5
 		)
@@ -741,8 +744,8 @@ class MainActivity : AppCompatActivity() {
 
 	private fun scrollTreeToBranch(branch: Branch) {
 		val pos = branch.cachedTreeIndex ?: return
-		val frag = supportFragmentManager.findFragmentByTag("f0") as NoteTreeFragment
-		(frag.binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
+		val frag = supportFragmentManager.findFragmentByTag("f0") ?: return
+		((frag as NoteTreeFragment).binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
 			pos,
 			5
 		)

@@ -846,7 +846,7 @@ object Cache {
 					callbackError(Exception("mismatched sync / database version"))
 				}
 			} else {
-				callbackError(NullPointerException())
+				callbackError(IllegalStateException("did not receive app info"))
 			}
 		}
 	}
