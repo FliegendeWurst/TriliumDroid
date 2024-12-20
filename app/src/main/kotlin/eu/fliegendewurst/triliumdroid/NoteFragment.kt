@@ -168,7 +168,11 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 		Log.i(TAG, "loading $id")
 		Cache.initializeDatabase(requireContext())
 		binding.textId.text = id
-		val note = Cache.getNoteWithContent(id) ?: return
+		val note = Cache.getNoteWithContent(id)
+		if (note == null) {
+			(this@NoteFragment.activity as MainActivity).handleEmptyNote()
+			return
+		}
 		handler!!.post {
 			val consoleLog = false
 			var execute = false
@@ -215,6 +219,12 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 				share,
 				id == "root"
 			)
+
+			if (note.content == null || note.content?.size?.compareTo(0) == 0 || (
+						note.content?.size == 15 && note.content?.decodeToString() == "<!DOCTYPE html>")
+			) {
+				(this@NoteFragment.activity as MainActivity).handleEmptyNote()
+			}
 		}
 	}
 

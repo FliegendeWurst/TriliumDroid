@@ -454,6 +454,9 @@ object Cache {
 		db!!.registerEntityChangeNote(note)
 	}
 
+	private val FIXER: Regex =
+		"\\s*(<div>|<div class=\"[^\"]+\">)(.*)</div>\\s*".toRegex(RegexOption.DOT_MATCHES_ALL)
+
 	private fun getNoteInternal(id: String): Note? {
 		var note: Note? = null
 		CursorFactory.selectionArgs = arrayOf(id)
@@ -498,9 +501,17 @@ object Cache {
 					if (trimmed.isBlank()) {
 						ByteArray(0)
 					} else {
-						val decoded = trimmed.decodeBase64()
-						decoded?.toByteArray()
-							?: "failed to decode note content".encodeToByteArray()
+						var decoded = trimmed.decodeBase64()?.utf8() ?: ""
+						// fixup useless nested divs
+						while (true) {
+							val contentFixed = FIXER.matchEntire(decoded)
+							if (contentFixed != null) {
+								decoded = contentFixed.groups[2]!!.value
+							} else {
+								break
+							}
+						}
+						decoded.toByteArray()
 					}
 				} else {
 					ByteArray(0)

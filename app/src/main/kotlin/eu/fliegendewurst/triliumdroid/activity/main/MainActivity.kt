@@ -343,6 +343,11 @@ class MainActivity : AppCompatActivity() {
 		)
 	}
 
+	fun handleEmptyNote() {
+		Log.d(TAG, "empty note, opening drawer")
+		binding.drawerLayout.openDrawer(GravityCompat.START)
+	}
+
 	private fun performAction(action: String) {
 		when (action) {
 			"showNoteTree" -> {
