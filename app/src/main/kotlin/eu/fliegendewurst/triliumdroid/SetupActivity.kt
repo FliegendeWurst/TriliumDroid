@@ -2,10 +2,12 @@ package eu.fliegendewurst.triliumdroid
 
 import android.content.SharedPreferences
 import android.os.Bundle
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
+
 
 class SetupActivity : AppCompatActivity() {
 	private lateinit var binding: ActivitySetupBinding
@@ -29,6 +31,18 @@ class SetupActivity : AppCompatActivity() {
 			ConfigureFabsDialog.showDialog(this, prefs) {
 				setText()
 			}
+		}
+		binding.buttonNukeDatabase.setOnClickListener {
+			AlertDialog.Builder(this)
+				.setTitle("Delete database")
+				.setMessage("Do you really want to delete all notes and related data?")
+				.setIconAttribute(android.R.attr.alertDialogIcon)
+				.setPositiveButton(
+					android.R.string.ok
+				) { _, _ ->
+					Cache.nukeDatabase(this)
+				}
+				.setNegativeButton(android.R.string.cancel, null).show()
 		}
 	}
 

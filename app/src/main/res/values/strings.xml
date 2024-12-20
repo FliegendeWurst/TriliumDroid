@@ -65,6 +65,8 @@
     <string name="button_create_new_note_collection">Create new note collection</string>
     <string name="text_existing_user">If you are already using the PC version, you may synchronize your existing data.</string>
     <string name="button_synchronize_existing_data">Synchronize existing data</string>
+    <string name="label_miscellaneous">Miscellaneous</string>
+    <string name="button_delete_database">Delete database</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

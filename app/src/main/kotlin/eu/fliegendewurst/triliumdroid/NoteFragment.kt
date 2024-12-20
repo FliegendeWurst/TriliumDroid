@@ -166,6 +166,7 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 		this.id = id
 		this.load = true
 		Log.i(TAG, "loading $id")
+		Cache.initializeDatabase(requireContext())
 		binding.textId.text = id
 		val note = Cache.getNoteWithContent(id) ?: return
 		handler!!.post {

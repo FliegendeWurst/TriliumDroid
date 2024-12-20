@@ -311,7 +311,7 @@ class MainActivity : AppCompatActivity() {
 				Log.i(TAG, "starting setup!")
 				val intent = Intent(this, SetupActivity::class.java)
 				startActivity(intent)
-			} else if (Cache.lastSync == null) {
+			} else if (Cache.lastSync == null && noteHistory.isEmpty()) {
 				ConnectionUtil.setup(prefs, {
 					handler.post {
 						startSync(handler)
@@ -414,6 +414,9 @@ class MainActivity : AppCompatActivity() {
 
 	private fun handleError(it: Exception) {
 		var toastText: String? = null
+		if (it is IllegalStateException) {
+			toastText = it.message ?: "IllegalStateException"
+		}
 		if (it.cause?.cause is ErrnoException) {
 			when ((it.cause!!.cause as ErrnoException).errno) {
 				OsConstants.ECONNREFUSED -> {
@@ -489,7 +492,10 @@ class MainActivity : AppCompatActivity() {
 	private fun showInitialNote(resetView: Boolean) {
 		refreshTree()
 		if (resetView) {
-			val n = firstNote ?: prefs.getString(LAST_NOTE, "root")!!
+			var n = firstNote ?: prefs.getString(LAST_NOTE, "root")!!
+			if (Cache.getNote(n) == null) {
+				n = "root" // may happen in case of new database or note deleted
+			}
 			navigateTo(Cache.getNote(n) ?: return)
 			// first use: open the drawer
 			if (!prefs.contains(LAST_NOTE)) {

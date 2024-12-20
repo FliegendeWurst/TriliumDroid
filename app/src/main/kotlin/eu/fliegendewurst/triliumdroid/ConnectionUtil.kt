@@ -196,12 +196,18 @@ object ConnectionUtil {
 					try {
 						val json = JSONObject(resp)
 						val msg = json.getString("message")
+						if (msg.startsWith("Sync login credentials are incorrect. It looks like you're trying to sync two different initialized documents which is not possible.")) {
+							callbackError(MismatchedDatabaseException)
+							return
+						}
 						if (msg.startsWith("Non-matching sync versions, local is version 32, remote is 33.")) {
-							prefs?.edit()?.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_63_3)?.apply()
+							prefs?.edit()
+								?.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_63_3)
+								?.apply()
 							connect(server, callback, callbackError)
 							return
 						}
-						callbackError(IllegalStateException())
+						callbackError(IllegalStateException(msg))
 						return
 					} catch (_: Exception) {
 					}

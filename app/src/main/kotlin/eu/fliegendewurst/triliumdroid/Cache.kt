@@ -3,6 +3,7 @@ package eu.fliegendewurst.triliumdroid
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
+import android.content.SharedPreferences
 import android.database.AbstractWindowedCursor
 import android.database.Cursor
 import android.database.CursorWindow
@@ -15,6 +16,7 @@ import android.database.sqlite.SQLiteQuery
 import android.icu.text.SimpleDateFormat
 import android.os.Build
 import androidx.core.database.sqlite.transaction
+import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.data.Attachment
 import eu.fliegendewurst.triliumdroid.data.Branch
@@ -671,6 +673,7 @@ object Cache {
 				}
 				if (n.branches.none { branch -> branch.id == branchId }) {
 					n.branches.add(b)
+					n.branches.sortBy { br -> br.position }
 				}
 				clones.add(Triple(Pair(parentNoteId, noteId), branchId, notePosition))
 			}
@@ -980,6 +983,24 @@ object Cache {
 		} catch (t: Throwable) {
 			Log.e(TAG, "fatal", t)
 		}
+	}
+
+	fun nukeDatabase(context: Context) {
+		if (db != null && db!!.isOpen) {
+			db!!.close()
+			dbHelper?.close()
+			db = null
+			dbHelper = null
+		}
+		PreferenceManager.getDefaultSharedPreferences(context).edit()
+			.remove("documentSecret")
+			.remove("syncVersion")
+			.apply()
+		File(context.filesDir.parent, "databases/Document.db").delete()
+		notes.clear()
+		branches.clear()
+		branchPosition.clear()
+		lastSync = null
 	}
 
 	fun closeDatabase() {
