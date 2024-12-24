@@ -17,7 +17,6 @@ import android.webkit.WebViewClient
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.iterator
-import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
@@ -72,7 +71,7 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 					if (lastPart == id) {
 						return
 					}
-					val id = parts.last()
+					val id = parts.last().trimStart('#')
 					Log.i(TAG, "navigating to note $id")
 					(activity as MainActivity).navigateTo(Cache.getNote(id)!!)
 				}
@@ -100,12 +99,23 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 					TAG,
 					"intercept: ${request.url.host} ${request.url.query} ${request.url} ${request.url.pathSegments.size}"
 				)
-				if (request.url.host == WEBVIEW_HOST && (request.url.pathSegments.size == 1 || request.url.pathSegments.size == 5)) {
-					// /api/attachments/cpidMJLNYddQ/image/Trilium%20Demo_trilium-icon.png
-					val id = if (request.url.pathSegments.size == 1) {
-						request.url.lastPathSegment!!
-					} else {
-						request.url.pathSegments[2]
+				if (request.url.host == WEBVIEW_HOST && (request.url.pathSegments.size <= 1 || request.url.pathSegments.size == 5)) {
+					// /api/attachments/note_id/image/Trilium%20Demo_trilium-icon.png
+					var id = when (request.url.pathSegments.size) {
+						0 -> {
+							request.url.fragment.orEmpty()
+						}
+
+						1 -> {
+							request.url.lastPathSegment!!
+						}
+
+						else -> {
+							request.url.pathSegments[2]
+						}
+					}
+					if (id == "") {
+						id = "root"
 					}
 					if (id == "favicon.ico") {
 						return null // TODO: catch all invalid IDs

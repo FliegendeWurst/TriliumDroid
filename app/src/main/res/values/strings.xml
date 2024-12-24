@@ -67,6 +67,7 @@
     <string name="button_synchronize_existing_data">Synchronize existing data</string>
     <string name="label_miscellaneous">Miscellaneous</string>
     <string name="button_delete_database">Delete database</string>
+    <string name="description_add_note_link">add note link</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>
