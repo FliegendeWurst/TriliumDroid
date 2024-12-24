@@ -1,6 +1,7 @@
 package eu.fliegendewurst.triliumdroid.data
 
 class Relation(
+	val id: String?,
 	val target: Note?,
 	name: String,
 	val inheritable: Boolean,
@@ -14,10 +15,10 @@ class Relation(
 	}
 
 	fun makeInherited(): Relation {
-		return Relation(target, name, inheritable, promoted, multi, true)
+		return Relation(id, target, name, inheritable, promoted, multi, true)
 	}
 
 	fun makeTemplated(): Relation {
-		return Relation(target, name, inheritable, promoted, multi, true)
+		return Relation(id, target, name, inheritable, promoted, multi, true)
 	}
 }

@@ -22,7 +22,8 @@ object ModifyRelationsDialog {
 			.create()
 		dialog.show()
 
-		val changes = mutableMapOf<String, Note?>()
+		// list: attribute name, ID (null if new), target note id (null if deleted)
+		val changes = mutableListOf<Triple<String, String?, Note?>>()
 
 		val ownedAttributesList = dialog.findViewById<ListView>(R.id.list_relations)!!
 		val ownedAttributes =
@@ -35,9 +36,10 @@ object ModifyRelationsDialog {
 					R.string.dialog_select_note
 				) { targetNote ->
 					val note = Cache.getNote(targetNote.note)!!
-					changes[it.trim()] = note
+					changes.add(Triple(it.trim(), null, Cache.getNote(targetNote.note)))
 					ownedAttributes.add(
 						Relation(
+							null,
 							note,
 							it.trim(),
 							inheritable = false,
@@ -60,6 +62,7 @@ object ModifyRelationsDialog {
 			val settings = template.value.split(',')
 			ownedAttributes.add(
 				Relation(
+					null,
 					null,
 					labelName,
 					inheritable,
@@ -93,8 +96,10 @@ object ModifyRelationsDialog {
 				}
 				vi!!.findViewById<TextView>(R.id.label_relation_name).text = attribute.name
 				val button = vi.findViewById<Button>(R.id.button_relation_target)
-				if (changes.containsKey(attribute.name)) {
-					button.text = changes[attribute.name]?.title ?: "none"
+				val prevChange =
+					changes.find { x -> x.first == attribute.name && x.second == attribute.id }
+				if (prevChange != null) {
+					button.text = prevChange.third?.title ?: "none"
 				} else {
 					button.text = attribute.target?.title ?: "none"
 				}
@@ -103,12 +108,24 @@ object ModifyRelationsDialog {
 						activity,
 						R.string.dialog_select_note
 					) { targetNote ->
-						changes[attribute.name] = Cache.getNote(targetNote.note)!!
+						changes.removeIf { x ->
+							x.first == attribute.name && x.second == attribute.id && x.third == attribute.target
+						}
+						changes.add(
+							Triple(
+								attribute.name,
+								attribute.id,
+								Cache.getNote(targetNote.note)!!
+							)
+						)
 						(ownedAttributesList.adapter as BaseAdapter).notifyDataSetChanged()
 					}
 				}
 				vi.findViewById<Button>(R.id.button_delete_relation).setOnClickListener {
-					changes[attribute.name] = null
+					changes.removeIf { x ->
+						x.first == attribute.name && x.second == attribute.id && x.third == attribute.target
+					}
+					changes.add(Triple(attribute.name, attribute.id, null))
 					ownedAttributes.removeAt(position)
 					(ownedAttributesList.adapter as BaseAdapter).notifyDataSetChanged()
 				}
@@ -124,28 +141,28 @@ object ModifyRelationsDialog {
 	private fun done(
 		activity: MainActivity,
 		dialog: AlertDialog,
-		changes: Map<String, Note?>,
+		changes: List<Triple<String, String?, Note?>>,
 		currentNote: Note
 	) {
 		val previousLabels = currentNote.getRelations().map {
-			return@map Pair(it.name, it.target)
+			return@map Pair(it.id, it.target)
 		}.toMap()
-		android.util.Log.d("modify", changes.toString())
 		for (change in changes) {
-			val attrName = change.key
-			val attrValue = change.value
+			val attrName = change.first
+			val attrId = change.second
+			val attrValue = change.third
 			if (attrValue == null) {
-				Cache.deleteRelation(currentNote, attrName)
+				Cache.deleteRelation(currentNote, attrName, attrId!!)
 				continue
 			}
-			if (previousLabels[attrName] == attrValue) {
+			if (previousLabels[attrId] == attrValue) {
 				continue
 			}
 			val inheritable =
 				currentNote.getRelations().filter { x -> x.name == attrName }
 					.map { x -> x.inheritable }.firstOrNull()
 					?: false
-			Cache.updateRelation(currentNote, attrName, attrValue, inheritable)
+			Cache.updateRelation(currentNote, attrId, attrName, attrValue, inheritable)
 		}
 		dialog.dismiss()
 		activity.refreshWidgets(currentNote)

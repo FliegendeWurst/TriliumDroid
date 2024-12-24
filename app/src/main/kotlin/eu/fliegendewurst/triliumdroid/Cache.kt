@@ -3,7 +3,6 @@ package eu.fliegendewurst.triliumdroid
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
-import android.content.SharedPreferences
 import android.database.AbstractWindowedCursor
 import android.database.Cursor
 import android.database.CursorWindow
@@ -193,16 +192,14 @@ object Cache {
 		getNoteInternal(note.id)
 	}
 
-	fun updateRelation(note: Note, name: String, value: Note, inheritable: Boolean) {
-		var previousId: String? = null
-		db!!.rawQuery(
-			"SELECT attributeId FROM attributes WHERE noteId = ? AND type = 'relation' AND name = ? AND isDeleted = 0",
-			arrayOf(note.id, name)
-		).use {
-			if (it.moveToNext()) {
-				previousId = it.getString(0)
-			}
-		}
+	fun updateRelation(
+		note: Note,
+		attributeId: String?,
+		name: String,
+		value: Note,
+		inheritable: Boolean
+	) {
+		var previousId: String? = attributeId
 		val utc = utcDateModified()
 		if (previousId != null) {
 			db!!.execSQL(
@@ -278,13 +275,13 @@ object Cache {
 		getNoteInternal(note.id)
 	}
 
-	fun deleteRelation(note: Note, name: String) {
+	fun deleteRelation(note: Note, name: String, attributeId: String) {
 		Log.d(TAG, "deleting relation $name in ${note.id}")
 		var previousId: String? = null
 		var inheritable = false
 		db!!.rawQuery(
-			"SELECT attributeId, isInheritable FROM attributes WHERE noteId = ? AND type = 'relation' AND name = ? AND isDeleted = 0",
-			arrayOf(note.id, name)
+			"SELECT attributeId, isInheritable FROM attributes WHERE attributeId = ? AND type = 'relation' AND isDeleted = 0",
+			arrayOf(attributeId)
 		).use {
 			if (it.moveToNext()) {
 				previousId = it.getString(0)
@@ -476,7 +473,8 @@ object Cache {
 					"attributes.isInheritable," + // 9
 					"attributes.isDeleted, " + // 10
 					"notes.isProtected, " + // 11
-					"notes.blobId " + // 12
+					"notes.blobId, " + // 12
+					"attributes.attributeId " + // 13
 					"FROM notes LEFT JOIN blobs USING (blobId) " +
 					"LEFT JOIN attributes USING(noteId)" +
 					"WHERE notes.noteId = ? AND notes.isDeleted = 0 AND (attributes.isDeleted = 0 OR attributes.isDeleted IS NULL)",
@@ -522,11 +520,18 @@ object Cache {
 					val type = it.getString(3)
 					val inheritable = it.getInt(9) == 1
 					val deleted = it.getInt(10) == 1
+					val attributeId = it.getString(13)
 					if (!deleted) {
 						if (type == "label") {
 							val name = it.getString(4)
 							val value = it.getString(5)
-							labels.add(Label(name, value, inheritable, false, false))
+							labels.add(
+								Label(
+									name, value, inheritable,
+									promoted = false,
+									multi = false
+								)
+							)
 						} else if (type == "relation") {
 							val name = it.getString(4)
 							// value = note ID
@@ -544,7 +549,13 @@ object Cache {
 										"INVALID"
 									)
 							}
-							relations.add(Relation(notes[value], name, inheritable, false, false))
+							relations.add(
+								Relation(
+									attributeId, notes[value], name, inheritable,
+									promoted = false,
+									multi = false
+								)
+							)
 						}
 					}
 				}
@@ -1111,16 +1122,25 @@ object Cache {
 		return createChildNote(getNote(parentNote[1].note)!!, newNoteTitle)
 	}
 
+	fun addInternalLink(note: Note, target: String) {
+		val relations = note.getRelations()
+		if (relations.any { x -> x.target?.id == target && x.name == "internalLink" }) {
+			return
+		}
+		updateRelation(note, null, "internalLink", Cache.getNote(target) ?: return, false)
+	}
+
 	fun getAllNotesWithRelations(): List<Note> {
 		val list = mutableListOf<Note>()
-		val relations = mutableListOf<Triple<String, String, String>>()
+		val relations = mutableListOf<Triple<String, String, Pair<String, String>>>()
 		db!!.rawQuery(
 			"SELECT " +
 					"noteId, " + // 0
 					"title," + // 1
 					"attributes.name," + // 2
 					"attributes.value," + // 3
-					"attributes.type " + // 4
+					"attributes.type," + // 4
+					"attributes.attributeId " + // 5
 					"FROM notes " +
 					"LEFT JOIN attributes USING(noteId) " +
 					"WHERE notes.isDeleted = 0 AND SUBSTR(noteId, 1, 1) != '_'",
@@ -1134,6 +1154,7 @@ object Cache {
 				val attrName = it.getString(2)
 				val attrValue = it.getString(3)
 				val attrType = it.getString(4)
+				val attrId = it.getString(5)
 				if (currentNote == null || currentNote.title != title) {
 					if (currentNote != null) {
 						list.add(currentNote)
@@ -1144,7 +1165,7 @@ object Cache {
 						"child:"
 					)
 				) {
-					relations.add(Triple(id, attrValue, attrName))
+					relations.add(Triple(id, attrValue, Pair(attrName, attrId)))
 				}
 			}
 			list.add(currentNote!!)
@@ -1160,7 +1181,8 @@ object Cache {
 				relationsByIdIncoming[rel.second] = mutableListOf()
 			}
 			val relation = Relation(
-				notesById[rel.second]!!, rel.third,
+				rel.third.second,
+				notesById[rel.second]!!, rel.third.first,
 				inheritable = false,
 				promoted = false,
 				multi = false

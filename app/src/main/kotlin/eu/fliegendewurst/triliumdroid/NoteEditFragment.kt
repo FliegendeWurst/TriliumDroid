@@ -53,7 +53,8 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 		super.onResume()
 
 		if (id != null) {
-			val content = Cache.getNoteWithContent(id!!)?.content?.decodeToString() ?: return
+			val note = Cache.getNoteWithContent(id!!) ?: return
+			val content = note.content?.decodeToString() ?: return
 			Aztec.with(binding.visual, binding.source, binding.formattingToolbar, this)
 				.addPlugin(object : IToolbarButton {
 					override val action: IToolbarAction
@@ -83,8 +84,9 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 							requireContext() as MainActivity,
 							R.string.dialog_select_note
 						) {
-							val url = "/#${it.note}"
+							val url = "#${it.note}"
 							val builder = SpannableStringBuilder(prev)
+							// TODO: set data-note-path?
 							val newSpan = AztecURLSpan(url, AztecAttributes())
 							builder.setSpan(newSpan, 0, 0, Spannable.SPAN_MARK_MARK)
 							builder.setSpan(
@@ -92,7 +94,7 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 								0,
 								prev.length,
 								Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-							);
+							)
 							binding.visual.editableText.replace(
 								start,
 								end,
@@ -100,6 +102,7 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 								0,
 								builder.length
 							)
+							Cache.addInternalLink(note, it.note)
 						}
 					}
 
