@@ -21,9 +21,10 @@ import androidx.fragment.app.Fragment
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteBinding
+import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 
 
-class NoteFragment : Fragment(R.layout.fragment_note) {
+class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 	companion object {
 		private const val TAG: String = "NoteFragment"
 		private const val WEBVIEW_DOMAIN: String = "https://trilium-notes.invalid/"
@@ -32,12 +33,12 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 
 	private lateinit var binding: FragmentNoteBinding
 	private var handler: Handler? = null
-	private var id: String = ""
+	private var id: String? = null
 	private var load: Boolean = false
 	private var subCodeNotes: List<Note>? = null
 	var console: MutableList<ConsoleMessage> = mutableListOf()
 
-	fun getNoteId(): String {
+	override fun getNoteId(): String? {
 		return id
 	}
 
@@ -158,13 +159,13 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 		return binding.root
 	}
 
-	fun loadLater(id: String) {
+	fun loadLater(id: String?) {
 		load = true
 		this.id = id
 	}
 
 	@SuppressLint("MissingInflatedId")
-	fun load(id: String) {
+	fun load(id: String?) {
 		// if called before proper creation
 		if (this.activity == null) {
 			loadLater(id)
@@ -176,6 +177,9 @@ class NoteFragment : Fragment(R.layout.fragment_note) {
 		this.id = id
 		this.load = true
 		Log.i(TAG, "loading $id")
+		if (id == null) {
+			return
+		}
 		Cache.initializeDatabase(requireContext())
 		binding.textId.text = id
 		val note = Cache.getNoteWithContent(id)

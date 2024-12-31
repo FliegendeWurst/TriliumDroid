@@ -33,7 +33,9 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 class GraphView(context: Context, attributes: AttributeSet?) : View(context, attributes) {
-	private val TAG: String = "GraphView"
+	companion object {
+		private const val TAG: String = "GraphView"
+	}
 
 	var g: Graph<Note, Relation> = Graph()
 
@@ -139,9 +141,9 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 			val nodeLinkRatio = g.nodes.size.toFloat() / g.edges.size.toFloat()
 			val magnifiedRatio = nodeLinkRatio.pow(1.5F)
 			val charge = -20F / magnifiedRatio
-			val boundedCharge = min(-3F, charge);
+			val boundedCharge = min(-3F, charge)
 
-			chargeStrength = boundedCharge;
+			chargeStrength = boundedCharge
 
 			for (node in g.nodes) {
 				if (count[node.id] == null) {
@@ -200,8 +202,9 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 		for (link in bias) {
 			val source = link.key.first
 			val target = link.key.second
-			val sourcePos = g.vertexPositions[source]!!
-			val targetPos = g.vertexPositions[target]!!
+			// TODO: figure out why these are sometimes null?
+			val sourcePos = g.vertexPositions[source] ?: continue
+			val targetPos = g.vertexPositions[target] ?: continue
 			val sourceV = velocities[source]!!
 			val targetV = velocities[target]!!
 			var x = targetPos.x + targetV.x - sourcePos.x - sourceV.x
@@ -243,7 +246,7 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 		}
 		val end = System.currentTimeMillis()
 		if (end - start >= 1) {
-			Log.d(TAG, "update of ${g.nodes.size} nodes took ${end-start} ms")
+			Log.d(TAG, "update of ${g.nodes.size} nodes took ${end - start} ms")
 		}
 		invalidate()
 		(context as MainActivity).handler.postDelayed(this::updatePositions, simulationDelay)

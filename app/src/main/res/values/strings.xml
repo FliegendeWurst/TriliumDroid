@@ -68,6 +68,7 @@
     <string name="label_miscellaneous">Miscellaneous</string>
     <string name="button_delete_database">Delete database</string>
     <string name="description_add_note_link">add note link</string>
+    <string name="toast_no_note">no note loaded</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

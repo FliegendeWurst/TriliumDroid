@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteEditBinding
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
+import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import org.wordpress.aztec.Aztec
 import org.wordpress.aztec.AztecAttributes
 import org.wordpress.aztec.ITextFormat
@@ -23,7 +24,7 @@ import org.wordpress.aztec.toolbar.ToolbarActionType
 
 
 class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
-	IAztecToolbarClickListener {
+	IAztecToolbarClickListener, NoteRelatedFragment {
 	companion object {
 		private const val TAG: String = "NoteEditFragment"
 	}
@@ -158,5 +159,9 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 	override fun onToolbarMediaButtonClicked(): Boolean {
 		Log.e(TAG, "onToolbarMediaButtonClicked")
 		return false
+	}
+
+	override fun getNoteId(): String? {
+		return id
 	}
 }

@@ -15,10 +15,9 @@ import eu.fliegendewurst.triliumdroid.util.Graph
 import eu.fliegendewurst.triliumdroid.util.Position
 import kotlin.math.PI
 import kotlin.math.cos
-import kotlin.math.max
 import kotlin.math.sin
 
-class NoteMapFragment : Fragment(R.layout.fragment_note_map) {
+class NoteMapFragment : Fragment(R.layout.fragment_note_map), NoteRelatedFragment {
 	var noteId: String? = null
 		private set
 
@@ -107,5 +106,9 @@ class NoteMapFragment : Fragment(R.layout.fragment_note_map) {
 			g.addEdge(note, relation.target, relation)
 			rec(g, processed, relation.target)
 		}
+	}
+
+	override fun getNoteId(): String? {
+		return noteId
 	}
 }

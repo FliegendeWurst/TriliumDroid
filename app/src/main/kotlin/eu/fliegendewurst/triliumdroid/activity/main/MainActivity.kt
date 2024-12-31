@@ -72,6 +72,7 @@ import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
+import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
@@ -147,7 +148,7 @@ class MainActivity : AppCompatActivity() {
 		toolbar.title = ""
 		setSupportActionBar(toolbar)
 		binding.toolbarTitle.setOnClickListener {
-			val note = getNoteLoaded()
+			val note = getNoteLoaded() ?: return@setOnClickListener
 			AskForNameDialog.showDialog(this, R.string.dialog_rename_note, note.title) {
 				Cache.renameNote(note, it)
 				refreshTree()
@@ -173,13 +174,29 @@ class MainActivity : AppCompatActivity() {
 					frag.initLater {
 						it.binding.treeList.adapter = tree
 						it.binding.buttonNewNote.setOnClickListener {
-							CreateNewNoteDialog.showDialog(this@MainActivity, true, getNoteLoaded())
+							val note = getNoteLoaded()
+							if (note == null) {
+								Toast.makeText(
+									this@MainActivity, getString(R.string.toast_no_note),
+									Toast.LENGTH_LONG
+								).show()
+								return@setOnClickListener
+							}
+							CreateNewNoteDialog.showDialog(this@MainActivity, true, note)
 						}
 						it.binding.buttonNewNoteSibling.setOnClickListener {
+							val note = getNoteLoaded()
+							if (note == null) {
+								Toast.makeText(
+									this@MainActivity, getString(R.string.toast_no_note),
+									Toast.LENGTH_LONG
+								).show()
+								return@setOnClickListener
+							}
 							CreateNewNoteDialog.showDialog(
 								this@MainActivity,
 								false,
-								getNoteLoaded()
+								note
 							)
 						}
 						for (buttonId in prefs.all.keys.filter { pref -> pref.startsWith("button") }) {
@@ -251,13 +268,13 @@ class MainActivity : AppCompatActivity() {
 		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 
 		binding.root.findViewById<Button>(R.id.button_labels_modify).setOnClickListener {
-			ModifyLabelsDialog.showDialog(this, getNoteLoaded())
+			ModifyLabelsDialog.showDialog(this, getNoteLoaded() ?: return@setOnClickListener)
 		}
 		binding.root.findViewById<Button>(R.id.button_relations_edit).setOnClickListener {
-			ModifyRelationsDialog.showDialog(this, getNoteLoaded())
+			ModifyRelationsDialog.showDialog(this, getNoteLoaded() ?: return@setOnClickListener)
 		}
 		binding.root.findViewById<Button>(R.id.button_note_paths_add).setOnClickListener {
-			val loaded = getNoteLoaded()
+			val loaded = getNoteLoaded() ?: return@setOnClickListener
 			JumpToNoteDialog.showDialogReturningNote(this, R.string.dialog_select_note) {
 				Cache.cloneNote(it, loaded)
 			}
@@ -507,7 +524,7 @@ class MainActivity : AppCompatActivity() {
 				binding.drawerLayout.openDrawer(GravityCompat.START)
 			}
 		} else {
-			navigateTo(Cache.getNote(getNoteFragment().getNoteId()) ?: return)
+			navigateTo(Cache.getNote(getNoteFragment().getNoteId() ?: return) ?: return)
 		}
 	}
 
@@ -553,152 +570,159 @@ class MainActivity : AppCompatActivity() {
 		return doMenuAction(item.itemId) || super.onOptionsItemSelected(item)
 	}
 
-	private fun doMenuAction(actionId: Int) = when (actionId) {
-		R.id.action_edit -> {
-			when (val fragment = getFragment()) {
-				is NoteFragment -> {
-					val id = fragment.getNoteId()
-					noteHistory.add(NoteEditItem(Cache.getNote(id)!!))
-					noteHistory.last().restore(this)
+	private fun doMenuAction(actionId: Int): Boolean {
+		return when (actionId) {
+			R.id.action_edit -> {
+				when (val fragment = getFragment()) {
+					is NoteFragment -> {
+						val id = fragment.getNoteId() ?: return true
+						noteHistory.add(NoteEditItem(Cache.getNote(id)!!))
+						noteHistory.last().restore(this)
+					}
+
+					is NoteEditFragment -> {
+						noteHistory.removeAt(noteHistory.size - 1)
+						noteHistory.last().restore(this)
+					}
+
+					else -> {
+						Log.e(TAG, "failed to identify fragment " + fragment.javaClass)
+					}
+				}
+				true
+			}
+
+			R.id.action_share -> {
+				val id = getNoteFragment().getNoteId() ?: return true
+				val note = Cache.getNoteWithContent(id)!!
+				val sendIntent: Intent = Intent().apply {
+					action = Intent.ACTION_SEND
+					if (note.type == "text" || note.type == "code") {
+						if (note.mime == "text/html") {
+							val html = String(note.content!!)
+							putExtra(Intent.EXTRA_HTML_TEXT, html)
+							putExtra(Intent.EXTRA_TEXT, html.parseAsHtml())
+						} else {
+							putExtra(Intent.EXTRA_TEXT, String(note.content!!))
+						}
+					} else if (note.type == "image") {
+						var f = Path(
+							cacheDir.absolutePath,
+							"images"
+						)
+						f = f.createDirectories().resolve("${note.id}.${note.mime.split('/')[1]}")
+						f.writeBytes(note.content!!)
+						val contentUri = FileProvider.getUriForFile(
+							this@MainActivity,
+							applicationContext.packageName + ".provider",
+							f.toFile()
+						)
+						clipData = ClipData.newRawUri("", contentUri)
+						putExtra(
+							Intent.EXTRA_STREAM,
+							contentUri
+						)
+						addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+					} else {
+						putExtra(Intent.EXTRA_TEXT, "(cannot share this note type)")
+					}
+					type = note.mime
 				}
 
-				is NoteEditFragment -> {
+				val shareIntent = Intent.createChooser(sendIntent, note.title)
+				startActivity(shareIntent)
+				true
+			}
+
+			R.id.action_execute -> {
+				Log.i(TAG, "executing code note")
+				val noteFrag = getNoteFragment()
+				val noteId = getNoteFragment().getNoteId()
+				if (noteId != null) {
+					val script = String(Cache.getNoteWithContent(noteId)!!.content!!)
+					runScript(noteFrag, script)
+				}
+				true
+			}
+
+			R.id.action_delete -> {
+				val note = getNoteLoaded()
+				if (note == null || note.id == "root") {
+					Toast.makeText(
+						this, getString(R.string.toast_cannot_delete_root),
+						Toast.LENGTH_SHORT
+					).show()
+				} else {
+					val path = getNotePathLoaded() ?: Cache.getNotePath(note.id)[0]
+					AlertDialog.Builder(this)
+						.setTitle("Delete note")
+						.setMessage("Do you really want to delete this note?")
+						.setPositiveButton(
+							android.R.string.ok
+						) { _, _ ->
+							if (!Cache.deleteNote(path)) {
+								Toast.makeText(
+									this, getString(R.string.toast_could_not_delete),
+									Toast.LENGTH_SHORT
+								).show()
+							}
+							navigateTo(Cache.getNote(path.parentNote)!!)
+							refreshTree()
+						}
+						.setNegativeButton(android.R.string.cancel, null).show()
+				}
+				true
+			}
+
+			R.id.action_sync -> {
+				startSync(handler, false)
+				true
+			}
+
+			R.id.action_note_map -> {
+				val frag = getFragment()
+				if (frag is NoteMapFragment) {
 					noteHistory.removeAt(noteHistory.size - 1)
 					noteHistory.last().restore(this)
-				}
-
-				else -> {
-					Log.e(TAG, "failed to identify fragment " + fragment.javaClass)
-				}
-			}
-			true
-		}
-
-		R.id.action_share -> {
-			val note = Cache.getNoteWithContent(getNoteFragment().getNoteId())!!
-			val sendIntent: Intent = Intent().apply {
-				action = Intent.ACTION_SEND
-				if (note.type == "text" || note.type == "code") {
-					if (note.mime == "text/html") {
-						val html = String(note.content!!)
-						putExtra(Intent.EXTRA_HTML_TEXT, html)
-						putExtra(Intent.EXTRA_TEXT, html.parseAsHtml())
-					} else {
-						putExtra(Intent.EXTRA_TEXT, String(note.content!!))
+				} else if (frag is NoteFragment) {
+					val id = frag.getNoteId()
+					if (id != null) {
+						noteHistory.add(NoteMapItem(Cache.getNote(id)!!))
+						noteHistory.last().restore(this)
 					}
-				} else if (note.type == "image") {
-					var f = Path(
-						cacheDir.absolutePath,
-						"images"
-					)
-					f = f.createDirectories().resolve("${note.id}.${note.mime.split('/')[1]}")
-					f.writeBytes(note.content!!)
-					val contentUri = FileProvider.getUriForFile(
-						this@MainActivity,
-						applicationContext.packageName + ".provider",
-						f.toFile()
-					)
-					clipData = ClipData.newRawUri("", contentUri)
-					putExtra(
-						Intent.EXTRA_STREAM,
-						contentUri
-					)
-					addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-				} else {
-					putExtra(Intent.EXTRA_TEXT, "(cannot share this note type)")
 				}
-				type = note.mime
+				true
 			}
 
-			val shareIntent = Intent.createChooser(sendIntent, note.title)
-			startActivity(shareIntent)
-			true
-		}
-
-		R.id.action_execute -> {
-			Log.i(TAG, "executing code note")
-			val noteFrag = getNoteFragment()
-			val noteId = getNoteFragment().getNoteId()
-			val script = String(Cache.getNoteWithContent(noteId)!!.content!!)
-			runScript(noteFrag, script)
-			true
-		}
-
-		R.id.action_delete -> {
-			val note = getNoteLoaded()
-			val path = getNotePathLoaded() ?: Cache.getNotePath(note.id)[0]
-			if (note.id == "root") {
-				Toast.makeText(
-					this, getString(R.string.toast_cannot_delete_root),
-					Toast.LENGTH_SHORT
-				).show()
-			} else {
-				AlertDialog.Builder(this)
-					.setTitle("Delete note")
-					.setMessage("Do you really want to delete this note?")
-					.setPositiveButton(
-						android.R.string.ok
-					) { _, _ ->
-						if (!Cache.deleteNote(path)) {
-							Toast.makeText(
-								this, getString(R.string.toast_could_not_delete),
-								Toast.LENGTH_SHORT
-							).show()
-						}
-						navigateTo(Cache.getNote(path.parentNote)!!)
-						refreshTree()
-					}
-					.setNegativeButton(android.R.string.cancel, null).show()
+			R.id.action_console -> {
+				val dialog = AlertDialog.Builder(this)
+					.setTitle(R.string.action_console_log)
+					.setView(R.layout.dialog_console)
+					.create()
+				val text = StringBuilder()
+				for (entry in getNoteFragment().console) {
+					text.append(entry.message()).append("\n")
+				}
+				dialog.show()
+				dialog.findViewById<TextView>(R.id.dialog_console_output)!!.text = text
+				true
 			}
-			true
-		}
 
-		R.id.action_sync -> {
-			startSync(handler, false)
-			true
-		}
-
-		R.id.action_note_map -> {
-			val frag = getFragment()
-			if (frag is NoteMapFragment) {
-				noteHistory.removeAt(noteHistory.size - 1)
-				noteHistory.last().restore(this)
-			} else if (frag is NoteFragment) {
-				val id = frag.getNoteId()
-				noteHistory.add(NoteMapItem(Cache.getNote(id)!!))
-				noteHistory.last().restore(this)
+			R.id.action_settings -> {
+				startActivity(Intent(this, SetupActivity::class.java))
+				true
 			}
-			true
-		}
 
-		R.id.action_console -> {
-			val dialog = AlertDialog.Builder(this)
-				.setTitle(R.string.action_console_log)
-				.setView(R.layout.dialog_console)
-				.create()
-			val text = StringBuilder()
-			for (entry in getNoteFragment().console) {
-				text.append(entry.message()).append("\n")
+			R.id.action_about -> {
+				startActivity(Intent(this, AboutActivity::class.java))
+				true
 			}
-			dialog.show()
-			dialog.findViewById<TextView>(R.id.dialog_console_output)!!.text = text
-			true
-		}
 
-		R.id.action_settings -> {
-			startActivity(Intent(this, SetupActivity::class.java))
-			true
-		}
-
-		R.id.action_about -> {
-			startActivity(Intent(this, AboutActivity::class.java))
-			true
-		}
-
-		else -> {
-			// If we got here, the user's action was not recognized.
-			// Invoke the superclass to handle it.
-			false
+			else -> {
+				// If we got here, the user's action was not recognized.
+				// Invoke the superclass to handle it.
+				false
+			}
 		}
 	}
 
@@ -767,7 +791,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun refreshTitle() {
-		binding.toolbarTitle.text = getNoteLoaded().title
+		binding.toolbarTitle.text = getNoteLoaded()?.title ?: return
 	}
 
 	fun refreshWidgets(noteContent: Note) {
@@ -986,8 +1010,13 @@ class MainActivity : AppCompatActivity() {
 		return frag
 	}
 
-	fun getNoteLoaded(): Note {
-		return Cache.getNoteWithContent(getNoteFragment().getNoteId())!!
+	fun getNoteLoaded(): Note? {
+		val frag = getFragment()
+		if (frag is NoteRelatedFragment) {
+			val id = frag.getNoteId() ?: return null
+			return Cache.getNoteWithContent(id)
+		}
+		return null
 	}
 
 	private fun getNotePathLoaded(): Branch? {
