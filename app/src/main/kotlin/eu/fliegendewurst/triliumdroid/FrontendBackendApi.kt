@@ -418,8 +418,8 @@ class FrontendBackendApi(
 	}
 
 	@JavascriptInterface
-	fun getActiveContextNote(): FrontendNote {
-		return FrontendNote(mainActivity.getNoteLoaded())
+	fun getActiveContextNote(): FrontendNote? {
+		return FrontendNote(mainActivity.getNoteLoaded() ?: return null)
 	}
 
 	@JavascriptInterface

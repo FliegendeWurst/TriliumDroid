@@ -897,7 +897,7 @@ object Cache {
 			val changesUri =
 				"/api/sync/changed?instanceId=${instanceId}&lastEntityChangeId=${lastSyncedPull}&logMarkerId=${logMarkerId}"
 
-			ConnectionUtil.doSyncRequest(changesUri) { resp ->
+			ConnectionUtil.doSyncRequest(changesUri, { resp ->
 				val outstandingPullCount = resp.getInt("outstandingPullCount")
 				val entityChangeId = resp.getString("lastEntityChangeId")
 				Log.i(TAG, "sync outstanding $outstandingPullCount")
@@ -981,7 +981,7 @@ object Cache {
 				} else {
 					callbackDone(Pair(totalSynced, totalPushed))
 				}
-			}
+			}, callbackError)
 		} catch (e: Exception) {
 			Log.e(TAG, "sync error", e)
 			callbackError(e)

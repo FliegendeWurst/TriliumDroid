@@ -18,8 +18,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 class NoteMapFragment : Fragment(R.layout.fragment_note_map), NoteRelatedFragment {
-	var noteId: String? = null
-		private set
+	private var noteId: String? = null
 
 	override fun onCreateView(
 		inflater: LayoutInflater,

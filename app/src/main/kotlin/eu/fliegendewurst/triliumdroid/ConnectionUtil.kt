@@ -231,7 +231,11 @@ object ConnectionUtil {
 		})
 	}
 
-	fun doSyncRequest(uri: String, callback: (JSONObject) -> Unit) {
+	fun doSyncRequest(
+		uri: String,
+		callback: (JSONObject) -> Unit,
+		callbackError: (Exception) -> Unit
+	) {
 		val req = Request.Builder()
 			.get()
 			.url("$server$uri")
@@ -240,12 +244,19 @@ object ConnectionUtil {
 		client!!.newCall(req).enqueue(object : Callback {
 			override fun onResponse(call: Call, response: Response) {
 				response.use {
-					callback(JSONObject(response.body!!.string()))
+					val body = response.body!!
+					if (body.contentLength() >= 30000000) {
+						Log.e(TAG, "sync data too big: ${body.contentLength()} bytes > 30 MB")
+						callbackError(SyncResponseTooBigException)
+						return
+					}
+					callback(JSONObject(body.string()))
 				}
 			}
 
 			override fun onFailure(call: Call, e: IOException) {
 				Log.e(TAG, "failed to fetch sync data", e)
+				callbackError(e)
 			}
 		})
 	}
@@ -285,9 +296,8 @@ object ConnectionUtil {
 			override fun onResponse(call: Call, response: Response) {
 				val resp = response.body!!.string()
 				Log.d(TAG, "app-info $resp")
-				var json: JSONObject? = null
 				try {
-					json = JSONObject(resp)
+					val json = JSONObject(resp)
 					callback(
 						AppInfo(
 							json.getString("appVersion"),
