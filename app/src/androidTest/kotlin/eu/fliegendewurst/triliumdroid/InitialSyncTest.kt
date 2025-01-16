@@ -44,12 +44,12 @@ class InitialSyncTest {
 			.perform(typeText("1234"))
 		Espresso.closeSoftKeyboard()
 		Espresso.pressBack()
-		Thread.sleep(20000) // wait for Sync to finish
+		Thread.sleep(30000) // wait for Sync to finish
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
 		onView(ViewMatchers.withText("Trilium Demo"))
 			.perform(click())
-		Thread.sleep(1000) // wait for WebView to load
+		Thread.sleep(2000) // wait for WebView to load
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
 	}
@@ -62,7 +62,7 @@ class InitialSyncTest {
 		onView(ViewMatchers.withId(R.id.toolbar_title))
 			.perform(click())
 		// wait for WebView to load
-		Thread.sleep(1000)
+		Thread.sleep(2000)
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
 		onView(ViewMatchers.withId(R.id.note_title))
