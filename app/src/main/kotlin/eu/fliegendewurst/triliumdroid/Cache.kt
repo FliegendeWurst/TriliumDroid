@@ -934,6 +934,12 @@ object Cache {
 						}
 						val keys = entity.keys().asSequence().toList()
 
+						if (entityName == "notes") {
+							notes[entityName]?.title = "INVALID"
+							notes[entityName]?.content = null
+							notes.remove(entityName)
+						}
+
 						val cv = ContentValues(entity.length())
 						keys.map { fieldName ->
 							val x = entity.get(fieldName)

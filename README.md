@@ -64,6 +64,11 @@ There is also some preliminary support for scripting, but it doesn't work exactl
 
 Please report bugs and missing features. I will soon setup a way to contribute translations. Any coding help is also welcome!
 
+### Testing
+
+- Gradle action `pixel9api35DebugAndroidTest`
+- Scripts `copy-test-images.sh`, `compare-test-images.sh`
+
 ## License
 
 Copyright © 2023 Arne Keller

@@ -15,6 +15,7 @@ android {
         versionName "0.90.12-alpha2.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments useTestStorageService: "true"
 
         buildConfigField "long", "TIMESTAMP", "1734200570000L"
     }
@@ -48,6 +49,17 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    testOptions {
+        managedDevices {
+            localDevices {
+                create("pixel9api35") {
+                    device = "Pixel 9"
+                    apiLevel = 35
+                    systemImageSource = "aosp-atd"
+                }
+            }
+        }
+    }
     namespace 'eu.fliegendewurst.triliumdroid'
 }
 
@@ -68,4 +80,7 @@ dependencies {
     implementation "org.wordpress:aztec:v2.1.4"
 
     testImplementation "junit:junit:4.13.2"
+    androidTestImplementation "androidx.test.ext:junit-ktx:1.2.1"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.6.1"
+    androidTestUtil "androidx.test.services:test-services:1.5.0"
 }
