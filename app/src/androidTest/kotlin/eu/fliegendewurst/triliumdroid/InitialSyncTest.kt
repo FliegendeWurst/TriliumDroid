@@ -39,12 +39,12 @@ class InitialSyncTest {
 		onView(ViewMatchers.withId(R.id.button_setup_sync))
 			.perform(click())
 		onView(ViewMatchers.withId(R.id.server))
-			.perform(typeText("http://10.0.2.2:12391"))
+			.perform(typeText("http://10.0.2.2:8080"))
 		onView(ViewMatchers.withId(R.id.password))
 			.perform(typeText("1234"))
 		Espresso.closeSoftKeyboard()
 		Espresso.pressBack()
-		Thread.sleep(10000) // wait for Sync to finish
+		Thread.sleep(20000) // wait for Sync to finish
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
 		onView(ViewMatchers.withText("Trilium Demo"))
