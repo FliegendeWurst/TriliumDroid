@@ -44,7 +44,7 @@ class InitialSyncTest {
 			.perform(typeText("1234"))
 		Espresso.closeSoftKeyboard()
 		Espresso.pressBack()
-		Thread.sleep(30000) // wait for Sync to finish
+		Thread.sleep(60000) // wait for Sync to finish
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
 		onView(ViewMatchers.withText("Trilium Demo"))
