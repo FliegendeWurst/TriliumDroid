@@ -10,11 +10,11 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/cache@v4
         with:
           path: app/build
           key: ${{ runner.os }}-build
+      - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v16
       - name: Install Trilium Server
         run: nix profile install nixpkgs/nixos-unstable-small#trilium-next-server

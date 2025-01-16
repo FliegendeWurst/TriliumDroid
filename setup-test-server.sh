@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 export HOME=$(mktemp -d)
 trilium-server & disown
