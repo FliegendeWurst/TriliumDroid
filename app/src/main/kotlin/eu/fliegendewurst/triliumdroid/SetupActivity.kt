@@ -66,8 +66,11 @@ class SetupActivity : AppCompatActivity() {
 
 	override fun onPause() {
 		super.onPause()
-		val server = binding.server.text.toString().trimEnd('/')
+		var server = binding.server.text.toString().trimEnd('/')
 		val password = binding.password.text.toString()
+		if (!(server.startsWith("http://") || server.startsWith("https://"))) {
+			server = "http://${server}"
+		}
 		prefs.edit()
 			.putString("hostname", server)
 			.putString("password", password)
