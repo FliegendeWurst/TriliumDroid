@@ -8,7 +8,7 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 
 ## Features
 
-- Support for version 0.90.12 and 0.63.7 of sync protocol + database schema
+- Support for version 0.91.6, 0.90.12 and 0.63.7 of sync protocol + database schema
 - Sync with other Trilium instance (push + pull)
 - Displaying/editing/sharing note content
 - Displaying/editing note attributes (labels and relations)

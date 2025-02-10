@@ -1439,19 +1439,20 @@ object Cache {
 			const val DATABASE_VERSION_0_60_4 = 214
 			const val DATABASE_VERSION_0_61_5 = 225
 			const val DATABASE_VERSION_0_62_3 = 227
-			const val DATABASE_VERSION_0_63_3 = 228 // same up to 0.90.12
+			const val DATABASE_VERSION_0_63_3 = 228 // same up to 0.91.6
 			const val SYNC_VERSION_0_59_4 = 29
 			const val SYNC_VERSION_0_60_4 = 29
 			const val SYNC_VERSION_0_62_3 = 31
 			const val SYNC_VERSION_0_63_3 = 32
 			const val SYNC_VERSION_0_90_12 = 33
+			const val SYNC_VERSION_0_91_6 = 34
 
 			const val DATABASE_VERSION = DATABASE_VERSION_0_63_3
 			const val DATABASE_NAME = "Document.db"
 
 			// sync version is largely irrelevant
-			const val SYNC_VERSION = SYNC_VERSION_0_90_12
-			const val APP_VERSION = "0.90.12"
+			const val SYNC_VERSION = SYNC_VERSION_0_91_6
+			const val APP_VERSION = "0.91.6"
 		}
 	}
 

@@ -200,9 +200,16 @@ object ConnectionUtil {
 							callbackError(MismatchedDatabaseException)
 							return
 						}
-						if (msg.startsWith("Non-matching sync versions, local is version 32, remote is 33.")) {
+						if (msg.startsWith("Non-matching sync versions, local is version 32, remote is")) {
 							prefs?.edit()
 								?.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_63_3)
+								?.apply()
+							connect(server, callback, callbackError)
+							return
+						}
+						if (msg.startsWith("Non-matching sync versions, local is version 33, remote is")) {
+							prefs?.edit()
+								?.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_90_12)
 								?.apply()
 							connect(server, callback, callbackError)
 							return

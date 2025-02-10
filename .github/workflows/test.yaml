@@ -2,7 +2,6 @@ name: Test
 
 on:
   push:
-    branches: [ "master", "ci-testing" ]
   workflow_dispatch:
 
 jobs:
@@ -19,7 +18,7 @@ jobs:
       - name: Install Trilium Server
         run: nix profile install nixpkgs/nixos-unstable-small#trilium-next-server
       - name: Run Trilium Server
-        run: ./setup-test-server.sh
+        run: ./app/test/setup-test-server.sh
       - uses: mfinelli/setup-imagemagick@v6
       - uses: actions/setup-java@v4
         with:
@@ -32,7 +31,12 @@ jobs:
         run: ./gradlew :app:packageDebugAndroidTest
       - name: Run tests on emulator
         run: ./gradlew :app:pixel9api35DebugAndroidTest
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/*
       - name: Compare screenshots to reference
-        run: ./compare-test-images.sh
+        run: ./app/test/compare-test-images.sh
       - name: Delete screenshots before caching
         run: rm app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/* 2>/dev/null || true
