@@ -7,6 +7,7 @@ import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.captureToBitmap
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.longClick
 import androidx.test.espresso.action.ViewActions.pressBack
 import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.matcher.ViewMatchers
@@ -46,6 +47,11 @@ class InitialSyncTest {
 		Thread.sleep(2000)
 		Espresso.pressBack()
 		Thread.sleep(50000) // wait for Sync to finish
+		// Trilium 0.91+: Demo Document has different default expanded state
+		onView(ViewMatchers.withText("Trilium Demo"))
+			.perform(longClick())
+		Thread.sleep(2000)
+		// End Trilium 0.91+
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
 		onView(ViewMatchers.withText("Trilium Demo"))

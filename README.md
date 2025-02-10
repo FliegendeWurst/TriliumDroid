@@ -67,7 +67,7 @@ Please report bugs and missing features. I will soon setup a way to contribute t
 ### Testing
 
 - Gradle action `pixel9api35DebugAndroidTest`
-- Scripts `copy-test-images.sh`, `compare-test-images.sh`
+- Scripts `copy-test-images.sh`, `compare-test-images.sh` in `app/test`
 
 ## License
 
