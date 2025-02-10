@@ -410,16 +410,34 @@ object Cache {
 	}
 
 	fun moveBranch(branch: Branch, newParent: Branch) {
+		Log.i(TAG, "moving branch ${branch.id} to new parent ${branch.note}")
+		if (branch.parentNote == newParent.note) {
+			return // no action needed
+		}
 		val newId = "${newParent.note}_${branch.note}"
-		// TODO: what if branch already exists?
-		db!!.execSQL("INSERT INTO branches VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
-			newId, branch.note, newParent.note, branch.position, branch.prefix, 1, 0, null, utcDateModified()
-		))
+		val utc = utcDateModified()
+		val args = ContentValues()
+		args.put("branchId", newId)
+		args.put("noteId", branch.note)
+		args.put("parentNoteId", newParent.note)
+		args.put("notePosition", branch.position)
+		args.put("prefix", branch.prefix)
+		args.put("isExpanded", branch.expanded)
+		args.put("isDeleted", 0)
+		args.putNull("deleteId")
+		args.put("utcDateModified", utc)
+		if (db!!.insertWithOnConflict("branches", null, args, CONFLICT_REPLACE) == -1L) {
+			Log.e(TAG, "error moving branch!")
+		}
 		deleteBranch(branch)
 		branch.id = newId
+		val oldParent = branch.parentNote
 		branch.parentNote = newParent.note
 		db!!.registerEntityChangeBranch(branch)
+		notes[oldParent]?.children = null
 		notes[newParent.note]?.children = null
+		getTreeData("AND branches.parentNoteId = \"${oldParent}\"")
+		getTreeData("AND branches.parentNoteId = \"${newParent.note}\"")
 	}
 
 	fun getNote(id: String): Note? {
