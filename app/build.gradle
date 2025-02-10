@@ -52,7 +52,7 @@ android {
     testOptions {
         managedDevices {
             localDevices {
-                create("pixel9api35") {
+                register("pixel9api35") {
                     device = "Pixel 9"
                     apiLevel = 35
                     systemImageSource = "aosp-atd"
@@ -64,7 +64,7 @@ android {
 }
 
 dependencies {
-    def nav_version = "2.8.5"
+    def nav_version = "2.8.6"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:2.0.20"
     implementation 'androidx.core:core-ktx:1.15.0'
