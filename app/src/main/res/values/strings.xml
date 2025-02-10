@@ -69,6 +69,10 @@
     <string name="button_delete_database">Delete database</string>
     <string name="description_add_note_link">add note link</string>
     <string name="toast_no_note">no note loaded</string>
+    <string name="description_move_note">move note</string>
+    <string name="dialog_select_parent_note">Select parent note</string>
+    <string name="dialog_report_app_crash">App crash</string>
+    <string name="label_report_crash">Report crash at %1$s to the developer?</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

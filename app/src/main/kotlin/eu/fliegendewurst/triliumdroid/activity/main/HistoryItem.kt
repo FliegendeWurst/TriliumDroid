@@ -16,9 +16,11 @@ abstract class HistoryItem {
 
 	abstract fun noteId(): String
 	abstract fun branch(): Branch?
+
+	abstract fun setBranch(branch: Branch);
 }
 
-class NoteItem(private val note: Note, private val branch: Branch?) : HistoryItem() {
+class NoteItem(private val note: Note, private var branch: Branch?) : HistoryItem() {
 	override fun restore(activity: MainActivity): Boolean {
 		if (note.id == "DELETED") {
 			return false
@@ -33,6 +35,10 @@ class NoteItem(private val note: Note, private val branch: Branch?) : HistoryIte
 
 	override fun branch(): Branch? {
 		return branch
+	}
+
+	override fun setBranch(branch: Branch) {
+		this.branch = branch
 	}
 }
 
@@ -53,6 +59,9 @@ class NoteEditItem(val note: Note) : HistoryItem() {
 
 	override fun branch(): Branch? {
 		return null
+	}
+
+	override fun setBranch(branch: Branch) {
 	}
 }
 
@@ -79,5 +88,8 @@ class NoteMapItem(val note: Note?) : HistoryItem() {
 
 	override fun branch(): Branch? {
 		return null
+	}
+
+	override fun setBranch(branch: Branch) {
 	}
 }

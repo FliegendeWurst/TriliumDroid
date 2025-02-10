@@ -409,6 +409,19 @@ object Cache {
 		branches[branch.id]?.expanded = newValue
 	}
 
+	fun moveBranch(branch: Branch, newParent: Branch) {
+		val newId = "${newParent.note}_${branch.note}"
+		// TODO: what if branch already exists?
+		db!!.execSQL("INSERT INTO branches VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", arrayOf(
+			newId, branch.note, newParent.note, branch.position, branch.prefix, 1, 0, null, utcDateModified()
+		))
+		deleteBranch(branch)
+		branch.id = newId
+		branch.parentNote = newParent.note
+		db!!.registerEntityChangeBranch(branch)
+		notes[newParent.note]?.children = null
+	}
+
 	fun getNote(id: String): Note? {
 		if (notes.containsKey(id) && notes[id]?.mime != "INVALID") {
 			return notes[id]
@@ -443,6 +456,12 @@ object Cache {
 		db!!.registerEntityChangeBranch(branch)
 		note.branches.remove(branch)
 		return true
+	}
+
+	private fun deleteBranch(branch: Branch) {
+		Log.i(TAG, "deleting branch ${branch.id}")
+		db!!.execSQL("UPDATE branches SET isDeleted=1 WHERE branchId = ?", arrayOf(branch.id))
+		db!!.registerEntityChangeBranch(branch)
 	}
 
 	fun renameNote(note: Note, title: String) {
@@ -1207,6 +1226,9 @@ object Cache {
 		return localTime.format(Calendar.getInstance().time)
 	}
 
+	/**
+	 * Get time formatted as YYYY-MM-DD HH:MM:SS.sssZ
+	 */
 	fun utcDateModified(): String {
 		return DateTimeFormatter.ISO_INSTANT.format(OffsetDateTime.now(ZoneOffset.UTC))
 			.replace('T', ' ')

@@ -8,6 +8,8 @@ import android.content.ClipData
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Typeface
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -50,6 +52,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayoutMediator
 import eu.fliegendewurst.triliumdroid.AboutActivity
 import eu.fliegendewurst.triliumdroid.AlarmReceiver
+import eu.fliegendewurst.triliumdroid.BuildConfig
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.FrontendBackendApi
@@ -75,10 +78,11 @@ import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment
 import eu.fliegendewurst.triliumdroid.service.Icon
+import eu.fliegendewurst.triliumdroid.util.CrashReport
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.*
+import java.io.IOException
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeBytes
@@ -88,6 +92,8 @@ class MainActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityMainBinding
 	lateinit var handler: Handler
 	private lateinit var prefs: SharedPreferences
+
+	// menu items
 	private var consoleLogMenuItem: MenuItem? = null
 	private var executeScriptMenuItem: MenuItem? = null
 	private var shareMenuItem: MenuItem? = null
@@ -96,13 +102,18 @@ class MainActivity : AppCompatActivity() {
 	private var executeVisible: Boolean = false
 	private var shareVisible: Boolean = false
 	private var deleteVisible: Boolean = true
+
+	// initial note to show
 	private var firstNote: String? = null
+
+	// navigation history
 	private val noteHistory: MutableList<HistoryItem> = mutableListOf()
 
 	companion object {
 		private const val TAG = "MainActivity"
 		const val JUMP_TO_NOTE_ENTRY = "JUMP_TO_NOTE_ENTRY"
 		private const val LAST_NOTE = "LastNote"
+		private const val LAST_REPORT = "LastReport"
 		var tree: TreeItemAdapter? = null
 	}
 
@@ -122,6 +133,65 @@ class MainActivity : AppCompatActivity() {
 		// or other notification behaviors after this.
 		val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 		notificationManager.createNotificationChannel(mChannel)
+
+		val oldHandler = Thread.getDefaultUncaughtExceptionHandler()
+
+		Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
+			CrashReport.saveReport(this, paramThread, paramThrowable)
+			oldHandler?.uncaughtException(
+				paramThread,
+				paramThrowable
+			)
+		}
+
+		val lastReported = prefs.getString(LAST_REPORT, "2020") ?: "2020"
+		val pendingReports = CrashReport.pendingReports(this).filter { x -> x.name > lastReported }
+		val toReport = pendingReports.maxByOrNull { x -> x.name }
+		if (toReport != null) {
+			AlertDialog.Builder(this)
+				.setTitle(getString(R.string.dialog_report_app_crash))
+				.setMessage(
+					getString(
+						R.string.label_report_crash,
+						toReport.name
+					)
+				)
+				.setPositiveButton(
+					android.R.string.ok
+				) { _, _ ->
+					prefs.edit().putString(LAST_REPORT, toReport.name)
+						.apply()
+					// read report and create email
+					val intent = Intent(Intent.ACTION_SENDTO).apply {
+						data = Uri.parse("mailto:")
+						putExtra(
+							Intent.EXTRA_EMAIL,
+							arrayOf("arne.keller+triliumdroid-crash@posteo.de")
+						)
+						putExtra(
+							Intent.EXTRA_SUBJECT,
+							"TriliumDroid crash, version ${BuildConfig.VERSION_NAME}"
+						)
+						putExtra(Intent.EXTRA_TEXT, toReport.readText())
+					}
+					startActivity(Intent.createChooser(intent, "Choose email client:"))
+
+					try {
+						pendingReports.forEach { x -> x.deleteOnExit() }
+					} catch (e: IOException) {
+						Log.e(TAG, "failed to delete crash report ", e)
+					}
+				}
+				.setNegativeButton(android.R.string.cancel) { _, _ ->
+					try {
+						pendingReports.forEach { x -> x.delete() }
+					} catch (e: IOException) {
+						Log.e(TAG, "failed to delete crash report ", e)
+					}
+				}
+				.setIconAttribute(android.R.attr.alertDialogIcon)
+				.show()
+		}
 	}
 
 	fun checkNotificationPermission(): Boolean {
@@ -137,6 +207,7 @@ class MainActivity : AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		firstNote = intent.extras?.getString("note")
+		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 
 		oneTimeSetup()
 
@@ -157,7 +228,7 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		tree = TreeItemAdapter({
-			navigateTo(Cache.getNote(it.note)!!)
+			navigateTo(Cache.getNote(it.note)!!, it)
 		}, {
 			Cache.toggleBranch(it)
 			refreshTree()
@@ -264,8 +335,6 @@ class MainActivity : AppCompatActivity() {
 			adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
 			findViewById<Spinner>(R.id.widget_basic_properties_type_content).adapter = adapter
 		}
-
-		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 
 		binding.root.findViewById<Button>(R.id.button_labels_modify).setOnClickListener {
 			ModifyLabelsDialog.showDialog(this, getNoteLoaded() ?: return@setOnClickListener)
@@ -518,7 +587,8 @@ class MainActivity : AppCompatActivity() {
 			if (Cache.getNote(n) == null) {
 				n = "root" // may happen in case of new database or note deleted
 			}
-			navigateTo(Cache.getNote(n) ?: return)
+			val note = Cache.getNote(n) ?: return
+			navigateTo(note, note.branches.first())
 			// first use: open the drawer
 			if (!prefs.contains(LAST_NOTE)) {
 				binding.drawerLayout.openDrawer(GravityCompat.START)
@@ -894,21 +964,50 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		// note paths
-		val paths = Cache.getNotePaths(noteContent.id)!!
-		val arrayAdapter: ArrayAdapter<String> = ArrayAdapter<String>(
-			this,
-			android.R.layout.simple_list_item_1,
-			paths.map { x ->
-				val notes = x.toMutableList()
-				// do not use reversed() until root cause is fixed
-				// https://github.com/FliegendeWurst/TriliumDroid/issues/6
-				Collections.reverse(notes)
-				notes
-					.subList(1, x.size)
-					.joinToString(" > ") { Cache.getNote(it.note)!!.title }
-			}
-		)
 		val notePaths = findViewById<ListView>(R.id.widget_note_paths_type_content)
+		val paths = Cache.getNotePaths(noteContent.id)!!
+		val currentPath = noteHistory.last().branch()
+		val branchToString = { x: List<Branch> ->
+			Pair(
+				x.asReversed()
+					.subList(1, x.size)
+					.joinToString(" > ") { Cache.getNote(it.note)!!.title }, x.first()
+			)
+		}
+		val arrayAdapter =
+			ListAdapter(paths.map(branchToString)) { path: Pair<String, Branch>, convertView: View? ->
+				val pathString = path.first
+				val pathBranch = path.second
+				var vi = convertView
+				if (vi == null) {
+					vi = layoutInflater.inflate(
+						R.layout.item_note_path,
+						notePaths,
+						false
+					)
+				}
+				val textView = vi!!.findViewById<TextView>(R.id.label_note_path)
+				val button = vi!!.findViewById<Button>(R.id.button_note_path_edit)
+				textView.text = pathString
+				if (path.second == currentPath) {
+					textView.setTypeface(null, Typeface.BOLD)
+					button.visibility = View.VISIBLE
+					button.setOnClickListener {
+						JumpToNoteDialog.showDialogReturningNote(
+							this,
+							R.string.dialog_select_parent_note
+						) { newParent ->
+							Cache.moveBranch(pathBranch, newParent)
+							refreshTree()
+							refreshWidgets(noteContent)
+						}
+					}
+				} else {
+					textView.setTypeface(null, Typeface.NORMAL)
+					button.visibility = View.GONE
+				}
+				return@ListAdapter vi!!
+			}
 		notePaths.adapter = arrayAdapter
 		notePaths.onItemClickListener = OnItemClickListener { _, _, position, _ ->
 			// switch to the note path in the tree
@@ -918,6 +1017,8 @@ class MainActivity : AppCompatActivity() {
 					refreshTree()
 				}
 				if (pathSelected.first().cachedTreeIndex != null) {
+					noteHistory.last().setBranch(pathSelected.first())
+					refreshWidgets(noteContent)
 					scrollTreeToBranch(pathSelected.first())
 					binding.drawerLayout.closeDrawers()
 					binding.drawerLayout.openDrawer(GravityCompat.START)
