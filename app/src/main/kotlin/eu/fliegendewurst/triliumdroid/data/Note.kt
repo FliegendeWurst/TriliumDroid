@@ -12,14 +12,15 @@ class Note(
 	var modified: String,
 	var isProtected: Int,
 	var blobId: String
-): Comparable<Note> {
+) : Comparable<Note> {
 	var content: ByteArray? = null
 	var contentFixed: Boolean = false
 	private var labels: List<Label>? = null
 	private var relations: List<Relation>? = null
 	private var inheritedLabels: List<Label>? = null
 	private var inheritedRelations: List<Relation>? = null
-	var children: SortedMap<String, Branch>? = null
+	var children: SortedSet<Branch>? = null
+
 	/**
 	 * Note clones for this note.
 	 */
@@ -61,6 +62,14 @@ class Note(
 			}
 		}
 		return null
+	}
+
+	fun computeChildren(): SortedSet<Branch> {
+		if (children != null) {
+			return children!!
+		}
+		Cache.getChildren(id)
+		return children ?: TreeSet()
 	}
 
 	private fun cacheInheritableAttributes() {

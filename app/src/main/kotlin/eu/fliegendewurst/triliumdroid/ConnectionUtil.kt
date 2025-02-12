@@ -1,7 +1,6 @@
 package eu.fliegendewurst.triliumdroid
 
 import android.content.SharedPreferences
-import androidx.preference.PreferenceManager
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Cookie
@@ -13,7 +12,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONException
@@ -37,8 +35,10 @@ object ConnectionUtil {
 	private var loginFails = 0
 
 	fun setup(prefs: SharedPreferences, callback: () -> Unit, callbackError: (Exception) -> Unit) {
+		ConnectionUtil.prefs = prefs
+
 		if (client == null) {
-			client = OkHttpClient.Builder()
+			var clientBuilder = OkHttpClient.Builder()
 				.cookieJar(object : CookieJar {
 					// TODO: this is a terrible cookie jar
 					private var cookieStore: MutableList<Cookie> = ArrayList()
@@ -66,10 +66,15 @@ object ConnectionUtil {
 						return cookieStore
 					}
 				})
+
+//			val x = prefs.getString("mTLS_cert", null)
+
+//			val xy = HeldCertificate.decode("xxx")
+
+			client = clientBuilder
 				.build()
 		}
 
-		ConnectionUtil.prefs = prefs
 		server = prefs.getString("hostname", null)!!
 		password = prefs.getString("password", null)!!
 		val documentSecret = prefs.getString("documentSecret", null)

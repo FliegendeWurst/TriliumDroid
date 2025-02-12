@@ -211,7 +211,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			} else if (note.type == "code") {
 				// code notes automatically load all the scripts in child nodes
 				// -> modify content returned by webview interceptor
-				subCodeNotes = note.children.orEmpty().map { Cache.getNote(it.value.note)!! }
+				subCodeNotes = note.children.orEmpty().map { Cache.getNote(it.note)!! }
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)
 			} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)

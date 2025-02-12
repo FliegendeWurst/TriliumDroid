@@ -409,18 +409,19 @@ object Cache {
 		branches[branch.id]?.expanded = newValue
 	}
 
-	fun moveBranch(branch: Branch, newParent: Branch) {
-		Log.i(TAG, "moving branch ${branch.id} to new parent ${branch.note}")
-		if (branch.parentNote == newParent.note) {
+	fun moveBranch(branch: Branch, newParent: Branch, newPosition: Int) {
+		Log.i(TAG, "moving branch ${branch.id} to new parent ${newParent.note}, pos: ${branch.position} -> ${newPosition}")
+		if (branch.parentNote == newParent.note && branch.position == newPosition) {
 			return // no action needed
 		}
 		val newId = "${newParent.note}_${branch.note}"
+		val idChanged = branch.id != newId
 		val utc = utcDateModified()
 		val args = ContentValues()
 		args.put("branchId", newId)
 		args.put("noteId", branch.note)
 		args.put("parentNoteId", newParent.note)
-		args.put("notePosition", branch.position)
+		args.put("notePosition", newPosition)
 		args.put("prefix", branch.prefix)
 		args.put("isExpanded", branch.expanded)
 		args.put("isDeleted", 0)
@@ -429,15 +430,16 @@ object Cache {
 		if (db!!.insertWithOnConflict("branches", null, args, CONFLICT_REPLACE) == -1L) {
 			Log.e(TAG, "error moving branch!")
 		}
-		deleteBranch(branch)
-		branch.id = newId
+		if (idChanged) {
+			deleteBranch(branch)
+			branch.id = newId
+		}
 		val oldParent = branch.parentNote
 		branch.parentNote = newParent.note
 		db!!.registerEntityChangeBranch(branch)
 		notes[oldParent]?.children = null
 		notes[newParent.note]?.children = null
-		getTreeData("AND branches.parentNoteId = \"${oldParent}\"")
-		getTreeData("AND branches.parentNoteId = \"${newParent.note}\"")
+		getTreeData("AND (branches.parentNoteId = \"${oldParent}\" OR branches.parentNoteId = \"${newParent.note}\")")
 	}
 
 	fun getNote(id: String): Note? {
@@ -455,8 +457,8 @@ object Cache {
 		Log.i(TAG, "deleting note ${branch.note}")
 		// delete child notes if this is the last branch of this note
 		if (note.branches.size == 1) {
-			for (child in note.children ?: emptyMap()) {
-				val id2 = child.value.note
+			for (child in note.children ?: emptySet()) {
+				val id2 = child.note
 				val note2 = getNote(id2)!!
 				if (note2.branches.size == 1) {
 					if (!deleteNote(note2.branches[0])) {
@@ -690,7 +692,7 @@ object Cache {
 					"FROM branches INNER JOIN notes USING (noteId) WHERE notes.isDeleted = 0 AND branches.isDeleted = 0 $filter",
 			arrayOf()
 		).use {
-			val clones = mutableListOf<Triple<Pair<String, String>, String, Int>>()
+			val clones = mutableListOf<Pair<Pair<String, String>, String>>()
 			while (it.moveToNext()) {
 				val branchId = it.getString(0)
 				val noteId = it.getString(1)
@@ -732,22 +734,26 @@ object Cache {
 				}
 				if (n.branches.none { branch -> branch.id == branchId }) {
 					n.branches.add(b)
-					n.branches.sortBy { br -> br.position }
+					n.branches.sortBy { br -> br.position } // TODO: sort by date instead?
 				}
-				clones.add(Triple(Pair(parentNoteId, noteId), branchId, notePosition))
+				clones.add(Pair(Pair(parentNoteId, noteId), branchId))
 			}
 			for (p in clones) {
-				val b = branches[p.second]
 				val parentNoteId = p.first.first
+				val b = branches[p.second]
 				if (parentNoteId == "none") {
 					continue
 				}
 				if (notes[parentNoteId]?.children == null) {
-					notes[parentNoteId]?.children = TreeMap()
+					notes[parentNoteId]?.children = TreeSet()
 				}
-				notes[parentNoteId]?.children!!["${p.third}_${p.first.second}"] = b
+				notes[parentNoteId]?.children!!.add(b)
 			}
 		}
+	}
+
+	fun getChildren(noteId: String) {
+		getTreeData("AND (branches.parentNoteId = \"${noteId}\" OR branches.noteId = \"${noteId}\")")
 	}
 
 	/**
@@ -760,7 +766,7 @@ object Cache {
 		if (!current.expanded) {
 			return list
 		}
-		for (children in notes[current.note]!!.children.orEmpty().values) {
+		for (children in notes[current.note]!!.children.orEmpty()) {
 			list.addAll(getTreeList(children.id, lvl + 1))
 		}
 		if (branchId == "none_root") {

@@ -73,6 +73,7 @@ import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
+import eu.fliegendewurst.triliumdroid.dialog.SelectNoteDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
@@ -83,6 +84,7 @@ import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.IOException
+import javax.net.ssl.SSLProtocolException
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeBytes
@@ -505,6 +507,9 @@ class MainActivity : AppCompatActivity() {
 
 	private fun handleError(it: Exception) {
 		var toastText: String? = null
+		if (it is SSLProtocolException) {
+			// TODO ask the user if they need mTLS
+		}
 		if (it is IllegalStateException) {
 			toastText = it.message ?: "IllegalStateException"
 		}
@@ -997,9 +1002,61 @@ class MainActivity : AppCompatActivity() {
 							this,
 							R.string.dialog_select_parent_note
 						) { newParent ->
-							Cache.moveBranch(pathBranch, newParent)
-							refreshTree()
-							refreshWidgets(noteContent)
+							val newParentNote =
+								Cache.getNote(newParent.note) ?: return@showDialogReturningNote
+							val children = (listOf(newParent) + newParentNote.computeChildren()
+								.toList()).toMutableList()
+							children.remove(pathBranch)
+							if (children.size == 1) {
+								Cache.moveBranch(pathBranch, newParent, 0)
+							} else {
+								SelectNoteDialog.showDialogReturningNote(
+									this,
+									children
+								) { siblingNote ->
+									val siblingIndex = children.indexOf(siblingNote)
+									if (siblingIndex == 0) {
+										// insert as first element
+										Cache.moveBranch(
+											pathBranch,
+											newParent,
+											children[1].position - 10
+										)
+									} else if (siblingIndex < children.size - 1) {
+										val insertBefore = children[siblingIndex + 1]
+										val positionDelta =
+											insertBefore.position - siblingNote.position
+										if (positionDelta <= 1) {
+											// re-order entire list
+											val ourIndex = siblingIndex + 1
+											for (i in 1 until children.size) {
+												if (i < ourIndex) {
+													Cache.moveBranch(
+														children[i],
+														newParent,
+														(i - 1) * 10
+													)
+												} else {
+													Cache.moveBranch(children[i], newParent, i * 10)
+												}
+											}
+											Cache.moveBranch(pathBranch, newParent, ourIndex * 10)
+										} else {
+											val ourPosition =
+												siblingNote.position + positionDelta / 2
+											Cache.moveBranch(pathBranch, newParent, ourPosition)
+										}
+									} else {
+										Cache.moveBranch(
+											pathBranch,
+											newParent,
+											siblingNote.position + 10
+										)
+									}
+									refreshTree()
+									refreshWidgets(noteContent)
+								}
+							}
 						}
 					}
 				} else {
