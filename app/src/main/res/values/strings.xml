@@ -75,6 +75,7 @@
     <string name="label_report_crash">Report crash at %1$s to the developer?</string>
     <string name="dialog_select_sibling_note">Insert after which note?</string>
     <string name="button_insert_as_last_note">Insert as last note</string>
+    <string name="button_export_database">Export database</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

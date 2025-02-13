@@ -1,4 +1,4 @@
 - Editor function to add inline link
 - Dialog to move note in note tree
-- Button to delete the database
+- Database management: export / delete functions
 - Crash detection and opt-in reporting

@@ -204,6 +204,19 @@
             android:text="@string/label_miscellaneous" />
 
         <Button
+            android:id="@+id/button_export_database"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="@dimen/settings_label_start_margin"
+            android:layout_marginTop="@dimen/normal_margin"
+            android:layout_marginEnd="@dimen/settings_label_start_margin"
+            android:layout_marginBottom="@dimen/normal_margin"
+            android:drawableStart="@drawable/bx_save"
+            android:paddingStart="6dp"
+            android:text="@string/button_export_database"
+            tools:ignore="RtlSymmetry" />
+
+        <Button
             android:id="@+id/button_nuke_database"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
@@ -214,8 +227,6 @@
             android:drawableStart="@drawable/bx_trash"
             android:paddingStart="6dp"
             android:text="@string/button_delete_database"
-            app:layout_constraintBaseline_toBaselineOf="@id/input_fab"
-            app:layout_constraintStart_toEndOf="@id/input_fab"
             tools:ignore="RtlSymmetry" />
 
         <include

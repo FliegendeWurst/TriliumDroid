@@ -1,12 +1,16 @@
 package eu.fliegendewurst.triliumdroid
 
+import android.app.Activity
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
+import java.io.File
 
 
 class SetupActivity : AppCompatActivity() {
@@ -27,11 +31,34 @@ class SetupActivity : AppCompatActivity() {
 		)
 		ConfigureFabsDialog.init(prefs)
 		setText()
+
+		val exportLauncher =
+			registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+				if (result.resultCode != Activity.RESULT_OK) {
+					return@registerForActivityResult
+				}
+				contentResolver.openOutputStream(
+					result.data?.data ?: return@registerForActivityResult
+				)?.use { out ->
+					val db = File(filesDir.parent, "databases/Document.db")
+					db.inputStream().copyTo(out)
+				}
+			}
+
 		binding.buttonConfigureFabs.setOnClickListener {
 			ConfigureFabsDialog.showDialog(this, prefs) {
 				setText()
 			}
 		}
+
+		binding.buttonExportDatabase.setOnClickListener {
+			val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+			intent.addCategory(Intent.CATEGORY_OPENABLE)
+			intent.setType("application/vnd.sqlite3")
+			intent.putExtra(Intent.EXTRA_TITLE, "document.db")
+			exportLauncher.launch(intent)
+		}
+
 		binding.buttonNukeDatabase.setOnClickListener {
 			AlertDialog.Builder(this)
 				.setTitle("Delete database")
