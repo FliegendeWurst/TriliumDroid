@@ -78,6 +78,7 @@ import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment
+import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.util.CrashReport
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
@@ -184,7 +185,8 @@ class MainActivity : AppCompatActivity() {
 						Log.e(TAG, "failed to delete crash report ", e)
 					}
 				}
-				.setNegativeButton(android.R.string.cancel) { _, _ ->
+				.setNegativeButton(android.R.string.cancel, null)
+				.setOnDismissListener {
 					try {
 						pendingReports.forEach { x -> x.delete() }
 					} catch (e: IOException) {
@@ -210,6 +212,21 @@ class MainActivity : AppCompatActivity() {
 		super.onCreate(savedInstanceState)
 		firstNote = intent.extras?.getString("note")
 		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+
+		if (intent?.action == Intent.ACTION_SEND) {
+			if (intent.type == "text/plain" || intent.type == "text/html") {
+				val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+				if (text != null) {
+					if (Cache.haveDatabase(this)) {
+						Cache.initializeDatabase(applicationContext)
+						val inbox = DateNotes.getInboxNote()
+						val note = Cache.createChildNote(inbox, text.lineSequence().first())
+						Cache.setNoteContent(note.id, text)
+					}
+				}
+			}
+			finish()
+		}
 
 		oneTimeSetup()
 
