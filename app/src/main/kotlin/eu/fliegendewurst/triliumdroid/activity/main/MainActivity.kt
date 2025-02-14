@@ -425,9 +425,10 @@ class MainActivity : AppCompatActivity() {
 					Cache.getTreeData("")
 					handler.post {
 						handleError(it)
-						showInitialNote(true)
 					}
 				})
+				Cache.getTreeData("")
+				showInitialNote(true)
 			} else if (noteHistory.isEmpty()) {
 				showInitialNote(true)
 			}
@@ -567,10 +568,6 @@ class MainActivity : AppCompatActivity() {
 				}, {
 					handler.post {
 						handleError(it)
-					}
-					Cache.getTreeData("")
-					handler.post {
-						showInitialNote(resetView)
 					}
 					// ensure the snackbar doesn't stay visible
 					handler.post {
