@@ -2,4 +2,10 @@
 <resources>
     <string name="user_placeholder">Benutzername</string>
     <string name="action_settings">Einstellungen</string>
+    <string name="action_delete">Löschen</string>
+    <string name="attribute">Attribut</string>
+    <string name="action_edit">Bearbeiten</string>
+    <string name="password_label">Passwort</string>
+    <string name="action_execute">Ausführen</string>
+    <string name="toast_cannot_delete_root">Kann Wurzel-Notiz nicht löschen</string>
 </resources>
