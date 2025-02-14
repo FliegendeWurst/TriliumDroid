@@ -242,7 +242,7 @@ class MainActivity : AppCompatActivity() {
 			AskForNameDialog.showDialog(this, R.string.dialog_rename_note, note.title) {
 				Cache.renameNote(note, it)
 				refreshTree()
-				refreshTitle()
+				refreshTitle(note)
 			}
 		}
 
@@ -423,6 +423,7 @@ class MainActivity : AppCompatActivity() {
 					}
 				}, {
 					Cache.getTreeData("")
+					refreshTree()
 					handler.post {
 						handleError(it)
 					}
@@ -504,6 +505,15 @@ class MainActivity : AppCompatActivity() {
 	override fun onResume() {
 		super.onResume()
 		if (loadedNoteId == null) {
+			return
+		}
+		if (!Cache.haveDatabase(this)) {
+			loadedNoteId = null
+			tree?.submitList(emptyList())
+			refreshTitle(null)
+			supportFragmentManager.beginTransaction()
+				.replace(R.id.fragment_container, EmptyFragment())
+				.commit()
 			return
 		}
 		when (getFragment()) {
@@ -879,8 +889,11 @@ class MainActivity : AppCompatActivity() {
 		navigateTo(Cache.getNote(notePath.split("/").last())!!)
 	}
 
-	private fun refreshTitle() {
-		binding.toolbarTitle.text = getNoteLoaded()?.title ?: return
+	private fun refreshTitle(note: Note?) {
+		Log.d(TAG, "refreshing title")
+		binding.toolbarTitle.text = note?.title ?: "(nothing loaded)"
+		binding.toolbarIcon.text =
+			Icon.getUnicodeCharacter(note?.getLabel("iconClass") ?: "bx bx-file-blank")
 	}
 
 	fun refreshWidgets(noteContent: Note) {
@@ -1130,9 +1143,7 @@ class MainActivity : AppCompatActivity() {
 		getNoteFragment().load(note.id)
 		val noteContent = Cache.getNoteWithContent(note.id)!!
 		binding.drawerLayout.closeDrawers()
-		binding.toolbarTitle.text = noteContent.title
-		binding.toolbarIcon.text =
-			Icon.getUnicodeCharacter(noteContent.getLabel("iconClass") ?: "bx bx-note")
+		refreshTitle(noteContent)
 		if (branch != null) {
 			scrollTreeToBranch(branch)
 		} else {

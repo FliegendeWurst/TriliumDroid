@@ -10,6 +10,7 @@ import android.icu.text.DateFormat
 import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.os.Handler
+import android.util.Log
 import android.webkit.JavascriptInterface
 import android.widget.DatePicker
 import android.widget.Toast
@@ -368,7 +369,7 @@ class FrontendBackendApi(
 
 	@JavascriptInterface
 	fun getInstanceName(): String {
-		return "mobilemobile"
+		return ConnectionUtil.instanceId!!
 	}
 
 	@JavascriptInterface

@@ -1,27 +1,26 @@
 package eu.fliegendewurst.triliumdroid
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.test.core.graphics.writeToTestStorage
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu
 import androidx.test.espresso.action.ViewActions.captureToBitmap
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.longClick
-import androidx.test.espresso.action.ViewActions.pressBack
 import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.matcher.ViewMatchers
-import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import java.io.IOException
-
 import androidx.test.ext.junit.rules.activityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
+import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import org.junit.FixMethodOrder
+import org.junit.Rule
+import org.junit.Test
 import org.junit.rules.TestName
+import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
+import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -76,6 +75,43 @@ class InitialSyncTest {
 			.perform(typeText(" Title Edited!"))
 		onView(ViewMatchers.withId(R.id.button_rename_note))
 			.perform(click())
+		onView(ViewMatchers.isRoot())
+			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
+		// click to sync
+		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
+		onView(ViewMatchers.withText(R.string.action_sync))
+			.perform(click())
+		// wait for sync to finish
+		Thread.sleep(5000)
+	}
+
+	@Test
+	@Throws(IOException::class)
+	fun test_020_nukeDatabase() {
+		var index = 1
+		// click to open settings
+		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
+		onView(ViewMatchers.withText(R.string.action_settings))
+			.perform(click())
+		// wait to load
+		Thread.sleep(2000)
+		onView(ViewMatchers.withId(R.id.button_nuke_database))
+			.perform(click())
+		// confirm delete
+		onView(ViewMatchers.withText(android.R.string.ok))
+			.perform(click())
+		Espresso.pressBack()
+		// wait to load
+		Thread.sleep(2000)
+		onView(ViewMatchers.isRoot())
+			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
+	}
+
+	@Test
+	@Throws(IOException::class)
+	fun test_021_nukedDatabaseRestored() {
+		var index = 1
+		Thread.sleep(50000) // wait for sync
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
 	}

@@ -9,13 +9,13 @@ import android.graphics.Paint
 import android.graphics.Paint.Align
 import android.graphics.Path
 import android.util.AttributeSet
+import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import androidx.core.graphics.withScale
 import androidx.core.graphics.withTranslation
-import eu.fliegendewurst.triliumdroid.Log
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note

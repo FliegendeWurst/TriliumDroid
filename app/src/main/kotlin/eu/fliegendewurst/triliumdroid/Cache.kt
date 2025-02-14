@@ -14,6 +14,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteQuery
 import android.icu.text.SimpleDateFormat
 import android.os.Build
+import android.util.Log
 import androidx.core.database.sqlite.transaction
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.Cache.utcDateModified
@@ -135,9 +136,9 @@ object Cache {
 				blobId,
 				hash,
 				0,
-				"changeId${(1000..9999).random()}",
+				Util.randomString(12),
 				"NA",
-				"mobilemobile",
+				ConnectionUtil.instanceId,
 				1,
 				utc
 			)
@@ -410,7 +411,7 @@ object Cache {
 	}
 
 	fun moveBranch(branch: Branch, newParent: Branch, newPosition: Int) {
-		Log.i(TAG, "moving branch ${branch.id} to new parent ${newParent.note}, pos: ${branch.position} -> ${newPosition}")
+		Log.i(TAG, "moving branch ${branch.id} to new parent ${newParent.note}, pos: ${branch.position} -> $newPosition")
 		if (branch.parentNote == newParent.note && branch.position == newPosition) {
 			return // no action needed
 		}
@@ -744,10 +745,15 @@ object Cache {
 				if (parentNoteId == "none") {
 					continue
 				}
-				if (notes[parentNoteId]?.children == null) {
-					notes[parentNoteId]?.children = TreeSet()
+				val parentNote = notes[parentNoteId]
+				if (parentNote != null) {
+					if (parentNote.children == null) {
+						parentNote.children = TreeSet()
+					}
+					parentNote.children!!.add(b)
+				} else {
+					Log.d(TAG, "failed to find $parentNoteId in ${notes.size} notes")
 				}
-				notes[parentNoteId]?.children!!.add(b)
 			}
 		}
 	}
@@ -788,11 +794,10 @@ object Cache {
 			}
 		Log.i(TAG, "last synced push: $lastSyncedPush")
 		val logMarkerId = "trilium-droid"
-		val instanceId = "mobilemobile"
 		val changesUri = "/api/sync/update?logMarkerId=$logMarkerId"
 
 		val data = JSONObject()
-		data.put("instanceId", instanceId)
+		data.put("instanceId", ConnectionUtil.instanceId)
 		val entities = JSONArray()
 		var largestId = lastSyncedPush
 		db!!.rawQuery(
@@ -802,7 +807,7 @@ object Cache {
 
 			while (it.moveToNext()) {
 				val instanceIdSaved = it.getString(7)
-				if (instanceIdSaved != instanceId) {
+				if (instanceIdSaved != ConnectionUtil.instanceId) {
 					continue
 				}
 
@@ -814,6 +819,7 @@ object Cache {
 				val isErased = it.getInt(4)
 				val changeId = it.getString(5)
 				val componentId = it.getString(6)
+				val instanceId = it.getString(7)
 				val isSynced = it.getString(8)
 				val utc = it.getString(9)
 
@@ -936,9 +942,8 @@ object Cache {
 					}
 				}
 			val logMarkerId = "trilium-droid"
-			val instanceId = "mobilemobile"
 			val changesUri =
-				"/api/sync/changed?instanceId=${instanceId}&lastEntityChangeId=${lastSyncedPull}&logMarkerId=${logMarkerId}"
+				"/api/sync/changed?instanceId=${ConnectionUtil.instanceId}&lastEntityChangeId=${lastSyncedPull}&logMarkerId=${logMarkerId}"
 
 			ConnectionUtil.doSyncRequest(changesUri, { resp ->
 				val outstandingPullCount = resp.getInt("outstandingPullCount")
@@ -1066,6 +1071,7 @@ object Cache {
 		PreferenceManager.getDefaultSharedPreferences(context).edit()
 			.remove("documentSecret")
 			.remove("syncVersion")
+			.remove("instanceId")
 			.apply()
 		File(context.filesDir.parent, "databases/Document.db").delete()
 		notes.clear()
@@ -1176,7 +1182,7 @@ object Cache {
 		if (relations.any { x -> x.target?.id == target && x.name == "internalLink" }) {
 			return
 		}
-		updateRelation(note, null, "internalLink", Cache.getNote(target) ?: return, false)
+		updateRelation(note, null, "internalLink", getNote(target) ?: return, false)
 	}
 
 	fun getAllNotesWithRelations(): List<Note> {
@@ -1591,9 +1597,9 @@ private fun SQLiteDatabase.registerEntityChange(
 			id,
 			hash,
 			0,
-			"changeId${(1000..9999).random()}",
+			Util.randomString(12),
 			"NA",
-			"mobilemobile",
+			ConnectionUtil.instanceId,
 			1,
 			utc
 		)

@@ -1,6 +1,8 @@
 package eu.fliegendewurst.triliumdroid
 
 import android.content.SharedPreferences
+import android.util.Log
+import eu.fliegendewurst.triliumdroid.service.Util
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Cookie
@@ -30,6 +32,7 @@ object ConnectionUtil {
 	private var client: OkHttpClient? = null
 	private var server: String = "http://0.0.0.0"
 	private var password: String = "aaaaaa" // easy to catch in logs
+	var instanceId: String? = null
 	private var prefs: SharedPreferences? = null
 	private var syncVersion: Int = Cache.CacheDbHelper.SYNC_VERSION
 	private var loginFails = 0
@@ -77,6 +80,11 @@ object ConnectionUtil {
 
 		server = prefs.getString("hostname", null)!!
 		password = prefs.getString("password", null)!!
+		instanceId = prefs.getString("instanceId", null)
+		if (instanceId == null) {
+			instanceId = "mobile" + Util.randomString(6)
+			prefs.edit().putString("instanceId", instanceId).apply()
+		}
 		val documentSecret = prefs.getString("documentSecret", null)
 		if (documentSecret == null) {
 			fetch("/api/setup/sync-seed", null, {

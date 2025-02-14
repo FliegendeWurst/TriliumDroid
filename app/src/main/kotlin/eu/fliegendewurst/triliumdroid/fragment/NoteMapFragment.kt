@@ -1,12 +1,12 @@
 package eu.fliegendewurst.triliumdroid.fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import eu.fliegendewurst.triliumdroid.Cache
-import eu.fliegendewurst.triliumdroid.Log
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
