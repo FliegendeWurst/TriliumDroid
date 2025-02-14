@@ -942,7 +942,7 @@ object Cache {
 
 			ConnectionUtil.doSyncRequest(changesUri, { resp ->
 				val outstandingPullCount = resp.getInt("outstandingPullCount")
-				val entityChangeId = resp.getString("lastEntityChangeId")
+				val entityChangeId = resp.getInt("lastEntityChangeId")
 				Log.i(TAG, "sync outstanding $outstandingPullCount")
 				val changes = resp.getJSONArray("entityChanges")
 				totalSynced += changes.length()
