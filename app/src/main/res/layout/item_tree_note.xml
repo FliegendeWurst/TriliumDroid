@@ -10,5 +10,6 @@
         android:layout_height="40dp"
         android:ellipsize="end"
         android:gravity="start|center_vertical"
+        android:textColor="@color/foreground"
         android:singleLine="true" />
 </LinearLayout>

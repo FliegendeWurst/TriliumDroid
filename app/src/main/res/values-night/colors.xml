@@ -1,21 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="secondary_light">#FF67d738</color>
-    <color name="secondary">#FF4FA52B</color>
-    <!-- orange:
-    <color name="secondary_light">#ff861c</color>
-    <color name="secondary">#E47B19</color>
-    <color name="secondary_dark">#b25d14</color>
-    -->
-    <color name="primary_light">#FFffed92</color>
-    <color name="primary">#FFffe44c</color>
-    <color name="primary_dark">#FFd7b81e</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-
     <color name="background">@color/black</color>
     <color name="background2">#FF111111</color>
-    <color name="tree_selected">#FFffe44c</color>
+    <color name="foreground">@color/white</color>
     <color name="tree_normal">#FF111111</color>
     <color name="divider_grey">#55808080</color>
 </resources>

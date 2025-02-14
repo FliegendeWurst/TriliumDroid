@@ -16,6 +16,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
@@ -41,41 +43,7 @@ object ConnectionUtil {
 		ConnectionUtil.prefs = prefs
 
 		if (client == null) {
-			var clientBuilder = OkHttpClient.Builder()
-				.cookieJar(object : CookieJar {
-					// TODO: this is a terrible cookie jar
-					private var cookieStore: MutableList<Cookie> = ArrayList()
-					override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-						for (cookie in cookies) {
-							Log.i(
-								TAG,
-								"cookie ${cookie.path} ${cookie.name} = ${cookie.value.length} characters"
-							)
-							var added = false
-							for (i in cookieStore.indices) {
-								if (cookieStore[i].name == cookie.name) {
-									cookieStore[i] = cookie
-									added = true
-									break
-								}
-							}
-							if (!added) {
-								cookieStore.add(cookie)
-							}
-						}
-					}
-
-					override fun loadForRequest(url: HttpUrl): List<Cookie> {
-						return cookieStore
-					}
-				})
-
-//			val x = prefs.getString("mTLS_cert", null)
-
-//			val xy = HeldCertificate.decode("xxx")
-
-			client = clientBuilder
-				.build()
+			resetClient()
 		}
 
 		server = prefs.getString("hostname", null)!!
@@ -113,6 +81,54 @@ object ConnectionUtil {
 		} else {
 			connect(server, callback, callbackError)
 		}
+	}
+
+	fun resetClient() {
+		client = null
+		var clientBuilder = OkHttpClient.Builder()
+			.cookieJar(object : CookieJar {
+				// TODO: this is a terrible cookie jar
+				private var cookieStore: MutableList<Cookie> = ArrayList()
+				override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+					for (cookie in cookies) {
+						Log.i(
+							TAG,
+							"cookie ${cookie.path} ${cookie.name} = ${cookie.value.length} characters"
+						)
+						var added = false
+						for (i in cookieStore.indices) {
+							if (cookieStore[i].name == cookie.name) {
+								cookieStore[i] = cookie
+								added = true
+								break
+							}
+						}
+						if (!added) {
+							cookieStore.add(cookie)
+						}
+					}
+				}
+
+				override fun loadForRequest(url: HttpUrl): List<Cookie> {
+					return cookieStore
+				}
+			})
+
+		val mtls = prefs!!.getString("mTLS_cert", null)
+		if (mtls != null) {
+			val cert = HeldCertificate.decode(mtls)
+
+			val clientCertificates: HandshakeCertificates = HandshakeCertificates.Builder()
+				.heldCertificate(cert)
+				.build()
+			clientBuilder = clientBuilder.sslSocketFactory(
+				clientCertificates.sslSocketFactory(),
+				clientCertificates.trustManager
+			)
+		}
+
+		client = clientBuilder
+			.build()
 	}
 
 	private fun fetch(

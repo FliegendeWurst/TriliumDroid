@@ -85,6 +85,11 @@
     <string name="text_about_7">The Android port has been developed by FliegendeWurst since 2023. If you encouter any issues using the app, feel free to open an issue in the repository linked below.</string>
     <string name="text_about_8">" FliegendeWurst / TriliumDroid"</string>
     <string name="description_run_script">run script</string>
+    <string name="label_background_colors">Background colors</string>
+    <string name="description_modify_primary_color">modify primary color</string>
+    <string name="description_modify_secondary_color">modify secondary color</string>
+    <string name="label_primary_color">Primary</string>
+    <string name="label_secondary_color">Secondary</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

@@ -8,6 +8,7 @@ import android.content.ClipData
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
@@ -95,6 +96,7 @@ class MainActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityMainBinding
 	lateinit var handler: Handler
 	private lateinit var prefs: SharedPreferences
+	private var resourceOverlay: Resources? = null
 
 	// menu items
 	private var consoleLogMenuItem: MenuItem? = null
@@ -118,6 +120,27 @@ class MainActivity : AppCompatActivity() {
 		private const val LAST_NOTE = "LastNote"
 		private const val LAST_REPORT = "LastReport"
 		var tree: TreeItemAdapter? = null
+	}
+
+	override fun getResources(): Resources {
+		if (resourceOverlay != null) {
+			return resourceOverlay!!
+		}
+		val res = super.getResources()
+		resourceOverlay = object : Resources(res.assets, res.displayMetrics, res.configuration) {
+			@Deprecated("overriden method deprecated", ReplaceWith("getColor(id, null)"))
+			override fun getColor(id: Int): Int {
+				return getColor(id, null)
+			}
+
+			override fun getColor(id: Int, theme: Theme?): Int {
+//				if (id == R.color.primary) {
+//					return 0xfa00
+//				}
+				return res.getColor(id, theme)
+			}
+		}
+		return resourceOverlay!!
 	}
 
 	private fun oneTimeSetup() {
