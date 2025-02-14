@@ -27,7 +27,7 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 
 ## Usage
 
-1. Download the app from the [latest release](https://github.com/FliegendeWurst/TriliumDroid/releases).
+1. Download the app from [IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/eu.fliegendewurst.triliumdroid).
 2. Install the APK. You need to enable installing apps from unknown sources.
 3. Open the app and configure your sync server (hostname, port, password).
 4. Go back, wait until sync is finished.
@@ -63,7 +63,7 @@ There is also some preliminary support for scripting, but it doesn't work exactl
 
 Please report bugs and missing features.
 
-Translate are done via [Weblate](https://hosted.weblate.org/projects/triliumdroid/app/).
+Translations are done via [Weblate](https://hosted.weblate.org/projects/triliumdroid/app/).
 
 ### Testing
 
