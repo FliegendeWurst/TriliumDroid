@@ -22,6 +22,7 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 - Local/global note map view
 - Basic Scripting
 - Upgrading to newer database versions / Trilium versions
+- Sharing content to save as new note
 - Support for Android 8.0+
 
 ## Usage
@@ -43,11 +44,9 @@ There is also some preliminary support for scripting, but it doesn't work exactl
 ## TODO
 - #sorted attribute
 - Search
-- Share target (create note from received text)
 - Folder view of child nodes
 - Jump to note dialog: smart sort
 - Modifying note icon
-- Editing note tree
 - Advanced Scripting
 - Dark Theme
 - Included notes
@@ -62,7 +61,9 @@ There is also some preliminary support for scripting, but it doesn't work exactl
 
 ## Contribute
 
-Please report bugs and missing features. I will soon setup a way to contribute translations. Any coding help is also welcome!
+Please report bugs and missing features.
+
+Translate are done via [Weblate](https://hosted.weblate.org/projects/triliumdroid/app/).
 
 ### Testing
 
