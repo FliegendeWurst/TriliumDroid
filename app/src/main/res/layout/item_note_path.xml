@@ -22,7 +22,6 @@
         android:background="#fff"
         android:contentDescription="@string/description_move_note"
         android:drawableStart="@drawable/bx_file_blank_move"
-        android:paddingStart="0dp"
         android:translationZ="@dimen/medium_margin_plus" />
 
 </LinearLayout>

@@ -76,6 +76,15 @@
     <string name="dialog_select_sibling_note">Insert after which note?</string>
     <string name="button_insert_as_last_note">Insert as last note</string>
     <string name="button_export_database">Export database</string>
+    <string name="text_about_1">Trilium Notes is a hierarchical note taking application with focus on building large personal knowledge bases.</string>
+    <string name="text_about_2">PC version</string>
+    <string name="text_about_3">The original version of this app has been developed by zadam since 2017. It runs on Windows, Mac and Linux. Starting in 2024, development has continued as part of the TriliumNext organization.</string>
+    <string name="text_about_4">" zadam / trilium"</string>
+    <string name="text_about_5">" TriliumNext / Notes"</string>
+    <string name="text_about_6">Android port</string>
+    <string name="text_about_7">The Android port has been developed by FliegendeWurst since 2023. If you encouter any issues using the app, feel free to open an issue in the repository linked below.</string>
+    <string name="text_about_8">" FliegendeWurst / TriliumDroid"</string>
+    <string name="description_run_script">run script</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

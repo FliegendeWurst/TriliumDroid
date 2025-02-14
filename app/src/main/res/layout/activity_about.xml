@@ -18,7 +18,7 @@
             android:layout_height="@dimen/extra_big_text_icon_size"
             android:layout_gravity="center"
             android:layout_marginEnd="@dimen/normal_margin"
-            android:contentDescription="app icon"
+            android:contentDescription="@string/description_app_icon"
             android:scaleType="center"
             android:src="@drawable/icon_color" />
 
@@ -37,7 +37,7 @@
         android:layout_marginTop="@dimen/normal_margin"
         android:paddingStart="@dimen/big_margin"
         android:paddingEnd="@dimen/big_margin"
-        android:text="Trilium Notes is a hierarchical note taking application with focus on building large personal knowledge bases."
+        android:text="@string/text_about_1"
         android:textSize="@dimen/big_text_size"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -57,7 +57,7 @@
         style="@style/SettingsSectionLabelStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="PC version"
+        android:text="@string/text_about_2"
         app:layout_constraintTop_toBottomOf="@id/divider" />
 
     <TextView
@@ -67,7 +67,7 @@
         android:layout_marginTop="@dimen/normal_margin"
         android:paddingStart="@dimen/big_margin"
         android:paddingEnd="@dimen/big_margin"
-        android:text="The original version of this app has been developed by zadam since 2017. It runs on Windows, Mac and Linux. Starting in 2024, development has continued as part of the TriliumNext organization."
+        android:text="@string/text_about_3"
         android:textSize="@dimen/bigger_text_size"
         app:layout_constraintBottom_toTopOf="@id/button_github"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -81,7 +81,7 @@
         android:layout_marginTop="@dimen/small_margin"
         android:layout_marginBottom="@dimen/activity_margin"
         android:drawableStart="@drawable/bxl_github"
-        android:text=" zadam / trilium"
+        android:text="@string/text_about_4"
         android:textSize="@dimen/bigger_text_size"
         app:layout_constraintBottom_toTopOf="@id/button_github3"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -95,7 +95,7 @@
         android:layout_marginTop="0dp"
         android:layout_marginBottom="@dimen/activity_margin"
         android:drawableStart="@drawable/bxl_github"
-        android:text=" TriliumNext / Notes"
+        android:text="@string/text_about_5"
         android:textSize="@dimen/bigger_text_size"
         app:layout_constraintBottom_toBottomOf="@id/description_pc"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -116,7 +116,7 @@
         style="@style/SettingsSectionLabelStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Android port"
+        android:text="@string/text_about_6"
         app:layout_constraintTop_toBottomOf="@id/divider2" />
 
     <TextView
@@ -126,7 +126,7 @@
         android:layout_marginTop="@dimen/normal_margin"
         android:paddingStart="@dimen/big_margin"
         android:paddingEnd="@dimen/big_margin"
-        android:text="The Android port has been developed by FliegendeWurst since 2023. If you encouter any issues using the app, feel free to open an issue in the repository linked below."
+        android:text="@string/text_about_7"
         android:textSize="@dimen/bigger_text_size"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -139,7 +139,7 @@
         android:layout_marginTop="@dimen/normal_margin"
         android:layout_marginBottom="@dimen/activity_margin"
         android:drawableStart="@drawable/bxl_github"
-        android:text=" FliegendeWurst / TriliumDroid"
+        android:text="@string/text_about_8"
         android:textSize="@dimen/bigger_text_size"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

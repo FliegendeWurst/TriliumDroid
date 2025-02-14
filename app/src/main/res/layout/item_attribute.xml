@@ -12,11 +12,14 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="2dp"
         android:layout_marginEnd="2dp"
+        android:labelFor="@id/label_attribute_value"
         android:text="Name" />
 
     <EditText
         android:id="@+id/label_attribute_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:inputType="text"
+        android:importantForAutofill="no"
         android:text="Value" />
 </LinearLayout>

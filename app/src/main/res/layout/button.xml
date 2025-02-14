@@ -3,4 +3,5 @@
     android:id="@+id/button_custom"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:contentDescription="@string/description_run_script"
     android:src="@drawable/bx_play" />

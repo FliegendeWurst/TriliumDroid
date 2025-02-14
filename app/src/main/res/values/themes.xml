@@ -1,14 +1,14 @@
 <resources>
     <!-- Base application theme. -->
-    <style name="Theme.TriliumDroid" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="Theme.TriliumDroid" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryVariant">@color/primary_dark</item>
-        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorOnPrimary">?android:attr/textColorPrimary</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/secondary</item>
         <item name="colorSecondaryVariant">@color/secondary_light</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <item name="colorOnSecondary">?android:attr/textColorPrimary</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">@color/primary_light</item>
         <!-- Customize your theme here. -->
