@@ -12,7 +12,6 @@ import android.icu.util.Calendar
 import android.os.Handler
 import android.util.Log
 import android.webkit.JavascriptInterface
-import android.widget.DatePicker
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.os.bundleOf
@@ -21,6 +20,7 @@ import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Attribute
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Util
 import org.json.JSONObject

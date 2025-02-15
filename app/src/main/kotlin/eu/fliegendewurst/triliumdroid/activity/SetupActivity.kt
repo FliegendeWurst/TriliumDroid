@@ -1,4 +1,4 @@
-package eu.fliegendewurst.triliumdroid
+package eu.fliegendewurst.triliumdroid.activity
 
 import android.app.Activity
 import android.content.Intent
@@ -9,6 +9,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
+import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.ConnectionUtil
+import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import java.io.File

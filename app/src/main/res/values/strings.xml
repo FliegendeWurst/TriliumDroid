@@ -93,6 +93,10 @@
     <string name="label_mtls_authentication">mTLS authentication (optional)</string>
     <string name="button_add_certificate_and_key">Add certificate and key</string>
     <string name="button_clear_mtls_auth">Clear</string>
+    <string name="label_widget_basic_properties">Basic Properties</string>
+    <string name="label_note_type">Note Type</string>
+    <string name="label_protect_the_note">Protect the note</string>
+    <string name="label_bookmark">Bookmark</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

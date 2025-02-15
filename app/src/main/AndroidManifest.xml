@@ -37,8 +37,8 @@
                 <data android:mimeType="text/html" />
             </intent-filter>
         </activity>
-        <activity android:name="eu.fliegendewurst.triliumdroid.SetupActivity" />
-        <activity android:name="eu.fliegendewurst.triliumdroid.AboutActivity" />
+        <activity android:name="eu.fliegendewurst.triliumdroid.activity.SetupActivity" />
+        <activity android:name="eu.fliegendewurst.triliumdroid.activity.AboutActivity" />
         <activity android:name="eu.fliegendewurst.triliumdroid.activity.WelcomeActivity" />
 
         <receiver android:name="eu.fliegendewurst.triliumdroid.AlarmReceiver" />

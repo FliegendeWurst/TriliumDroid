@@ -1,5 +1,7 @@
+- Experimental dark theme
 - Editor function to add inline link
 - Dialog to move note in note tree
 - Database management: export / delete functions
 - Crash detection and opt-in reporting
 - Sync on launch no longer blocks note loading
+- Authentication with mTLS certificate and key

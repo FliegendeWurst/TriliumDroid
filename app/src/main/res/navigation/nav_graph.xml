@@ -10,11 +10,11 @@
 
     <fragment
         android:id="@+id/noteFragment"
-        android:name="eu.fliegendewurst.triliumdroid.NoteFragment"
+        android:name="eu.fliegendewurst.triliumdroid.fragment.NoteFragment"
         android:label="NoteFragment" />
 
     <fragment
         android:id="@+id/noteEditFragment"
-        android:name="eu.fliegendewurst.triliumdroid.NoteEditFragment"
+        android:name="eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment"
         android:label="NoteEditFragment" />
 </navigation>

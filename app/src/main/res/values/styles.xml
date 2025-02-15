@@ -52,6 +52,11 @@
 
     <style name="WidgetTableHeader">
         <item name="android:textSize">@dimen/bigger_text_size</item>
+        <item name="android:textColor">@color/foreground</item>
+    </style>
+
+    <style name="WidgetTableText">
+        <item name="android:textColor">@color/foreground</item>
     </style>
 
     <style name="WidgetTableHeaderDivider">

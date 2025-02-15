@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.Cache
-import eu.fliegendewurst.triliumdroid.SetupActivity
 import eu.fliegendewurst.triliumdroid.databinding.ActivityWelcomeBinding
 
 class WelcomeActivity : AppCompatActivity() {

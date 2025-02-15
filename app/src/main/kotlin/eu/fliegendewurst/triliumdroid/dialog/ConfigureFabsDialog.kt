@@ -9,7 +9,7 @@ import android.widget.RadioButton
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import eu.fliegendewurst.triliumdroid.R
-import eu.fliegendewurst.triliumdroid.SetupActivity
+import eu.fliegendewurst.triliumdroid.activity.SetupActivity
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 
 object ConfigureFabsDialog {

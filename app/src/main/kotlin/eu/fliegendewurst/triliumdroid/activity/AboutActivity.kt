@@ -1,4 +1,4 @@
-package eu.fliegendewurst.triliumdroid
+package eu.fliegendewurst.triliumdroid.activity
 
 import android.content.Intent
 import android.net.Uri

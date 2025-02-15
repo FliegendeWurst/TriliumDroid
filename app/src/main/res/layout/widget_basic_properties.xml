@@ -15,7 +15,7 @@
             style="@style/WidgetTableHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Basic Properties"
+            android:text="@string/label_widget_basic_properties"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -33,7 +33,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/smaller_margin"
-            android:text="Note Type"
+            android:text="@string/label_note_type"
             app:layout_constraintBaseline_toBaselineOf="@id/widget_basic_properties_type_content"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -49,7 +49,7 @@
             android:id="@+id/widget_basic_properties_encrypt_content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Protect the note"
+            android:text="@string/label_protect_the_note"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_basic_properties_type_content" />
 
@@ -58,7 +58,7 @@
             style="@style/WidgetTableRowLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Bookmark"
+            android:text="@string/label_bookmark"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_basic_properties_encrypt_content" />
     </androidx.constraintlayout.widget.ConstraintLayout>

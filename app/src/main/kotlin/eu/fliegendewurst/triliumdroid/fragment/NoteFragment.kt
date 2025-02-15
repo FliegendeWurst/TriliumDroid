@@ -1,4 +1,4 @@
-package eu.fliegendewurst.triliumdroid
+package eu.fliegendewurst.triliumdroid.fragment
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -19,10 +19,12 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.iterator
 import androidx.fragment.app.Fragment
+import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.FrontendBackendApi
+import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteBinding
-import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 
 
 class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {

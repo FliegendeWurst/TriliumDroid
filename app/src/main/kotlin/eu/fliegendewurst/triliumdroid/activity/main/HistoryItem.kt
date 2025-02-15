@@ -1,6 +1,6 @@
 package eu.fliegendewurst.triliumdroid.activity.main
 
-import eu.fliegendewurst.triliumdroid.NoteEditFragment
+import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment

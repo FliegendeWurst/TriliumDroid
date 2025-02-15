@@ -30,7 +30,8 @@
                 android:layout_gravity="center_vertical"
                 android:layout_marginEnd="@dimen/smaller_margin"
                 android:fontFamily="@font/boxicons"
-                android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                android:textColor="@color/black" />
 
             <TextView
                 android:id="@+id/toolbar_title"
@@ -38,7 +39,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:clickable="true"
-                android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+                android:textAppearance="@style/TextAppearance.AppCompat.Title"
+                android:textColor="@color/black" />
 
         </androidx.appcompat.widget.Toolbar>
 

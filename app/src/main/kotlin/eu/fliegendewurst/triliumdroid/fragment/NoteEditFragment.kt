@@ -1,4 +1,4 @@
-package eu.fliegendewurst.triliumdroid
+package eu.fliegendewurst.triliumdroid.fragment
 
 import android.content.Context
 import android.os.Bundle
@@ -9,10 +9,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteEditBinding
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
-import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import org.wordpress.aztec.Aztec
 import org.wordpress.aztec.AztecAttributes
 import org.wordpress.aztec.ITextFormat
