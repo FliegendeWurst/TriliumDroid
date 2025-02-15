@@ -3,16 +3,12 @@ package eu.fliegendewurst.triliumdroid
 import android.app.Activity
 import android.content.Intent
 import android.content.SharedPreferences
-import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
-import com.skydoves.colorpickerview.ColorPickerDialog
-import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import java.io.File
@@ -126,6 +122,7 @@ class SetupActivity : AppCompatActivity() {
 			}
 		}
 
+		/*
 		val primaryColorVal = prefs.getString("primaryColor", null)
 		val primaryColor = if (primaryColorVal != null) {
 			Color.parseColor(primaryColorVal)
@@ -134,7 +131,7 @@ class SetupActivity : AppCompatActivity() {
 		}
 		binding.buttonConfigurePrimaryColor.setTextColor(primaryColor)
 		binding.buttonConfigurePrimaryColor.setOnClickListener {
-			ColorPickerDialog.Builder(this)
+			val picker = ColorPickerDialog.Builder(this)
 				.setTitle("Primary background color")
 				.setPreferenceName("primaryColorPicker")
 				.setPositiveButton(getString(android.R.string.ok),
@@ -148,7 +145,8 @@ class SetupActivity : AppCompatActivity() {
 				.attachAlphaSlideBar(false)
 				.attachBrightnessSlideBar(true)
 				.setBottomSpace(12)
-				.show()
+			picker.colorPickerView.setInitialColor(primaryColor)
+			picker.show()
 		}
 
 		val secondaryColorVal = prefs.getString("secondaryColor", null)
@@ -159,7 +157,7 @@ class SetupActivity : AppCompatActivity() {
 		}
 		binding.buttonConfigureSecondaryColor.setTextColor(secondaryColor)
 		binding.buttonConfigureSecondaryColor.setOnClickListener {
-			ColorPickerDialog.Builder(this)
+			val picker = ColorPickerDialog.Builder(this)
 				.setTitle("Secondary background color")
 				.setPreferenceName("secondaryColorPicker")
 				.setPositiveButton(getString(android.R.string.ok),
@@ -173,8 +171,10 @@ class SetupActivity : AppCompatActivity() {
 				.attachAlphaSlideBar(false)
 				.attachBrightnessSlideBar(true)
 				.setBottomSpace(12)
-				.show()
+			picker.colorPickerView.setInitialColor(secondaryColor)
+			picker.show()
 		}
+		 */
 
 		binding.buttonExportDatabase.setOnClickListener {
 			val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)

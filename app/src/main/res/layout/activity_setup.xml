@@ -87,7 +87,7 @@
                 style="@style/SettingsTextLabelStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="mTLS authentication (optional)"
+                android:text="@string/label_mtls_authentication"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -99,7 +99,7 @@
                 android:padding="0dp"
                 android:paddingStart="6dp"
                 android:paddingEnd="6dp"
-                android:text="Add certificate and key"
+                android:text="@string/button_add_certificate_and_key"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/label_mtls"
                 tools:ignore="RtlSymmetry" />
@@ -112,7 +112,7 @@
                 android:padding="0dp"
                 android:paddingStart="6dp"
                 android:paddingEnd="6dp"
-                android:text="Clear"
+                android:text="@string/button_clear_mtls_auth"
                 app:layout_constraintStart_toEndOf="@id/button_configure_mtls"
                 app:layout_constraintTop_toBottomOf="@id/label_mtls"
                 tools:ignore="RtlSymmetry" />
@@ -213,12 +213,12 @@
 
             <TextView
                 android:id="@+id/input_fab"
+                style="@style/SettingsTextLabelStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingTop="@dimen/medium_margin"
                 android:text="@string/jump_to_dialog"
                 android:textSize="@dimen/bigger_text_size"
-                style="@style/SettingsTextLabelStyle"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/label_fab" />
 
@@ -236,6 +236,8 @@
                 tools:ignore="RtlSymmetry" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!--
 
         <include layout="@layout/divider" />
 
@@ -285,6 +287,8 @@
                 tools:ignore="RtlSymmetry" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
+
+        -->
 
         <include
             layout="@layout/divider"

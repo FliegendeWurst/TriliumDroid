@@ -122,27 +122,6 @@ class MainActivity : AppCompatActivity() {
 		var tree: TreeItemAdapter? = null
 	}
 
-	override fun getResources(): Resources {
-		if (resourceOverlay != null) {
-			return resourceOverlay!!
-		}
-		val res = super.getResources()
-		resourceOverlay = object : Resources(res.assets, res.displayMetrics, res.configuration) {
-			@Deprecated("overriden method deprecated", ReplaceWith("getColor(id, null)"))
-			override fun getColor(id: Int): Int {
-				return getColor(id, null)
-			}
-
-			override fun getColor(id: Int, theme: Theme?): Int {
-//				if (id == R.color.primary) {
-//					return 0xfa00
-//				}
-				return res.getColor(id, theme)
-			}
-		}
-		return resourceOverlay!!
-	}
-
 	private fun oneTimeSetup() {
 		StrictMode.setVmPolicy(
 			StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
@@ -593,6 +572,7 @@ class MainActivity : AppCompatActivity() {
 			Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
 		snackbar.show()
 		lifecycleScope.launch(Dispatchers.IO) {
+			Cache.initializeDatabase(applicationContext)
 			ConnectionUtil.setup(prefs, {
 				Cache.syncStart({
 					handler.post {
