@@ -95,9 +95,6 @@ class SetupActivity : AppCompatActivity() {
 			chooseFile.setType("*/*")
 			chooseFile = Intent.createChooser(chooseFile, "Choose PEM-encoded certificate and key")
 			readCertificate.launch(chooseFile)
-
-			binding.buttonConfigureMtls.isEnabled = false
-			binding.buttonConfigureMtls2.isEnabled = true
 		}
 		binding.buttonConfigureMtls2.isEnabled = mtlsCert == null
 		binding.buttonConfigureMtls2.setOnClickListener {

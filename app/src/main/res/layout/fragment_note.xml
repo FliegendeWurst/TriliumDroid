@@ -27,6 +27,7 @@
             android:layout_width="wrap_content"
             android:layout_height="20dp"
             android:typeface="monospace"
+            android:textColor="@color/foreground"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 

@@ -144,6 +144,9 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 							note.content = data
 							note.contentFixed = true
 						}
+						if (mime == "text/html") {
+							data += "<style>@media (prefers-color-scheme: dark) { * { color: white; background-color: black; } }</style>".encodeToByteArray()
+						}
 						WebResourceResponse(mime, null, data.inputStream())
 					} else {
 						null
