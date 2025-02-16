@@ -3,6 +3,7 @@ package eu.fliegendewurst.triliumdroid.activity.main
 import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.fragment.NavigationFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 
 /**
@@ -91,5 +92,27 @@ class NoteMapItem(val note: Note?) : HistoryItem() {
 	}
 
 	override fun setBranch(branch: Branch) {
+	}
+}
+
+class NavigationItem(private val note: Note, private var branchStart: Branch) : HistoryItem() {
+	override fun restore(activity: MainActivity): Boolean {
+		val frag = NavigationFragment()
+		activity.showFragment(frag, true)
+		frag.showFor(note, branchStart)
+		return true
+	}
+
+	override fun noteId(): String {
+		return note.id
+	}
+
+	override fun branch(): Branch {
+		return branchStart
+	}
+
+	override fun setBranch(branch: Branch) {
+		// not exactly applicable
+		branchStart = branch
 	}
 }

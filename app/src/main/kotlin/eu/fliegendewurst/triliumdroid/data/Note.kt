@@ -20,6 +20,7 @@ class Note(
 	private var inheritedLabels: List<Label>? = null
 	private var inheritedRelations: List<Relation>? = null
 	var children: SortedSet<Branch>? = null
+	var icon: String? = null
 
 	/**
 	 * Note clones for this note.
@@ -31,6 +32,10 @@ class Note(
 	 * Relations with target = this. Only available when constructing global notes map.
 	 */
 	var incomingRelations: List<Relation>? = null
+
+	fun icon(): String {
+		return icon ?: "bx bx-file-blank"
+	}
 
 	fun getLabel(name: String): String? {
 		return getLabelValue(name)?.value

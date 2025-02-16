@@ -97,10 +97,11 @@
     <string name="label_note_type">Note Type</string>
     <string name="label_protect_the_note">Protect the note</string>
     <string name="label_bookmark">Bookmark</string>
-    <!-- FAB IDs: showNoteTree", "jumpToNote", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
+    <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>
         <item>Jump to note</item>
+        <item>Navigate note tree</item>
         <item>Edit note</item>
         <item>Share note</item>
         <item>Delete note</item>

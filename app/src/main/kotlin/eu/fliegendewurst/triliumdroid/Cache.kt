@@ -351,8 +351,13 @@ object Cache {
 					} else {
 						null
 					}
-					val branch = Branch(branchId, lastId, parentId, notePosition, prefix, expanded)
-					l.add(branch)
+					if (branches.containsKey(branchId)) {
+						l.add(branches[branchId]!!)
+					} else {
+						val branch =
+							Branch(branchId, lastId, parentId, notePosition, prefix, expanded)
+						l.add(branch)
+					}
 					if (parentId == "none") {
 						return l
 					}
@@ -411,7 +416,10 @@ object Cache {
 	}
 
 	fun moveBranch(branch: Branch, newParent: Branch, newPosition: Int) {
-		Log.i(TAG, "moving branch ${branch.id} to new parent ${newParent.note}, pos: ${branch.position} -> $newPosition")
+		Log.i(
+			TAG,
+			"moving branch ${branch.id} to new parent ${newParent.note}, pos: ${branch.position} -> $newPosition"
+		)
 		if (branch.parentNote == newParent.note && branch.position == newPosition) {
 			return // no action needed
 		}
@@ -752,12 +760,26 @@ object Cache {
 					}
 					parentNote.children!!.add(b)
 				} else {
-					Log.d(TAG, "failed to find $parentNoteId in ${notes.size} notes")
+					Log.w(TAG, "getTreeData() failed to find $parentNoteId in ${notes.size} notes")
 				}
+			}
+		}
+		db!!.rawQuery(
+			"SELECT notes.noteId, attributes.value " +
+					"FROM attributes INNER JOIN notes USING (noteId) INNER JOIN branches USING (noteId) WHERE notes.isDeleted = 0 AND attributes.isDeleted = 0 AND attributes.name = 'iconClass' AND attributes.type = 'label' $filter",
+			arrayOf()
+		).use {
+			while (it.moveToNext()) {
+				val noteId = it.getString(0)
+				val noteIcon = it.getString(1)
+				notes[noteId]!!.icon = noteIcon
 			}
 		}
 	}
 
+	/**
+	 * Use [Note.computeChildren] instead
+	 */
 	fun getChildren(noteId: String) {
 		getTreeData("AND (branches.parentNoteId = \"${noteId}\" OR branches.noteId = \"${noteId}\")")
 	}

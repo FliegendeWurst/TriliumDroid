@@ -13,12 +13,16 @@ import eu.fliegendewurst.triliumdroid.activity.SetupActivity
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 
 object ConfigureFabsDialog {
+	const val NOTE_NAVIGATION: String = "noteNavigation"
+
 	/**
-	 * See [eu.fliegendewurst.triliumdroid.activity.main.MainActivity.performAction].
+	 * See [eu.fliegendewurst.triliumdroid.activity.main.MainActivity.performAction],
+	 * and string array "fabs"
 	 */
 	val actions = listOf(
 		"showNoteTree",
 		"jumpToNote",
+		NOTE_NAVIGATION,
 		"editNote",
 		"shareNote",
 		"deleteNote",
@@ -36,6 +40,10 @@ object ConfigureFabsDialog {
 
 					"jumpToNote" -> {
 						setPref(prefs, action, left = false, right = true, show = false)
+					}
+
+					NOTE_NAVIGATION -> {
+						setPref(prefs, action, left = false, right = false, show = false)
 					}
 
 					else -> {
@@ -189,6 +197,10 @@ object ConfigureFabsDialog {
 
 			"jumpToNote" -> {
 				return R.drawable.bx_send
+			}
+
+			NOTE_NAVIGATION -> {
+				return R.drawable.bx_globe_alt
 			}
 
 			"editNote" -> {

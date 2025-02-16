@@ -4,4 +4,5 @@
 - Database management: export / delete functions
 - Crash detection and opt-in reporting
 - Sync on launch no longer blocks note loading
+- New note navigation view
 - Authentication with mTLS certificate and key

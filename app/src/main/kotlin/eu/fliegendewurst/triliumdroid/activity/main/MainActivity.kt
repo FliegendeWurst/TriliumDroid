@@ -70,12 +70,14 @@ import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.NOTE_NAVIGATION
 import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
 import eu.fliegendewurst.triliumdroid.dialog.SelectNoteDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
+import eu.fliegendewurst.triliumdroid.fragment.NavigationFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment
@@ -467,6 +469,10 @@ class MainActivity : AppCompatActivity() {
 				JumpToNoteDialog.showDialog(this)
 			}
 
+			NOTE_NAVIGATION -> {
+				showNoteNavigation()
+			}
+
 			"editNote" -> {
 				doMenuAction(R.id.action_edit)
 			}
@@ -487,6 +493,18 @@ class MainActivity : AppCompatActivity() {
 				doMenuAction(R.id.action_sync)
 			}
 		}
+	}
+
+	private fun showNoteNavigation() {
+		val item = noteHistory.last()
+		var note = Cache.getNote(item.noteId())!!
+		var branch = item.branch() ?: note.branches[0]
+		if (note.computeChildren().isEmpty()) {
+			note = Cache.getNote(branch.parentNote)!!
+			branch = note.branches[0] // TODO
+		}
+		noteHistory.add(NavigationItem(note, branch))
+		noteHistory.last().restore(this)
 	}
 
 	private var loadedNoteId: String? = null
@@ -880,6 +898,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun scrollTreeToBranch(branch: Branch) {
+		Log.d(TAG, "scrolling to ${branch.cachedTreeIndex}")
 		val pos = branch.cachedTreeIndex ?: return
 		val frag = supportFragmentManager.findFragmentByTag("f0") ?: return
 		((frag as NoteTreeFragment).binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
@@ -895,8 +914,7 @@ class MainActivity : AppCompatActivity() {
 	private fun refreshTitle(note: Note?) {
 		Log.d(TAG, "refreshing title")
 		binding.toolbarTitle.text = note?.title ?: "(nothing loaded)"
-		binding.toolbarIcon.text =
-			Icon.getUnicodeCharacter(note?.getLabel("iconClass") ?: "bx bx-file-blank")
+		binding.toolbarIcon.text = Icon.getUnicodeCharacter(note?.icon() ?: "bx bx-file-blank")
 	}
 
 	fun refreshWidgets(noteContent: Note) {
@@ -1134,7 +1152,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun load(note: Note, branch: Branch?) {
-		Log.i(TAG, "loading note ${note.id}")
+		Log.i(TAG, "loading note ${note.id} @ branch ${branch?.id}")
 		prefs.edit().putString(LAST_NOTE, note.id).apply()
 		// make sure note is visible
 		val path = Cache.getNotePath(note.id)
@@ -1177,7 +1195,7 @@ class MainActivity : AppCompatActivity() {
 	private fun getFragment(): Fragment {
 		val hostFragment =
 			supportFragmentManager.findFragmentById(R.id.fragment_container)
-		return if (hostFragment is NoteFragment || hostFragment is NoteEditFragment || hostFragment is EmptyFragment || hostFragment is NoteMapFragment) {
+		return if (hostFragment is NoteFragment || hostFragment is NoteEditFragment || hostFragment is EmptyFragment || hostFragment is NoteMapFragment || hostFragment is NavigationFragment) {
 			hostFragment
 		} else {
 			val frags = (hostFragment as NavHostFragment).childFragmentManager.fragments
