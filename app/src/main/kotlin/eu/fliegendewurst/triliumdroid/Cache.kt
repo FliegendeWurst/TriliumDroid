@@ -769,6 +769,7 @@ object Cache {
 			}
 		}
 		val query1 = System.currentTimeMillis() - startTime
+		val query2Start = System.currentTimeMillis()
 		db!!.rawQuery(
 			"SELECT notes.noteId, attributes.value " +
 					"FROM attributes " +
@@ -784,7 +785,7 @@ object Cache {
 				notes[noteId]!!.icon = noteIcon
 			}
 		}
-		val query2 = System.currentTimeMillis() - query1
+		val query2 = System.currentTimeMillis() - query2Start
 		if (query1 + query2 > 50) {
 			Log.w(TAG, "slow getTreeData() $query1 ms + $query2 ms")
 		}
@@ -794,7 +795,7 @@ object Cache {
 	 * Use [Note.computeChildren] instead
 	 */
 	fun getChildren(noteId: String) {
-		getTreeData("AND (branches.parentNoteId = \"${noteId}\" OR branches.noteId = \"${noteId}\")")
+		getTreeData("AND (branches.parentNoteId = '${noteId}' OR branches.noteId = '${noteId}')")
 	}
 
 	/**

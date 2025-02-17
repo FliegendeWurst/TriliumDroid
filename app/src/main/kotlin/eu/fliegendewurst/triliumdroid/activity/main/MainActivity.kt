@@ -99,7 +99,6 @@ class MainActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityMainBinding
 	lateinit var handler: Handler
 	private lateinit var prefs: SharedPreferences
-	private var resourceOverlay: Resources? = null
 
 	// menu items
 	private var consoleLogMenuItem: MenuItem? = null
@@ -592,6 +591,7 @@ class MainActivity : AppCompatActivity() {
 
 	private fun startSync(handler: Handler, resetView: Boolean = true) {
 		val snackbar = Snackbar.make(binding.root, "Sync: starting...", Snackbar.LENGTH_INDEFINITE)
+		snackbar.setTextColor(resources.getColor(R.color.white, null))
 		snackbar.view.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
 		snackbar.view.minimumWidth = 300
 		(snackbar.view.layoutParams as FrameLayout.LayoutParams).gravity =
