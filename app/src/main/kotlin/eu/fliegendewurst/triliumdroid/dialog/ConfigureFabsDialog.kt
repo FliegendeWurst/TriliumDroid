@@ -39,11 +39,11 @@ object ConfigureFabsDialog {
 					}
 
 					"jumpToNote" -> {
-						setPref(prefs, action, left = false, right = true, show = false)
+						setPref(prefs, action, left = false, right = false, show = false)
 					}
 
 					NOTE_NAVIGATION -> {
-						setPref(prefs, action, left = false, right = false, show = false)
+						setPref(prefs, action, left = false, right = true, show = false)
 					}
 
 					else -> {

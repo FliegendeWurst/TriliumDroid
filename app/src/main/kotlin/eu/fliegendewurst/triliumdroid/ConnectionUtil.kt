@@ -75,7 +75,7 @@ object ConnectionUtil {
 		}
 		val documentSecret = prefs.getString("documentSecret", null)
 		if (documentSecret == null) {
-			fetch("/api/setup/sync-seed", null, {
+			fetch("/api/setup/sync-seed", null, true, {
 				if (it.getInt("syncVersion") != Cache.CacheDbHelper.SYNC_VERSION && it.getInt("syncVersion") != Cache.CacheDbHelper.SYNC_VERSION_0_63_3) {
 					callbackError(IllegalStateException("wrong sync version"))
 					return@fetch
@@ -216,9 +216,10 @@ object ConnectionUtil {
 			.build()
 	}
 
-	private suspend fun fetch(
+	suspend fun fetch(
 		path: String,
 		formBody: FormBody?,
+		userPasswordAuth: Boolean,
 		callbackOk: (JSONObject) -> Unit,
 		callbackError: (Exception) -> Unit
 	) = withContext(Dispatchers.IO) {
@@ -236,7 +237,12 @@ object ConnectionUtil {
 		} else {
 			reqBuilder.get()
 		}
-		reqBuilder.addHeader("trilium-cred", Base64.encode("user:$password".encodeToByteArray()))
+		if (userPasswordAuth) {
+			reqBuilder.addHeader(
+				"trilium-cred",
+				Base64.encode("user:$password".encodeToByteArray())
+			)
+		}
 		val req = reqBuilder.build()
 		Log.i(TAG, req.url.encodedPath)
 		try {

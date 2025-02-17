@@ -83,7 +83,6 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 		binding.navigationListBottom.itemAnimator = null
 		val bg = resources.getColor(R.color.background, null)
 		adapter2 = ListRecyclerAdapter({ view, x ->
-			view.root.setBackgroundResource(R.color.background)
 			view.root.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
 
 			view.navigationButtonFiller.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT

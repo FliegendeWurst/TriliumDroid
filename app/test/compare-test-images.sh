@@ -4,7 +4,7 @@
 
 fail=0
 
-for x in app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/*{1,2}.png; do
+for x in app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/*{1,2,3}.png; do
   f=$(basename "$x")
   [ ! -e "app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/${f}scaled.png" ] \
     && magick "app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/$f" \
