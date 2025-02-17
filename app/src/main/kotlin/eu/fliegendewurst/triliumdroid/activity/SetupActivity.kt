@@ -3,7 +3,6 @@ package eu.fliegendewurst.triliumdroid.activity
 import android.app.Activity
 import android.content.Intent
 import android.content.SharedPreferences
-import android.net.Uri
 import android.os.Bundle
 import android.security.KeyChain
 import android.util.Log
@@ -16,11 +15,10 @@ import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import okhttp3.tls.HeldCertificate
 import java.io.File
+import java.security.PrivateKey
+import java.security.cert.X509Certificate
 
 
 class SetupActivity : AppCompatActivity() {
@@ -44,81 +42,21 @@ class SetupActivity : AppCompatActivity() {
 			)
 		)
 
-		/*
-		val readCertificate =
-			registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-				if (result.resultCode != Activity.RESULT_OK) {
-					return@registerForActivityResult
-				}
-				val data = result.data
-				if (null != data) {
-					val uris = mutableListOf<Uri>()
-					if (null != data.clipData) {
-						for (i in 0 until data.clipData!!.itemCount) {
-							val uri = data.clipData!!.getItemAt(i).uri
-							uris.add(uri)
-						}
-					} else if (data.data != null) {
-						uris.add(data.data!!)
-					}
-					var mtlsCert = prefs.getString("mTLS_cert", null) ?: ""
-					for (uri in uris) {
-						contentResolver.openInputStream(
-							uri
-						)?.use { stream ->
-							stream.bufferedReader().use {
-								mtlsCert += it.readText()
-							}
-						}
-					}
-					val haveCert = mtlsCert.contains("-----BEGIN CERTIFICATE-----")
-					val haveKey = mtlsCert.contains("-----BEGIN PRIVATE KEY-----")
-					var error = ""
-					if (!haveCert) {
-						error += "No certificate found. "
-					}
-					if (!haveKey) {
-						error += "No private key found. "
-					}
-					try {
-						HeldCertificate.decode(mtlsCert)
-					} catch (e: Exception) {
-						error += "${e.javaClass}: ${e.message}"
-					}
-					if (error.isNotEmpty()) {
-						AlertDialog.Builder(this)
-							.setTitle("mTLS configuration error")
-							.setMessage(error)
-							.setPositiveButton(android.R.string.ok) { dialog, _ ->
-								dialog.dismiss()
-							}
-							.setNegativeButton(android.R.string.cancel, null)
-							.show()
-					} else {
-						prefs.edit().putString("mTLS_cert", mtlsCert).apply()
-						runBlocking {
-						ConnectionUtil.resetClient(applicationContext)
-							}
-						binding.buttonConfigureMtls.isEnabled = false
-						binding.buttonConfigureMtls2.isEnabled = true
-					}
-				}
-			}
-		 */
-
 		val mtlsCert = prefs.getString("mTLS_cert", null)
 		binding.buttonConfigureMtls.setOnClickListener {
-//			var chooseFile = Intent(Intent.ACTION_GET_CONTENT)
-//			chooseFile.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-//			chooseFile.setType("*/*")
-//			chooseFile = Intent.createChooser(chooseFile, "Choose PEM-encoded certificate and key")
-//			readCertificate.launch(chooseFile)
 			KeyChain.choosePrivateKeyAlias(
 				this@SetupActivity,
 				{ alias ->
 					Log.d(TAG, "received key alias $alias")
 					if (alias == null) {
 						return@choosePrivateKeyAlias
+					}
+					// test we can actually retrieve the key material
+					var pk: PrivateKey? = null
+					var chain: Array<X509Certificate>? = null
+					runBlocking {
+						pk = KeyChain.getPrivateKey(applicationContext, alias)
+						chain = KeyChain.getCertificateChain(applicationContext, alias)
 					}
 					prefs.edit().putString("mTLS_cert", alias).apply()
 					runBlocking {
@@ -130,9 +68,9 @@ class SetupActivity : AppCompatActivity() {
 				null,  // TODO: host name of server requesting the cert, null if unavailable
 				-1,  // TODO: port of server requesting the cert, -1 if unavailable
 				null
-			) // alias to preselect, null if unavailable
+			)
 		}
-		binding.buttonConfigureMtls2.isEnabled = mtlsCert == null
+		binding.buttonConfigureMtls.isEnabled = mtlsCert == null
 		binding.buttonConfigureMtls2.setOnClickListener {
 			prefs.edit().remove("mTLS_cert").apply()
 			binding.buttonConfigureMtls.isEnabled = true

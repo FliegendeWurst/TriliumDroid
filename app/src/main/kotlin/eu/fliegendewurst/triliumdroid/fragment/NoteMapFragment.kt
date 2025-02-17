@@ -13,6 +13,7 @@ import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteMapBinding
 import eu.fliegendewurst.triliumdroid.util.Graph
 import eu.fliegendewurst.triliumdroid.util.Position
+import kotlinx.coroutines.runBlocking
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -66,7 +67,7 @@ class NoteMapFragment : Fragment(R.layout.fragment_note_map), NoteRelatedFragmen
 	private fun createGraphGlobal(): Graph<Note, Relation> {
 		val g = Graph<Note, Relation>()
 
-		val data = Cache.getAllNotesWithRelations()
+		val data = runBlocking { Cache.getAllNotesWithRelations() }
 
 		// start at a random note and keep going!
 		val processed = mutableSetOf<Note>()

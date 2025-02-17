@@ -6,6 +6,7 @@ import android.security.KeyChain
 import android.util.Log
 import eu.fliegendewurst.triliumdroid.service.Util
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
@@ -88,7 +89,9 @@ object ConnectionUtil {
 					if (name == "documentSecret") {
 						prefs.edit().putString("documentSecret", value)
 							.putInt("syncVersion", syncVersion).apply()
-						connect(server, callback, callbackError)
+						runBlocking {
+							connect(server, callback, callbackError)
+						}
 						return@fetch
 					}
 				}
@@ -134,19 +137,22 @@ object ConnectionUtil {
 			})
 
 		val mtls = prefs!!.getString("mTLS_cert", null)
-		if (mtls != null) {
-//			val cert = HeldCertificate.decode(mtls)
-//
-//			val clientCertificates: HandshakeCertificates = HandshakeCertificates.Builder()
-//				.heldCertificate(cert)
-//				.build()
-//			clientBuilder = clientBuilder.sslSocketFactory(
-//				clientCertificates.sslSocketFactory(),
-//				clientCertificates.trustManager
-//			)
+		while (mtls != null) {
 			// TODO: handle null | Exception
-			val pk = KeyChain.getPrivateKey(applicationContext, mtls)!!
-			val chain = KeyChain.getCertificateChain(applicationContext, mtls)!!
+			val pk: PrivateKey?
+			val chain: Array<X509Certificate>?
+
+			try {
+				pk = KeyChain.getPrivateKey(applicationContext, mtls)
+				chain = KeyChain.getCertificateChain(applicationContext, mtls)
+			} catch (t: Throwable) {
+				Log.e(TAG, "failed to read mTLS key ", t)
+				break
+			}
+			if (pk == null || chain == null) {
+				Log.e(TAG, "got null response from KeyChain getPrivateKey or getCertificateChain")
+				break
+			}
 
 			val trustManagerFactory =
 				TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
@@ -203,6 +209,7 @@ object ConnectionUtil {
 
 			clientBuilder = clientBuilder
 				.sslSocketFactory(sslContext.socketFactory, trustManagers[0] as X509TrustManager)
+			break
 		}
 
 		client = clientBuilder
@@ -266,21 +273,21 @@ object ConnectionUtil {
 		return Base64.encode(data)
 	}
 
-	private fun connect(
+	private suspend fun connect(
 		server: String,
 		callback: () -> Unit,
 		callbackError: (Exception) -> Unit
-	) {
+	): Unit = withContext(Dispatchers.IO) {
 		if (server.isEmpty()) {
 			Log.e(TAG, "empty sync URL")
-			return
+			return@withContext
 		}
 		try {
 			Request.Builder().url(server)
 		} catch (e: Exception) {
 			// bad URL
 			callbackError.invoke(IllegalArgumentException("bad sync URL"))
-			return
+			return@withContext
 		}
 
 		val utc = Cache.utcDateModified()
@@ -311,14 +318,18 @@ object ConnectionUtil {
 							prefs?.edit()
 								?.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_63_3)
 								?.apply()
-							connect(server, callback, callbackError)
+							runBlocking {
+								connect(server, callback, callbackError)
+							}
 							return
 						}
 						if (msg.startsWith("Non-matching sync versions, local is version 33, remote is")) {
 							prefs?.edit()
 								?.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_90_12)
 								?.apply()
-							connect(server, callback, callbackError)
+							runBlocking {
+								connect(server, callback, callbackError)
+							}
 							return
 						}
 						callbackError(IllegalStateException(msg))
@@ -345,11 +356,11 @@ object ConnectionUtil {
 		})
 	}
 
-	fun doSyncRequest(
+	suspend fun doSyncRequest(
 		uri: String,
 		callback: (JSONObject) -> Unit,
 		callbackError: (Exception) -> Unit
-	) {
+	) = withContext(Dispatchers.IO) {
 		val req = Request.Builder()
 			.get()
 			.url("$server$uri")
@@ -375,7 +386,7 @@ object ConnectionUtil {
 		})
 	}
 
-	fun doSyncPushRequest(uri: String, data: JSONObject) {
+	suspend fun doSyncPushRequest(uri: String, data: JSONObject) = withContext(Dispatchers.IO) {
 		val dataBody = data.toString(0)
 		Log.i(TAG, "syncing ${data.length()} bytes of data")
 		val req = Request.Builder()
@@ -401,7 +412,7 @@ object ConnectionUtil {
 	 * Get the "app info" of the connected sync server.
 	 * See <a href="https://github.com/zadam/trilium/blob/master/src/services/app_info.js">Trilium app_info service</a>.
 	 */
-	fun getAppInfo(callback: (AppInfo?) -> Unit) {
+	suspend fun getAppInfo(callback: (AppInfo?) -> Unit) = withContext(Dispatchers.IO) {
 		val req = Request.Builder()
 			.url("$server/api/app-info")
 			.build()

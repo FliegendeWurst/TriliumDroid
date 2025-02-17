@@ -14,6 +14,7 @@ import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteEditBinding
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
+import kotlinx.coroutines.runBlocking
 import org.wordpress.aztec.Aztec
 import org.wordpress.aztec.AztecAttributes
 import org.wordpress.aztec.ITextFormat
@@ -105,7 +106,9 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 								0,
 								builder.length
 							)
-							Cache.addInternalLink(note, it.note)
+							runBlocking {
+								Cache.addInternalLink(note, it.note)
+							}
 						}
 					}
 

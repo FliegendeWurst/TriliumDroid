@@ -90,8 +90,8 @@
     <string name="description_modify_secondary_color">modify secondary color</string>
     <string name="label_primary_color">Primary</string>
     <string name="label_secondary_color">Secondary</string>
-    <string name="label_mtls_authentication">mTLS authentication (optional)</string>
-    <string name="button_add_certificate_and_key">Add certificate and key</string>
+    <string name="label_mtls_authentication">mTLS authentication (optional, experimental)</string>
+    <string name="button_add_certificate_and_key">Select key</string>
     <string name="button_clear_mtls_auth">Clear</string>
     <string name="label_widget_basic_properties">Basic Properties</string>
     <string name="label_note_type">Note Type</string>

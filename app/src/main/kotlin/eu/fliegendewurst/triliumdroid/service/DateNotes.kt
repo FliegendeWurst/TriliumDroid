@@ -2,6 +2,7 @@ package eu.fliegendewurst.triliumdroid.service
 
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.data.Note
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -15,10 +16,10 @@ object DateNotes {
 		.appendValue(ChronoField.YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
 		.toFormatter()
 	private val YEAR_MONTH: DateTimeFormatter = DateTimeFormatterBuilder()
-			.appendValue(ChronoField.YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
-			.appendLiteral('-')
-			.appendValue(ChronoField.MONTH_OF_YEAR, 2)
-			.toFormatter()
+		.appendValue(ChronoField.YEAR, 4, 10, SignStyle.EXCEEDS_PAD)
+		.appendLiteral('-')
+		.appendValue(ChronoField.MONTH_OF_YEAR, 2)
+		.toFormatter()
 
 	val MONTH: DateTimeFormatter = DateTimeFormatterBuilder()
 		.appendValue(ChronoField.MONTH_OF_YEAR, 2, 2, SignStyle.NEVER)
@@ -79,7 +80,7 @@ object DateNotes {
 			val monthNote = getMonthNote(month) ?: return null
 			val dayLabel = DAY.format(dateFromIso(isoDate))
 
-			val dayNote = Cache.createChildNote(monthNote, dayLabel)
+			val dayNote = runBlocking { Cache.createChildNote(monthNote, dayLabel) }
 
 			// TODO: set dateNote attribute
 
@@ -107,7 +108,7 @@ object DateNotes {
 			val yearNote = getYearNote(year) ?: return null
 			val monthLabel = MONTH.format(dateFromIso("$yearMonth-01"))
 
-			val monthNote = Cache.createChildNote(yearNote, monthLabel)
+			val monthNote = runBlocking { Cache.createChildNote(yearNote, monthLabel) }
 
 			// TODO: set monthNote attribute
 
@@ -123,7 +124,7 @@ object DateNotes {
 			// create the new year note
 			val root = getCalendarRoot() ?: return null
 
-			val yearNote = Cache.createChildNote(root, year)
+			val yearNote = runBlocking { Cache.createChildNote(root, year) }
 
 			// TODO: set yearNote attribute
 

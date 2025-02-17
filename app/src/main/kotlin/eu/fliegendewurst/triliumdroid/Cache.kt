@@ -24,6 +24,9 @@ import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.service.Util
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import okio.ByteString.Companion.decodeBase64
 import org.json.JSONArray
 import org.json.JSONObject
@@ -816,7 +819,7 @@ object Cache {
 		return list
 	}
 
-	private fun syncPush(): Int {
+	private suspend fun syncPush(): Int = withContext(Dispatchers.IO) {
 		var lastSyncedPush = 0
 		db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPush"))
 			.use {
@@ -889,7 +892,7 @@ object Cache {
 				arrayOf("lastSyncedPush", largestId.toString(), utc)
 			)
 		}
-		return entities.length()
+		return@withContext entities.length()
 	}
 
 	private fun fetchEntity(entityName: String, entityId: String): JSONObject {
@@ -936,17 +939,19 @@ object Cache {
 		return obj
 	}
 
-	fun syncStart(
+	suspend fun syncStart(
 		callbackOutstanding: (Int) -> Unit,
 		callbackError: (Exception) -> Unit,
 		callbackDone: (Pair<Int, Int>) -> Unit
-	) {
+	) = withContext(Dispatchers.IO) {
 		lastSync = System.currentTimeMillis()
 		// first, verify correct sync version
 		ConnectionUtil.getAppInfo {
 			if (it != null) {
 				if ((it.syncVersion == CacheDbHelper.SYNC_VERSION || it.syncVersion == CacheDbHelper.SYNC_VERSION_0_63_3) && it.dbVersion == CacheDbHelper.DATABASE_VERSION) {
-					sync(0, callbackOutstanding, callbackError, callbackDone)
+					runBlocking {
+						sync(0, callbackOutstanding, callbackError, callbackDone)
+					}
 				} else {
 					Log.e(TAG, "mismatched sync / database version")
 					callbackError(Exception("mismatched sync / database version"))
@@ -957,12 +962,12 @@ object Cache {
 		}
 	}
 
-	private fun sync(
+	private suspend fun sync(
 		alreadySynced: Int,
 		callbackOutstanding: (Int) -> Unit,
 		callbackError: (Exception) -> Unit,
 		callbackDone: (Pair<Int, Int>) -> Unit
-	) {
+	): Unit = withContext(Dispatchers.IO) {
 		try {
 			val totalPushed = syncPush()
 			var totalSynced = alreadySynced
@@ -1063,7 +1068,9 @@ object Cache {
 				)
 				if (outstandingPullCount > 0) {
 					callbackOutstanding(outstandingPullCount)
-					sync(totalSynced, callbackOutstanding, callbackError, callbackDone)
+					runBlocking {
+						sync(totalSynced, callbackOutstanding, callbackError, callbackDone)
+					}
 				} else {
 					callbackDone(Pair(totalSynced, totalPushed))
 				}
@@ -1117,107 +1124,109 @@ object Cache {
 		dbHelper?.close()
 	}
 
-	fun createChildNote(parentNote: Note, newNoteTitle: String?): Note {
-		// create entries in notes, blobs, branches
-		var newId = Util.newNoteId()
-		val newBlobId = Util.newNoteId()
-		db!!.transaction {
-			do {
-				var exists = true
-				rawQuery("SELECT noteId FROM notes WHERE noteId = ?", arrayOf(newId)).use {
-					if (!it.moveToNext()) {
-						exists = false
+	suspend fun createChildNote(parentNote: Note, newNoteTitle: String?): Note =
+		withContext(Dispatchers.IO) {
+			// create entries in notes, blobs, branches
+			var newId = Util.newNoteId()
+			val newBlobId = Util.newNoteId()
+			db!!.transaction {
+				do {
+					var exists = true
+					rawQuery("SELECT noteId FROM notes WHERE noteId = ?", arrayOf(newId)).use {
+						if (!it.moveToNext()) {
+							exists = false
+						}
 					}
-				}
-				if (!exists) {
-					break
-				}
-				newId = Util.newNoteId()
-			} while (true)
-			val branchId = "${parentNote.id}_$newId"
-			val notePosition = 0 // TODO: sorting
-			val prefix = null
-			val isExpanded = 0
-			val isDeleted = 0
-			val deleteId = null
-			val dateModified = dateModified()
-			val utcDateModified = utcDateModified()
-			execSQL(
-				"INSERT INTO branches VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				arrayOf(
+					if (!exists) {
+						break
+					}
+					newId = Util.newNoteId()
+				} while (true)
+				val branchId = "${parentNote.id}_$newId"
+				val notePosition = 0 // TODO: sorting
+				val prefix = null
+				val isExpanded = 0
+				val isDeleted = 0
+				val deleteId = null
+				val dateModified = dateModified()
+				val utcDateModified = utcDateModified()
+				execSQL(
+					"INSERT INTO branches VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+					arrayOf(
+						branchId,
+						newId,
+						parentNote.id,
+						notePosition,
+						prefix,
+						isExpanded,
+						isDeleted,
+						deleteId,
+						utcDateModified
+					)
+				)
+				// hash "branchId", "noteId", "parentNoteId", "prefix"
+				registerEntityChange(
+					"branches",
 					branchId,
+					arrayOf(branchId, newId, parentNote.id, "null")
+				)
+				execSQL(
+					"INSERT INTO blobs VALUES (?, ?, ?, ?)",
+					arrayOf(
+						newBlobId,
+						"",
+						dateModified,
+						utcDateModified
+					)
+				)
+				registerEntityChange("blobs", newBlobId, arrayOf(newBlobId, ""))
+				execSQL(
+					"INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+					arrayOf(
+						newId,
+						newNoteTitle,
+						"0", // isProtected
+						"text", // type
+						"text/html", // mime
+						newBlobId, // blobId
+						"0", // isDeleted
+						null, // deleteId
+						dateModified, // dateCreated
+						dateModified,
+						utcDateModified, // utcDateCreated
+						utcDateModified,
+					)
+				)
+				// hash ["noteId", "title", "isProtected", "type", "mime", "blobId"]
+				registerEntityChange(
+					"notes",
 					newId,
-					parentNote.id,
-					notePosition,
-					prefix,
-					isExpanded,
-					isDeleted,
-					deleteId,
-					utcDateModified
+					arrayOf(newId, newNoteTitle ?: "", "0", "text", "text/html", newBlobId)
 				)
-			)
-			// hash "branchId", "noteId", "parentNoteId", "prefix"
-			registerEntityChange(
-				"branches",
-				branchId,
-				arrayOf(branchId, newId, parentNote.id, "null")
-			)
-			execSQL(
-				"INSERT INTO blobs VALUES (?, ?, ?, ?)",
-				arrayOf(
-					newBlobId,
-					"",
-					dateModified,
-					utcDateModified
-				)
-			)
-			registerEntityChange("blobs", newBlobId, arrayOf(newBlobId, ""))
-			execSQL(
-				"INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				arrayOf(
-					newId,
-					newNoteTitle,
-					"0", // isProtected
-					"text", // type
-					"text/html", // mime
-					newBlobId, // blobId
-					"0", // isDeleted
-					null, // deleteId
-					dateModified, // dateCreated
-					dateModified,
-					utcDateModified, // utcDateCreated
-					utcDateModified,
-				)
-			)
-			// hash ["noteId", "title", "isProtected", "type", "mime", "blobId"]
-			registerEntityChange(
-				"notes",
-				newId,
-				arrayOf(newId, newNoteTitle ?: "", "0", "text", "text/html", newBlobId)
-			)
+			}
+			getTreeData("AND noteId = \"$newId\"")
+			return@withContext getNote(newId)!!
 		}
-		getTreeData("AND noteId = \"$newId\"")
-		return getNote(newId)!!
-	}
 
-	fun createSiblingNote(siblingNote: Note, newNoteTitle: String?): Note {
-		val parentNote = getNotePath(siblingNote.id)
-		if (parentNote.size == 1) {
-			// root note can't have siblings
-			return createChildNote(siblingNote, newNoteTitle)
+	suspend fun createSiblingNote(siblingNote: Note, newNoteTitle: String?): Note =
+		withContext(Dispatchers.IO) {
+			val parentNote = getNotePath(siblingNote.id)
+			if (parentNote.size == 1) {
+				// root note can't have siblings
+				return@withContext createChildNote(siblingNote, newNoteTitle)
+			}
+			return@withContext createChildNote(getNote(parentNote[1].note)!!, newNoteTitle)
 		}
-		return createChildNote(getNote(parentNote[1].note)!!, newNoteTitle)
-	}
 
-	fun addInternalLink(note: Note, target: String) {
+	suspend fun addInternalLink(note: Note, target: String) = withContext(Dispatchers.IO) {
 		val relations = note.getRelations()
 		if (relations.any { x -> x.target?.id == target && x.name == "internalLink" }) {
-			return
+			return@withContext
 		}
-		updateRelation(note, null, "internalLink", getNote(target) ?: return, false)
+		updateRelation(note, null, "internalLink", getNote(target) ?: return@withContext, false)
 	}
 
-	fun getAllNotesWithRelations(): List<Note> {
+	suspend fun getAllNotesWithRelations(): List<Note> = withContext(Dispatchers.IO) {
 		val list = mutableListOf<Note>()
 		val relations = mutableListOf<Triple<String, String, Pair<String, String>>>()
 		db!!.rawQuery(
@@ -1281,7 +1290,7 @@ object Cache {
 			notesById[v.key]!!.setRelations(v.value)
 			notesById[v.key]!!.incomingRelations = relationsByIdIncoming[v.key]
 		}
-		return list
+		return@withContext list
 	}
 
 	private fun dateModified(): String {

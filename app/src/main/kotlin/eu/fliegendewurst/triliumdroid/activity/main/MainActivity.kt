@@ -225,7 +225,12 @@ class MainActivity : AppCompatActivity() {
 					if (Cache.haveDatabase(this)) {
 						Cache.initializeDatabase(applicationContext)
 						val inbox = DateNotes.getInboxNote()
-						val note = Cache.createChildNote(inbox, text.lineSequence().first())
+						val note = runBlocking {
+							Cache.createChildNote(
+								inbox,
+								text.lineSequence().first()
+							)
+						}
 						Cache.setNoteContent(note.id, text)
 					}
 				}
@@ -595,31 +600,33 @@ class MainActivity : AppCompatActivity() {
 		lifecycleScope.launch(Dispatchers.IO) {
 			Cache.initializeDatabase(applicationContext)
 			ConnectionUtil.setup(applicationContext, prefs, {
-				Cache.syncStart({
-					handler.post {
-						snackbar.setText("Sync: $it outstanding...")
-					}
-				}, {
-					handler.post {
-						handleError(it)
-					}
-					// ensure the snackbar doesn't stay visible
-					handler.post {
-						snackbar.setText("Sync: error!")
-						snackbar.duration = Snackbar.LENGTH_SHORT
-						snackbar.show()
-					}
-				}, {
-					handler.post {
-						snackbar.setText("Sync: ${it.first} pulled, ${it.second} pushed")
-						snackbar.duration = Snackbar.LENGTH_SHORT
-						snackbar.show()
-					}
-					Cache.getTreeData("")
-					handler.post {
-						showInitialNote(resetView)
-					}
-				})
+				runBlocking {
+					Cache.syncStart({
+						handler.post {
+							snackbar.setText("Sync: $it outstanding...")
+						}
+					}, {
+						handler.post {
+							handleError(it)
+						}
+						// ensure the snackbar doesn't stay visible
+						handler.post {
+							snackbar.setText("Sync: error!")
+							snackbar.duration = Snackbar.LENGTH_SHORT
+							snackbar.show()
+						}
+					}, {
+						handler.post {
+							snackbar.setText("Sync: ${it.first} pulled, ${it.second} pushed")
+							snackbar.duration = Snackbar.LENGTH_SHORT
+							snackbar.show()
+						}
+						Cache.getTreeData("")
+						handler.post {
+							showInitialNote(resetView)
+						}
+					})
+				}
 			}, {
 				Cache.getTreeData("")
 				handler.post {

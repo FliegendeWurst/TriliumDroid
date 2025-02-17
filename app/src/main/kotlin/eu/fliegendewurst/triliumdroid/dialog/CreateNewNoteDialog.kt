@@ -9,6 +9,7 @@ import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
+import kotlinx.coroutines.runBlocking
 import java.util.*
 
 object CreateNewNoteDialog {
@@ -43,10 +44,12 @@ object CreateNewNoteDialog {
 		createAsChild: Boolean,
 		currentNote: Note
 	) {
-		val note = if (createAsChild) {
-			Cache.createChildNote(currentNote, title)
-		} else {
-			Cache.createSiblingNote(currentNote, title)
+		val note = runBlocking {
+			if (createAsChild) {
+				Cache.createChildNote(currentNote, title)
+			} else {
+				Cache.createSiblingNote(currentNote, title)
+			}
 		}
 		dialog.dismiss()
 		activity.navigateTo(note)
