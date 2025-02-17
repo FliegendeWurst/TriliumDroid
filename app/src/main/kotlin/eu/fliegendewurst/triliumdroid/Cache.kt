@@ -684,6 +684,7 @@ object Cache {
 	 * Populate the tree data cache.
 	 */
 	fun getTreeData(filter: String) {
+		val startTime = System.currentTimeMillis()
 		db!!.rawQuery(
 			"SELECT branchId, " +
 					"branches.noteId, " +
@@ -764,9 +765,14 @@ object Cache {
 				}
 			}
 		}
+		val query1 = System.currentTimeMillis() - startTime
 		db!!.rawQuery(
 			"SELECT notes.noteId, attributes.value " +
-					"FROM attributes INNER JOIN notes USING (noteId) INNER JOIN branches USING (noteId) WHERE notes.isDeleted = 0 AND attributes.isDeleted = 0 AND attributes.name = 'iconClass' AND attributes.type = 'label' $filter",
+					"FROM attributes " +
+					"INNER JOIN notes USING (noteId) " +
+					"INNER JOIN branches USING (noteId) " +
+					"WHERE notes.isDeleted = 0 AND attributes.isDeleted = 0 " +
+					"AND attributes.name = 'iconClass' AND attributes.type = 'label' $filter",
 			arrayOf()
 		).use {
 			while (it.moveToNext()) {
@@ -774,6 +780,10 @@ object Cache {
 				val noteIcon = it.getString(1)
 				notes[noteId]!!.icon = noteIcon
 			}
+		}
+		val query2 = System.currentTimeMillis() - query1
+		if (query1 + query2 > 50) {
+			Log.w(TAG, "slow getTreeData() $query1 ms + $query2 ms")
 		}
 	}
 
