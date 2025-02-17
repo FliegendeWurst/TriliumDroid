@@ -82,6 +82,7 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 		binding.navigationListBottom.isNestedScrollingEnabled = false
 		binding.navigationListBottom.itemAnimator = null
 		val bg = resources.getColor(R.color.background, null)
+		val fg = resources.getColor(R.color.foreground, null)
 		adapter2 = ListRecyclerAdapter({ view, x ->
 			view.root.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
 
@@ -89,6 +90,9 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 			view.navigationButtonFiller.text = ">"
 			(view.navigationButtonFiller.layoutParams as LinearLayout.LayoutParams).weight = 0f
 			view.clickArea.setBackgroundColor(bg)
+
+			view.navigationButtonIcon.setTextColor(fg)
+			view.navigationButtonLabel.setTextColor(fg)
 
 			view.navigationButtonIcon.text = Icon.getUnicodeCharacter(x.icon)
 			view.navigationButtonLabel.text = x.title

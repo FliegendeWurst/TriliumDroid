@@ -114,7 +114,7 @@ class MainActivity : AppCompatActivity() {
 	private var firstNote: String? = null
 
 	// navigation history
-	private val noteHistory: MutableList<HistoryItem> = mutableListOf()
+	private val noteHistory = HistoryList()
 
 	companion object {
 		private const val TAG = "MainActivity"
@@ -328,8 +328,10 @@ class MainActivity : AppCompatActivity() {
 								button.text = type
 								button.setOnClickListener {
 									if (type == "Note Map") {
-										noteHistory.add(NoteMapItem(null))
-										noteHistory.last().restore(this@MainActivity)
+										noteHistory.addAndRestore(
+											NoteMapItem(null),
+											this@MainActivity
+										)
 									}
 								}
 								return@ListAdapter vi
@@ -393,21 +395,8 @@ class MainActivity : AppCompatActivity() {
 
 		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
-				if (noteHistory.isNotEmpty()) {
-					noteHistory.removeAt(noteHistory.size - 1)
-				}
-				while (true) {
-					if (noteHistory.isEmpty()) {
-						finish()
-						break
-					} else {
-						val entry = noteHistory[noteHistory.size - 1]
-						if (entry.restore(this@MainActivity)) {
-							return
-						} else {
-							noteHistory.removeAt(noteHistory.size - 1)
-						}
-					}
+				if (noteHistory.goBack(this@MainActivity)) {
+					finish()
 				}
 			}
 		})
@@ -503,15 +492,13 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun showNoteNavigation() {
-		val item = noteHistory.last()
-		var note = Cache.getNote(item.noteId())!!
-		var branch = item.branch() ?: note.branches[0]
+		var note = Cache.getNote(noteHistory.noteId())!!
+		var branch = noteHistory.branch() ?: note.branches[0]
 		if (note.computeChildren().isEmpty()) {
 			note = Cache.getNote(branch.parentNote)!!
 			branch = note.branches[0] // TODO
 		}
-		noteHistory.add(NavigationItem(note, branch))
-		noteHistory.last().restore(this)
+		noteHistory.addAndRestore(NavigationItem(note, branch), this)
 	}
 
 	private var loadedNoteId: String? = null
@@ -706,13 +693,11 @@ class MainActivity : AppCompatActivity() {
 				when (val fragment = getFragment()) {
 					is NoteFragment -> {
 						val id = fragment.getNoteId() ?: return true
-						noteHistory.add(NoteEditItem(Cache.getNote(id)!!))
-						noteHistory.last().restore(this)
+						noteHistory.addAndRestore(NoteEditItem(Cache.getNote(id)!!), this)
 					}
 
 					is NoteEditFragment -> {
-						noteHistory.removeAt(noteHistory.size - 1)
-						noteHistory.last().restore(this)
+						noteHistory.goBack(this)
 					}
 
 					else -> {
@@ -812,13 +797,11 @@ class MainActivity : AppCompatActivity() {
 			R.id.action_note_map -> {
 				val frag = getFragment()
 				if (frag is NoteMapFragment) {
-					noteHistory.removeAt(noteHistory.size - 1)
-					noteHistory.last().restore(this)
+					noteHistory.goBack(this)
 				} else if (frag is NoteFragment) {
 					val id = frag.getNoteId()
 					if (id != null) {
-						noteHistory.add(NoteMapItem(Cache.getNote(id)!!))
-						noteHistory.last().restore(this)
+						noteHistory.addAndRestore(NoteMapItem(Cache.getNote(id)!!), this)
 					}
 				}
 				true
@@ -1029,7 +1012,7 @@ class MainActivity : AppCompatActivity() {
 		// note paths
 		val notePaths = findViewById<ListView>(R.id.widget_note_paths_type_content)
 		val paths = Cache.getNotePaths(noteContent.id)!!
-		val currentPath = noteHistory.last().branch()
+		val currentPath = noteHistory.branch()
 		val branchToString = { x: List<Branch> ->
 			Pair(
 				x.asReversed()
@@ -1132,7 +1115,7 @@ class MainActivity : AppCompatActivity() {
 					refreshTree()
 				}
 				if (pathSelected.first().cachedTreeIndex != null) {
-					noteHistory.last().setBranch(pathSelected.first())
+					noteHistory.setBranch(pathSelected.first())
 					refreshWidgets(noteContent)
 					scrollTreeToBranch(pathSelected.first())
 					binding.drawerLayout.closeDrawers()
@@ -1157,8 +1140,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun navigateTo(note: Note, branch: Branch? = null) {
-		noteHistory.add(NoteItem(note, branch))
-		load(note, branch)
+		noteHistory.addAndRestore(NoteItem(note, branch), this)
 	}
 
 	fun load(note: Note, branch: Branch?) {
@@ -1234,6 +1216,6 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun getNotePathLoaded(): Branch? {
-		return noteHistory.last().branch()
+		return noteHistory.branch()
 	}
 }
