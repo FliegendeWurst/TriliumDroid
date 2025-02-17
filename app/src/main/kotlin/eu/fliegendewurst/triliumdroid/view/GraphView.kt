@@ -14,6 +14,7 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
+import androidx.core.graphics.toColorLong
 import androidx.core.graphics.withScale
 import androidx.core.graphics.withTranslation
 import eu.fliegendewurst.triliumdroid.R
@@ -39,9 +40,12 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 
 	var g: Graph<Note, Relation> = Graph()
 
+	private var backgroundColor: Int = 0
+
 	private var paint: Paint = Paint()
 	private var backgroundPaint: Paint = Paint()
 	private var fontPaint: Paint = Paint()
+	private var fontPaintEdgeLabel: Paint = Paint()
 
 	private var edgePath: Path = Path()
 
@@ -49,6 +53,9 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 	private var offsetY: Float = 0F
 	private var xScale: Float = 1F
 	private var yScale: Float = 1F
+
+	private var offsetXOld: Float = 0F
+	private var offsetYOld: Float = 0F
 	private var xScaleOld: Float = 1F
 	private var yScaleOld: Float = 1F
 
@@ -59,11 +66,13 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 	init {
 		g = Graph()
 
+		backgroundColor = resources.getColor(R.color.background, null)
+
 		paint.strokeWidth = 4f
 		paint.style = Paint.Style.STROKE
 		paint.strokeJoin = Paint.Join.ROUND
 		paint.isAntiAlias = true
-		paint.color = resources.getColor(android.R.color.black, null)
+		paint.color = resources.getColor(R.color.foreground, null)
 
 		backgroundPaint.style = Paint.Style.FILL
 		backgroundPaint.isAntiAlias = true
@@ -71,6 +80,10 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 
 		fontPaint.textAlign = Align.CENTER
 		fontPaint.textSize = 24f
+
+		fontPaintEdgeLabel.textAlign = Align.CENTER
+		fontPaintEdgeLabel.textSize = 24f
+		fontPaintEdgeLabel.color = paint.color
 
 		setOnClickListener {
 			val point = Position((x!! - xOffset()) / xScale, (y!! - yOffset()) / yScale)
@@ -89,6 +102,8 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 				override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
 					xScaleOld = xScale
 					yScaleOld = yScale
+					offsetXOld = offsetX - detector.focusX + width / 2
+					offsetYOld = offsetY - detector.focusY + height / 2
 					return super.onScaleBegin(detector)
 				}
 
@@ -96,6 +111,8 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 					detector.let {
 						xScale = xScaleOld * it.scaleFactor
 						yScale = yScaleOld * it.scaleFactor
+						offsetX = offsetXOld * it.scaleFactor + it.focusX - width / 2
+						offsetY = offsetYOld * it.scaleFactor + it.focusY - height / 2
 
 						invalidate()
 					}
@@ -245,8 +262,8 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 			velocities[node] = v
 		}
 		val end = System.currentTimeMillis()
-		if (end - start >= 1) {
-			Log.d(TAG, "update of ${g.nodes.size} nodes took ${end - start} ms")
+		if (end - start > 16) {
+			Log.w(TAG, "update of ${g.nodes.size} nodes took ${end - start} ms")
 		}
 		invalidate()
 		(context as MainActivity).handler.postDelayed(this::updatePositions, simulationDelay)
@@ -282,7 +299,11 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 		canvas.withTranslation(xOffset(), yOffset()) {
 			canvas.withScale(xScale, yScale) {
 
-				canvas.drawColor(Color.WHITE)
+				if (backgroundColor and 0xffffff == 0) {
+					canvas.drawColor(Color.BLACK)
+				} else {
+					canvas.drawColor(Color.WHITE)
+				}
 
 				val height = 20
 				val offset = 7
@@ -296,7 +317,7 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 					edgePath.reset()
 					edgePath.moveTo(sourcePos.x, sourcePos.y)
 					edgePath.lineTo(targetPos.x, targetPos.y)
-					drawTextOnPath(a.data.name, edgePath, 0f, 30f, fontPaint)
+					drawTextOnPath(a.data.name, edgePath, 0f, 30f, fontPaintEdgeLabel)
 					val dx = targetPos.x - sourcePos.x
 					val dy = targetPos.y - sourcePos.y
 					var angle = atan2(dy, dx) - PI.toFloat() / 2F
