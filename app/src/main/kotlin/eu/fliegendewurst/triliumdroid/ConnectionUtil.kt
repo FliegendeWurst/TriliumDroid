@@ -1,8 +1,12 @@
 package eu.fliegendewurst.triliumdroid
 
+import android.content.Context
 import android.content.SharedPreferences
+import android.security.KeyChain
 import android.util.Log
 import eu.fliegendewurst.triliumdroid.service.Util
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Cookie
@@ -21,8 +25,18 @@ import okhttp3.tls.HeldCertificate
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
+import java.net.Socket
+import java.security.KeyStore
+import java.security.Principal
+import java.security.PrivateKey
+import java.security.cert.X509Certificate
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import javax.net.ssl.KeyManagerFactory
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509KeyManager
+import javax.net.ssl.X509TrustManager
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -39,11 +53,16 @@ object ConnectionUtil {
 	private var syncVersion: Int = Cache.CacheDbHelper.SYNC_VERSION
 	private var loginFails = 0
 
-	fun setup(prefs: SharedPreferences, callback: () -> Unit, callbackError: (Exception) -> Unit) {
+	suspend fun setup(
+		applicationContext: Context,
+		prefs: SharedPreferences,
+		callback: () -> Unit,
+		callbackError: (Exception) -> Unit
+	) = withContext(Dispatchers.IO) {
 		ConnectionUtil.prefs = prefs
 
 		if (client == null) {
-			resetClient()
+			resetClient(applicationContext)
 		}
 
 		server = prefs.getString("hostname", null)!!
@@ -83,7 +102,7 @@ object ConnectionUtil {
 		}
 	}
 
-	fun resetClient() {
+	suspend fun resetClient(applicationContext: Context) = withContext(Dispatchers.IO) {
 		client = null
 		var clientBuilder = OkHttpClient.Builder()
 			.cookieJar(object : CookieJar {
@@ -116,33 +135,92 @@ object ConnectionUtil {
 
 		val mtls = prefs!!.getString("mTLS_cert", null)
 		if (mtls != null) {
-			val cert = HeldCertificate.decode(mtls)
+//			val cert = HeldCertificate.decode(mtls)
+//
+//			val clientCertificates: HandshakeCertificates = HandshakeCertificates.Builder()
+//				.heldCertificate(cert)
+//				.build()
+//			clientBuilder = clientBuilder.sslSocketFactory(
+//				clientCertificates.sslSocketFactory(),
+//				clientCertificates.trustManager
+//			)
+			// TODO: handle null | Exception
+			val pk = KeyChain.getPrivateKey(applicationContext, mtls)!!
+			val chain = KeyChain.getCertificateChain(applicationContext, mtls)!!
 
-			val clientCertificates: HandshakeCertificates = HandshakeCertificates.Builder()
-				.heldCertificate(cert)
-				.build()
-			clientBuilder = clientBuilder.sslSocketFactory(
-				clientCertificates.sslSocketFactory(),
-				clientCertificates.trustManager
-			)
+			val trustManagerFactory =
+				TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+			trustManagerFactory.init(null as KeyStore?)
+			val trustManagers = trustManagerFactory.trustManagers
+
+
+			val keyManagerFactory =
+				KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
+			keyManagerFactory.init(null, null)
+
+			val km = object : X509KeyManager {
+				override fun getClientAliases(
+					keyType: String?,
+					issuers: Array<Principal>
+				): Array<String> {
+					return arrayOf(mtls)
+				}
+
+				override fun chooseClientAlias(
+					keyType: Array<out String>?,
+					issuers: Array<out Principal>?,
+					socket: Socket?
+				): String {
+					return mtls
+				}
+
+				override fun getServerAliases(
+					keyType: String?,
+					issuers: Array<Principal>
+				): Array<String> {
+					return arrayOf()
+				}
+
+				override fun chooseServerAlias(
+					keyType: String?,
+					issuers: Array<Principal>,
+					socket: Socket
+				): String {
+					return ""
+				}
+
+				override fun getCertificateChain(alias: String?): Array<X509Certificate> {
+					return chain
+				}
+
+				override fun getPrivateKey(alias: String?): PrivateKey {
+					return pk
+				}
+			}
+
+			val sslContext = SSLContext.getInstance("TLS")
+			sslContext.init(arrayOf(km), trustManagers, null)
+
+			clientBuilder = clientBuilder
+				.sslSocketFactory(sslContext.socketFactory, trustManagers[0] as X509TrustManager)
 		}
 
 		client = clientBuilder
 			.build()
 	}
 
-	private fun fetch(
+	private suspend fun fetch(
 		path: String,
 		formBody: FormBody?,
 		callbackOk: (JSONObject) -> Unit,
 		callbackError: (Exception) -> Unit
-	) {
+	) = withContext(Dispatchers.IO) {
 		try {
 			Request.Builder().url("$server$path")
 		} catch (e: Exception) {
 			// bad URL
 			callbackError.invoke(IllegalArgumentException("bad fetch URL $server$path"))
-			return
+			return@withContext
 		}
 		var reqBuilder = Request.Builder()
 			.url("$server$path")

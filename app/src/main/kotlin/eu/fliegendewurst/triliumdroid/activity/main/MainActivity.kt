@@ -87,6 +87,7 @@ import eu.fliegendewurst.triliumdroid.util.CrashReport
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import javax.net.ssl.SSLProtocolException
 import kotlin.io.path.Path
@@ -421,17 +422,19 @@ class MainActivity : AppCompatActivity() {
 				val intent = Intent(this, SetupActivity::class.java)
 				startActivity(intent)
 			} else if (Cache.lastSync == null && noteHistory.isEmpty()) {
-				ConnectionUtil.setup(prefs, {
-					handler.post {
-						startSync(handler)
-					}
-				}, {
-					Cache.getTreeData("")
-					refreshTree()
-					handler.post {
-						handleError(it)
-					}
-				})
+				runBlocking {
+					ConnectionUtil.setup(applicationContext, prefs, {
+						handler.post {
+							startSync(handler)
+						}
+					}, {
+						Cache.getTreeData("")
+						handler.post {
+							refreshTree()
+							handleError(it)
+						}
+					})
+				}
 				Cache.getTreeData("")
 				showInitialNote(true)
 			} else if (noteHistory.isEmpty()) {
@@ -591,7 +594,7 @@ class MainActivity : AppCompatActivity() {
 		snackbar.show()
 		lifecycleScope.launch(Dispatchers.IO) {
 			Cache.initializeDatabase(applicationContext)
-			ConnectionUtil.setup(prefs, {
+			ConnectionUtil.setup(applicationContext, prefs, {
 				Cache.syncStart({
 					handler.post {
 						snackbar.setText("Sync: $it outstanding...")

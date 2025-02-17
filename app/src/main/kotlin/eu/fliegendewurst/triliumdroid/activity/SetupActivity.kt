@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
+import android.security.KeyChain
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -14,10 +16,18 @@ import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import okhttp3.tls.HeldCertificate
 import java.io.File
 
 
 class SetupActivity : AppCompatActivity() {
+	companion object {
+		private const val TAG: String = "SetupActivity"
+	}
+
 	private lateinit var binding: ActivitySetupBinding
 	private lateinit var prefs: SharedPreferences
 
@@ -34,6 +44,7 @@ class SetupActivity : AppCompatActivity() {
 			)
 		)
 
+		/*
 		val readCertificate =
 			registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
 				if (result.resultCode != Activity.RESULT_OK) {
@@ -67,7 +78,12 @@ class SetupActivity : AppCompatActivity() {
 						error += "No certificate found. "
 					}
 					if (!haveKey) {
-						error += "No private key found."
+						error += "No private key found. "
+					}
+					try {
+						HeldCertificate.decode(mtlsCert)
+					} catch (e: Exception) {
+						error += "${e.javaClass}: ${e.message}"
 					}
 					if (error.isNotEmpty()) {
 						AlertDialog.Builder(this)
@@ -80,20 +96,41 @@ class SetupActivity : AppCompatActivity() {
 							.show()
 					} else {
 						prefs.edit().putString("mTLS_cert", mtlsCert).apply()
-						ConnectionUtil.resetClient()
+						runBlocking {
+						ConnectionUtil.resetClient(applicationContext)
+							}
 						binding.buttonConfigureMtls.isEnabled = false
 						binding.buttonConfigureMtls2.isEnabled = true
 					}
 				}
 			}
+		 */
 
 		val mtlsCert = prefs.getString("mTLS_cert", null)
 		binding.buttonConfigureMtls.setOnClickListener {
-			var chooseFile = Intent(Intent.ACTION_GET_CONTENT)
-			chooseFile.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-			chooseFile.setType("*/*")
-			chooseFile = Intent.createChooser(chooseFile, "Choose PEM-encoded certificate and key")
-			readCertificate.launch(chooseFile)
+//			var chooseFile = Intent(Intent.ACTION_GET_CONTENT)
+//			chooseFile.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+//			chooseFile.setType("*/*")
+//			chooseFile = Intent.createChooser(chooseFile, "Choose PEM-encoded certificate and key")
+//			readCertificate.launch(chooseFile)
+			KeyChain.choosePrivateKeyAlias(
+				this@SetupActivity,
+				{ alias ->
+					Log.d(TAG, "received key alias $alias")
+					if (alias == null) {
+						return@choosePrivateKeyAlias
+					}
+					prefs.edit().putString("mTLS_cert", alias).apply()
+					runBlocking {
+						ConnectionUtil.resetClient(applicationContext)
+					}
+				},
+				null, // List of acceptable key types. null for any
+				null,  // issuer, null for any
+				null,  // TODO: host name of server requesting the cert, null if unavailable
+				-1,  // TODO: port of server requesting the cert, -1 if unavailable
+				null
+			) // alias to preselect, null if unavailable
 		}
 		binding.buttonConfigureMtls2.isEnabled = mtlsCert == null
 		binding.buttonConfigureMtls2.setOnClickListener {
