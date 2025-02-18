@@ -66,29 +66,30 @@ object Cache {
 		return branchPosition[id]
 	}
 
-	fun getNotesWithAttribute(attributeName: String, attributeValue: String?): List<Note> {
-		var query =
-			"SELECT noteId FROM notes INNER JOIN attributes USING (noteId) WHERE attributes.name = ? AND attributes.isDeleted = 0"
-		if (attributeValue != null) {
-			query += " AND attributes.value = ?"
-		}
-		db!!.rawQuery(
-			query,
+	suspend fun getNotesWithAttribute(attributeName: String, attributeValue: String?): List<Note> =
+		withContext(Dispatchers.IO) {
+			var query =
+				"SELECT noteId FROM notes INNER JOIN attributes USING (noteId) WHERE attributes.name = ? AND attributes.isDeleted = 0"
 			if (attributeValue != null) {
-				arrayOf(attributeName, attributeValue)
-			} else {
-				arrayOf(attributeName)
+				query += " AND attributes.value = ?"
 			}
-		).use {
-			val l = mutableListOf<Note>()
-			while (it.moveToNext()) {
-				l.add(getNote(it.getString(0))!!)
+			db!!.rawQuery(
+				query,
+				if (attributeValue != null) {
+					arrayOf(attributeName, attributeValue)
+				} else {
+					arrayOf(attributeName)
+				}
+			).use {
+				val l = mutableListOf<Note>()
+				while (it.moveToNext()) {
+					l.add(getNote(it.getString(0))!!)
+				}
+				return@withContext l
 			}
-			return l
 		}
-	}
 
-	fun getNoteWithContent(id: String): Note? {
+	suspend fun getNoteWithContent(id: String): Note? {
 		Log.d(TAG, "fetching note $id")
 		if (notes.containsKey(id) && notes[id]!!.mime != "INVALID" && notes[id]!!.content != null) {
 			return notes[id]
@@ -96,11 +97,11 @@ object Cache {
 		return getNoteInternal(id)
 	}
 
-	fun getAttachmentWithContent(id: String): Attachment? {
+	suspend fun getAttachmentWithContent(id: String): Attachment? {
 		return getAttachmentInternal(id)
 	}
 
-	fun setNoteContent(id: String, content: String) {
+	suspend fun setNoteContent(id: String, content: String) = withContext(Dispatchers.IO) {
 		if (!notes.containsKey(id)) {
 			getNoteInternal(id)
 		}
@@ -118,7 +119,7 @@ object Cache {
 		}
 		if (blobId == "") {
 			Log.e(TAG, "failed to find blob for note")
-			return
+			return@withContext
 		}
 
 		val date = dateModified()
@@ -155,54 +156,76 @@ object Cache {
 		db!!.registerEntityChangeNote(notes[id]!!)
 	}
 
-	fun updateLabel(note: Note, name: String, value: String, inheritable: Boolean) {
-		var previousId: String? = null
-		// TODO: multi labels
-		db!!.rawQuery(
-			"SELECT attributeId FROM attributes WHERE noteId = ? AND type = 'label' AND name = ? AND isDeleted = 0",
-			arrayOf(note.id, name)
-		).use {
-			if (it.moveToNext()) {
-				previousId = it.getString(0)
+	suspend fun updateLabel(note: Note, name: String, value: String, inheritable: Boolean) =
+		withContext(Dispatchers.IO) {
+			var previousId: String? = null
+			// TODO: multi labels
+			db!!.rawQuery(
+				"SELECT attributeId FROM attributes WHERE noteId = ? AND type = 'label' AND name = ? AND isDeleted = 0",
+				arrayOf(note.id, name)
+			).use {
+				if (it.moveToNext()) {
+					previousId = it.getString(0)
+				}
 			}
-		}
-		val utc = utcDateModified()
-		if (previousId != null) {
-			Log.i(TAG, "updating label $note / $name = ${value.length} characters")
-			db!!.execSQL(
-				"UPDATE attributes SET value = ?, utcDateModified = ? " +
-						"WHERE attributeId = ?",
-				arrayOf(value, utc, previousId)
-			)
-		} else {
-			var fresh = false
-			while (!fresh) {
-				previousId = Util.newNoteId()
-				// check if it is used
-				db!!.rawQuery("SELECT 1 FROM attributes WHERE attributeId = ?", arrayOf(previousId))
-					.use {
-						fresh = !it.moveToNext()
-					}
+			val utc = utcDateModified()
+			if (previousId != null) {
+				Log.i(TAG, "updating label $note / $name = ${value.length} characters")
+				db!!.execSQL(
+					"UPDATE attributes SET value = ?, utcDateModified = ? " +
+							"WHERE attributeId = ?",
+					arrayOf(value, utc, previousId)
+				)
+			} else {
+				var fresh = false
+				while (!fresh) {
+					previousId = Util.newNoteId()
+					// check if it is used
+					db!!.rawQuery(
+						"SELECT 1 FROM attributes WHERE attributeId = ?",
+						arrayOf(previousId)
+					)
+						.use {
+							fresh = !it.moveToNext()
+						}
+				}
+				// TODO: proper position
+				db!!.execSQL(
+					"INSERT INTO attributes (attributeId, noteId, type, name, value, position, utcDateModified, isDeleted, deleteId, isInheritable) " +
+							"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+					arrayOf(
+						previousId,
+						note.id,
+						"label",
+						name,
+						value,
+						10,
+						utc,
+						0,
+						null,
+						inheritable
+					)
+				)
 			}
-			// TODO: proper position
-			db!!.execSQL(
-				"INSERT INTO attributes (attributeId, noteId, type, name, value, position, utcDateModified, isDeleted, deleteId, isInheritable) " +
-						"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				arrayOf(previousId, note.id, "label", name, value, 10, utc, 0, null, inheritable)
+			db!!.registerEntityChangeAttribute(
+				previousId!!,
+				note.id,
+				"label",
+				name,
+				value,
+				inheritable
 			)
+			note.clearAttributeCache()
+			getNoteInternal(note.id)
 		}
-		db!!.registerEntityChangeAttribute(previousId!!, note.id, "label", name, value, inheritable)
-		note.clearAttributeCache()
-		getNoteInternal(note.id)
-	}
 
-	fun updateRelation(
+	suspend fun updateRelation(
 		note: Note,
 		attributeId: String?,
 		name: String,
 		value: Note,
 		inheritable: Boolean
-	) {
+	) = withContext(Dispatchers.IO) {
 		var previousId: String? = attributeId
 		val utc = utcDateModified()
 		if (previousId != null) {
@@ -251,7 +274,7 @@ object Cache {
 		getNoteInternal(note.id)
 	}
 
-	fun deleteLabel(note: Note, name: String) {
+	suspend fun deleteLabel(note: Note, name: String) = withContext(Dispatchers.IO) {
 		Log.d(TAG, "deleting label $name in ${note.id}")
 		var previousId: String? = null
 		var inheritable = false
@@ -266,7 +289,7 @@ object Cache {
 		}
 		if (previousId == null) {
 			Log.e(TAG, "failed to find label $name to delete")
-			return
+			return@withContext
 		}
 		val utc = utcDateModified()
 		db!!.execSQL(
@@ -279,40 +302,48 @@ object Cache {
 		getNoteInternal(note.id)
 	}
 
-	fun deleteRelation(note: Note, name: String, attributeId: String) {
-		Log.d(TAG, "deleting relation $name in ${note.id}")
-		var previousId: String? = null
-		var inheritable = false
-		db!!.rawQuery(
-			"SELECT attributeId, isInheritable FROM attributes WHERE attributeId = ? AND type = 'relation' AND isDeleted = 0",
-			arrayOf(attributeId)
-		).use {
-			if (it.moveToNext()) {
-				previousId = it.getString(0)
-				inheritable = it.getInt(1) == 1
+	suspend fun deleteRelation(note: Note, name: String, attributeId: String) =
+		withContext(Dispatchers.IO) {
+			Log.d(TAG, "deleting relation $name in ${note.id}")
+			var previousId: String? = null
+			var inheritable = false
+			db!!.rawQuery(
+				"SELECT attributeId, isInheritable FROM attributes WHERE attributeId = ? AND type = 'relation' AND isDeleted = 0",
+				arrayOf(attributeId)
+			).use {
+				if (it.moveToNext()) {
+					previousId = it.getString(0)
+					inheritable = it.getInt(1) == 1
+				}
 			}
+			if (previousId == null) {
+				Log.e(TAG, "failed to find relation $name to delete")
+				return@withContext
+			}
+			val utc = utcDateModified()
+			db!!.execSQL(
+				"UPDATE attributes SET value = '', isDeleted = ?, utcDateModified = ? " +
+						"WHERE attributeId = ?",
+				arrayOf(1, utc, previousId)
+			)
+			db!!.registerEntityChangeAttribute(
+				previousId!!,
+				note.id,
+				"relation",
+				name,
+				"",
+				inheritable
+			)
+			note.clearAttributeCache()
+			getNoteInternal(note.id)
 		}
-		if (previousId == null) {
-			Log.e(TAG, "failed to find relation $name to delete")
-			return
-		}
-		val utc = utcDateModified()
-		db!!.execSQL(
-			"UPDATE attributes SET value = '', isDeleted = ?, utcDateModified = ? " +
-					"WHERE attributeId = ?",
-			arrayOf(1, utc, previousId)
-		)
-		db!!.registerEntityChangeAttribute(previousId!!, note.id, "relation", name, "", inheritable)
-		note.clearAttributeCache()
-		getNoteInternal(note.id)
-	}
 
-	fun cloneNote(parentBranch: Branch, note: Note) {
+	suspend fun cloneNote(parentBranch: Branch, note: Note) = withContext(Dispatchers.IO) {
 		val parentNote = parentBranch.note
 		// first, make sure we aren't creating a cycle
-		val paths = getNotePaths(parentNote) ?: return
+		val paths = getNotePaths(parentNote) ?: return@withContext
 		if (paths.any { it.any { otherBranch -> otherBranch.note == note.id } }) {
-			return
+			return@withContext
 		}
 		// create new branch
 		val branchId = "${parentNote}_${note.id}"
@@ -320,7 +351,7 @@ object Cache {
 		db!!.rawQuery("SELECT 1 FROM branches WHERE branchId = ?", arrayOf(branchId))
 			.use {
 				if (it.moveToNext()) {
-					return
+					return@withContext
 				}
 			}
 		// TODO: proper position
@@ -375,8 +406,8 @@ object Cache {
 	/**
 	 * Return all note paths to a given note.
 	 */
-	fun getNotePaths(noteId: String): List<List<Branch>>? {
-		val branches = getNote(noteId)?.branches ?: return null
+	suspend fun getNotePaths(noteId: String): List<List<Branch>>? = withContext(Dispatchers.IO) {
+		val branches = getNote(noteId)?.branches ?: return@withContext null
 		var possibleBranches = branches.map { x -> listOf(x) }.toMutableList()
 		while (true) {
 			val newPossibleBranches = mutableListOf<List<Branch>>()
@@ -399,10 +430,10 @@ object Cache {
 				break
 			}
 		}
-		return possibleBranches
+		return@withContext possibleBranches
 	}
 
-	fun toggleBranch(branch: Branch) {
+	suspend fun toggleBranch(branch: Branch) = withContext(Dispatchers.IO) {
 		db!!.execSQL(
 			"UPDATE branches SET isExpanded = ? WHERE branchId = ?",
 			arrayOf(
@@ -418,54 +449,55 @@ object Cache {
 		branches[branch.id]?.expanded = newValue
 	}
 
-	fun moveBranch(branch: Branch, newParent: Branch, newPosition: Int) {
-		Log.i(
-			TAG,
-			"moving branch ${branch.id} to new parent ${newParent.note}, pos: ${branch.position} -> $newPosition"
-		)
-		if (branch.parentNote == newParent.note && branch.position == newPosition) {
-			return // no action needed
+	suspend fun moveBranch(branch: Branch, newParent: Branch, newPosition: Int) =
+		withContext(Dispatchers.IO) {
+			Log.i(
+				TAG,
+				"moving branch ${branch.id} to new parent ${newParent.note}, pos: ${branch.position} -> $newPosition"
+			)
+			if (branch.parentNote == newParent.note && branch.position == newPosition) {
+				return@withContext // no action needed
+			}
+			val newId = "${newParent.note}_${branch.note}"
+			val idChanged = branch.id != newId
+			val utc = utcDateModified()
+			val args = ContentValues()
+			args.put("branchId", newId)
+			args.put("noteId", branch.note)
+			args.put("parentNoteId", newParent.note)
+			args.put("notePosition", newPosition)
+			args.put("prefix", branch.prefix)
+			args.put("isExpanded", branch.expanded)
+			args.put("isDeleted", 0)
+			args.putNull("deleteId")
+			args.put("utcDateModified", utc)
+			if (db!!.insertWithOnConflict("branches", null, args, CONFLICT_REPLACE) == -1L) {
+				Log.e(TAG, "error moving branch!")
+			}
+			if (idChanged) {
+				deleteBranch(branch)
+				branch.id = newId
+			}
+			val oldParent = branch.parentNote
+			branch.parentNote = newParent.note
+			db!!.registerEntityChangeBranch(branch)
+			notes[oldParent]?.children = null
+			notes[newParent.note]?.children = null
+			getTreeData("AND (branches.parentNoteId = \"${oldParent}\" OR branches.parentNoteId = \"${newParent.note}\")")
 		}
-		val newId = "${newParent.note}_${branch.note}"
-		val idChanged = branch.id != newId
-		val utc = utcDateModified()
-		val args = ContentValues()
-		args.put("branchId", newId)
-		args.put("noteId", branch.note)
-		args.put("parentNoteId", newParent.note)
-		args.put("notePosition", newPosition)
-		args.put("prefix", branch.prefix)
-		args.put("isExpanded", branch.expanded)
-		args.put("isDeleted", 0)
-		args.putNull("deleteId")
-		args.put("utcDateModified", utc)
-		if (db!!.insertWithOnConflict("branches", null, args, CONFLICT_REPLACE) == -1L) {
-			Log.e(TAG, "error moving branch!")
-		}
-		if (idChanged) {
-			deleteBranch(branch)
-			branch.id = newId
-		}
-		val oldParent = branch.parentNote
-		branch.parentNote = newParent.note
-		db!!.registerEntityChangeBranch(branch)
-		notes[oldParent]?.children = null
-		notes[newParent.note]?.children = null
-		getTreeData("AND (branches.parentNoteId = \"${oldParent}\" OR branches.parentNoteId = \"${newParent.note}\")")
-	}
 
-	fun getNote(id: String): Note? {
+	suspend fun getNote(id: String): Note? {
 		if (notes.containsKey(id) && notes[id]?.mime != "INVALID") {
 			return notes[id]
 		}
 		return getNoteInternal(id)
 	}
 
-	fun deleteNote(branch: Branch): Boolean {
+	suspend fun deleteNote(branch: Branch): Boolean = withContext(Dispatchers.IO) {
 		if (branch.note == "root") {
-			return false
+			return@withContext false
 		}
-		val note = getNote(branch.note) ?: return false
+		val note = getNote(branch.note) ?: return@withContext false
 		Log.i(TAG, "deleting note ${branch.note}")
 		// delete child notes if this is the last branch of this note
 		if (note.branches.size == 1) {
@@ -474,7 +506,7 @@ object Cache {
 				val note2 = getNote(id2)!!
 				if (note2.branches.size == 1) {
 					if (!deleteNote(note2.branches[0])) {
-						return false
+						return@withContext false
 					}
 				}
 			}
@@ -487,16 +519,16 @@ object Cache {
 		db!!.execSQL("UPDATE branches SET isDeleted=1 WHERE branchId = ?", arrayOf(branch.id))
 		db!!.registerEntityChangeBranch(branch)
 		note.branches.remove(branch)
-		return true
+		return@withContext true
 	}
 
-	private fun deleteBranch(branch: Branch) {
+	private suspend fun deleteBranch(branch: Branch) = withContext(Dispatchers.IO) {
 		Log.i(TAG, "deleting branch ${branch.id}")
 		db!!.execSQL("UPDATE branches SET isDeleted=1 WHERE branchId = ?", arrayOf(branch.id))
 		db!!.registerEntityChangeBranch(branch)
 	}
 
-	fun renameNote(note: Note, title: String) {
+	suspend fun renameNote(note: Note, title: String) = withContext(Dispatchers.IO) {
 		note.title = title
 		db!!.execSQL("UPDATE notes SET title = ? WHERE noteId = ?", arrayOf(title, note.id))
 		db!!.registerEntityChangeNote(note)
@@ -505,7 +537,7 @@ object Cache {
 	private val FIXER: Regex =
 		"\\s*(<div>|<div class=\"[^\"]+\">)(.*)</div>\\s*".toRegex(RegexOption.DOT_MATCHES_ALL)
 
-	private fun getNoteInternal(id: String): Note? {
+	private suspend fun getNoteInternal(id: String): Note? = withContext(Dispatchers.IO) {
 		var note: Note? = null
 		CursorFactory.selectionArgs = arrayOf(id)
 		val labels = mutableListOf<Label>()
@@ -623,44 +655,45 @@ object Cache {
 			previous?.setRelations(relations)
 			notes[id] = note!!
 		}
-		return note
+		return@withContext note
 	}
 
-	private fun getAttachmentInternal(id: String): Attachment? {
-		var note: Attachment? = null
-		CursorFactory.selectionArgs = arrayOf(id)
-		db!!.rawQueryWithFactory(
-			CursorFactory,
-			"SELECT content," + // 0
-					"mime " + // 1
-					"FROM attachments LEFT JOIN blobs USING (blobId) " +
-					"WHERE attachments.attachmentId = ? AND attachments.isDeleted = 0",
-			arrayOf(id),
-			"notes"
-		).use {
-			if (it.moveToFirst()) {
-				note = Attachment(
-					id,
-					it.getString(1),
-				)
-				note!!.content = if (!it.isNull(0)) {
-					val content = it.getBlob(0)
-					val base64String = content.decodeToString()
-					val trimmed = base64String.substring(0..base64String.length - 2)
-					if (trimmed.isBlank()) {
-						ByteArray(0)
+	private suspend fun getAttachmentInternal(id: String): Attachment? =
+		withContext(Dispatchers.IO) {
+			var note: Attachment? = null
+			CursorFactory.selectionArgs = arrayOf(id)
+			db!!.rawQueryWithFactory(
+				CursorFactory,
+				"SELECT content," + // 0
+						"mime " + // 1
+						"FROM attachments LEFT JOIN blobs USING (blobId) " +
+						"WHERE attachments.attachmentId = ? AND attachments.isDeleted = 0",
+				arrayOf(id),
+				"notes"
+			).use {
+				if (it.moveToFirst()) {
+					note = Attachment(
+						id,
+						it.getString(1),
+					)
+					note!!.content = if (!it.isNull(0)) {
+						val content = it.getBlob(0)
+						val base64String = content.decodeToString()
+						val trimmed = base64String.substring(0..base64String.length - 2)
+						if (trimmed.isBlank()) {
+							ByteArray(0)
+						} else {
+							trimmed.decodeBase64()!!.toByteArray()
+						}
 					} else {
-						trimmed.decodeBase64()!!.toByteArray()
+						ByteArray(0)
 					}
-				} else {
-					ByteArray(0)
 				}
 			}
+			return@withContext note
 		}
-		return note
-	}
 
-	fun getJumpToResults(input: String): List<Note> {
+	suspend fun getJumpToResults(input: String): List<Note> = withContext(Dispatchers.IO) {
 		val notes = mutableListOf<Note>()
 		db!!.rawQuery(
 			"SELECT noteId, mime, title, type FROM notes WHERE isDeleted = 0 AND title LIKE ? LIMIT 50",
@@ -680,13 +713,13 @@ object Cache {
 				notes.add(note)
 			}
 		}
-		return notes
+		return@withContext notes
 	}
 
 	/**
 	 * Populate the tree data cache.
 	 */
-	fun getTreeData(filter: String) {
+	suspend fun getTreeData(filter: String) = withContext(Dispatchers.IO) {
 		val startTime = System.currentTimeMillis()
 		db!!.rawQuery(
 			"SELECT branchId, " +
@@ -794,7 +827,7 @@ object Cache {
 	/**
 	 * Use [Note.computeChildren] instead
 	 */
-	fun getChildren(noteId: String) {
+	suspend fun getChildren(noteId: String) = withContext(Dispatchers.IO) {
 		getTreeData("AND (branches.parentNoteId = '${noteId}' OR branches.noteId = '${noteId}')")
 	}
 
@@ -896,49 +929,54 @@ object Cache {
 		return@withContext entities.length()
 	}
 
-	private fun fetchEntity(entityName: String, entityId: String): JSONObject {
-		var keyName = entityName.substring(0, entityName.length - 1)
-		if (keyName == "note_content") {
-			keyName = "note"
-		} else if (keyName == "branche") {
-			keyName = "branch"
-		}
-		val obj = JSONObject()
-		db!!.rawQuery("SELECT * FROM $entityName WHERE ${keyName}Id = ?", arrayOf(entityId)).use {
-			if (it.moveToNext()) {
-				for (i in (0 until it.columnCount)) {
-					var x: Any? = null
-					when (it.getType(i)) {
-						Cursor.FIELD_TYPE_NULL -> {
-							x = null
-						}
+	/**
+	 * Get row from database table [entityName] with ID [entityId]
+	 */
+	private suspend fun fetchEntity(entityName: String, entityId: String): JSONObject =
+		withContext(Dispatchers.IO) {
+			var keyName = entityName.substring(0, entityName.length - 1)
+			if (keyName == "note_content") {
+				keyName = "note"
+			} else if (keyName == "branche") {
+				keyName = "branch"
+			}
+			val obj = JSONObject()
+			db!!.rawQuery("SELECT * FROM $entityName WHERE ${keyName}Id = ?", arrayOf(entityId))
+				.use {
+					if (it.moveToNext()) {
+						for (i in (0 until it.columnCount)) {
+							var x: Any? = null
+							when (it.getType(i)) {
+								Cursor.FIELD_TYPE_NULL -> {
+									x = null
+								}
 
-						Cursor.FIELD_TYPE_BLOB -> {
-							x = it.getBlob(i)
-						}
+								Cursor.FIELD_TYPE_BLOB -> {
+									x = it.getBlob(i)
+								}
 
-						Cursor.FIELD_TYPE_FLOAT -> {
-							x = it.getDouble(i)
-						}
+								Cursor.FIELD_TYPE_FLOAT -> {
+									x = it.getDouble(i)
+								}
 
-						Cursor.FIELD_TYPE_INTEGER -> {
-							x = it.getLong(i)
-						}
+								Cursor.FIELD_TYPE_INTEGER -> {
+									x = it.getLong(i)
+								}
 
-						Cursor.FIELD_TYPE_STRING -> {
-							x = it.getString(i)
+								Cursor.FIELD_TYPE_STRING -> {
+									x = it.getString(i)
+								}
+							}
+							if (x is ByteArray) {
+								obj.put(it.getColumnName(i), Base64.encode(x))
+							} else {
+								obj.put(it.getColumnName(i), x)
+							}
 						}
-					}
-					if (x is ByteArray) {
-						obj.put(it.getColumnName(i), Base64.encode(x))
-					} else {
-						obj.put(it.getColumnName(i), x)
 					}
 				}
-			}
+			return@withContext obj
 		}
-		return obj
-	}
 
 	suspend fun syncStart(
 		callbackOutstanding: (Int) -> Unit,
@@ -1574,7 +1612,7 @@ object Cache {
 	}
 }
 
-private fun SQLiteDatabase.registerEntityChangeNote(
+private suspend fun SQLiteDatabase.registerEntityChangeNote(
 	note: Note,
 ) {
 	// hash ["noteId", "title", "isProtected", "type", "mime", "blobId"]
@@ -1585,7 +1623,7 @@ private fun SQLiteDatabase.registerEntityChangeNote(
 	)
 }
 
-private fun SQLiteDatabase.registerEntityChangeAttribute(
+private suspend fun SQLiteDatabase.registerEntityChangeAttribute(
 	attributeId: String,
 	noteId: String,
 	type: String,
@@ -1607,7 +1645,7 @@ private fun SQLiteDatabase.registerEntityChangeAttribute(
 	)
 }
 
-private fun SQLiteDatabase.registerEntityChangeBranch(
+private suspend fun SQLiteDatabase.registerEntityChangeBranch(
 	branch: Branch,
 ) {
 	// hash ["branchId", "noteId", "parentNoteId", "prefix"]
@@ -1619,11 +1657,11 @@ private fun SQLiteDatabase.registerEntityChangeBranch(
 }
 
 @OptIn(ExperimentalEncodingApi::class)
-private fun SQLiteDatabase.registerEntityChange(
+private suspend fun SQLiteDatabase.registerEntityChange(
 	table: String,
 	id: String,
 	toHash: Array<String>,
-) {
+) = withContext(Dispatchers.IO) {
 	val utc = utcDateModified()
 	val md = MessageDigest.getInstance("SHA-1")
 	for (h in toHash) {

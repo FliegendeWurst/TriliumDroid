@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.VERTICAL
@@ -20,6 +21,7 @@ import eu.fliegendewurst.triliumdroid.databinding.FragmentNavigationBinding
 import eu.fliegendewurst.triliumdroid.databinding.ItemNavigationButtonBinding
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.util.ListRecyclerAdapter
+import kotlinx.coroutines.launch
 
 
 /**
@@ -136,24 +138,27 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 		this.note = note
 		this.branch = branch
 
-		val notes = note.computeChildren()
-		if (notes.isEmpty()) {
-			(this.activity as MainActivity).navigateTo(note, branch)
-			return
+		val main = this.activity as MainActivity
+		lifecycleScope.launch {
+			val notes = note.computeChildren()
+			if (notes.isEmpty()) {
+				main.navigateTo(note, branch)
+				return@launch
+			}
+			val entries = notes.map {
+				val noteHere = Cache.getNote(it.note)!!
+				Entry(noteHere.icon(), noteHere.title, noteHere, it, 0)
+			}.asReversed()
+			adapter.submitList(entries)
+			val entries2 = Cache.getNotePath(note.id).map {
+				val note2 = Cache.getNote(it.note)!!
+				Entry(note2.icon(), note2.title, note2, it, 0)
+			}
+			entries2.first().flags = FLAG_LAST
+			adapter2.submitList(entries2.asReversed())
+			binding.navigationListBottom.stopScroll()
+			binding.navigationListBottom.smoothScrollBy(5000, 0)
 		}
-		val entries = notes.map {
-			val noteHere = Cache.getNote(it.note)!!
-			Entry(noteHere.icon(), noteHere.title, noteHere, it, 0)
-		}.asReversed()
-		adapter.submitList(entries)
-		val entries2 = Cache.getNotePath(note.id).map {
-			val note2 = Cache.getNote(it.note)!!
-			Entry(note2.icon(), note2.title, note2, it, 0)
-		}
-		entries2.first().flags = FLAG_LAST
-		adapter2.submitList(entries2.asReversed())
-		binding.navigationListBottom.stopScroll()
-		binding.navigationListBottom.smoothScrollBy(5000, 0)
 	}
 
 	data class Entry(

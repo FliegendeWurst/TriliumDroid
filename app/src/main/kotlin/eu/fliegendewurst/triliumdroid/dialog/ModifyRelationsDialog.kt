@@ -7,11 +7,14 @@ import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 
 object ModifyRelationsDialog {
@@ -35,8 +38,8 @@ object ModifyRelationsDialog {
 					activity,
 					R.string.dialog_select_note
 				) { targetNote ->
-					val note = Cache.getNote(targetNote.note)!!
-					changes.add(Triple(it.trim(), null, Cache.getNote(targetNote.note)))
+					val note = runBlocking { Cache.getNote(targetNote.note)!! }
+					changes.add(Triple(it.trim(), null, note))
 					ownedAttributes.add(
 						Relation(
 							null,
@@ -53,8 +56,10 @@ object ModifyRelationsDialog {
 		}
 
 		// add template labels
-		for (template in currentNote.getLabels().filter { x -> x.name.startsWith("relation:") }) {
-			val labelName = template.name.removePrefix("relation:").removeSuffix("(inheritable)")
+		for (template in currentNote.getLabels()
+			.filter { x -> x.name.startsWith("relation:") }) {
+			val labelName =
+				template.name.removePrefix("relation:").removeSuffix("(inheritable)")
 			val inheritable = template.name.endsWith("(inheritable)")
 			if (ownedAttributes.any { x -> x.name == labelName }) {
 				continue
@@ -115,7 +120,7 @@ object ModifyRelationsDialog {
 							Triple(
 								attribute.name,
 								attribute.id,
-								Cache.getNote(targetNote.note)!!
+								runBlocking { Cache.getNote(targetNote.note)!! }
 							)
 						)
 						(ownedAttributesList.adapter as BaseAdapter).notifyDataSetChanged()
@@ -144,27 +149,29 @@ object ModifyRelationsDialog {
 		changes: List<Triple<String, String?, Note?>>,
 		currentNote: Note
 	) {
-		val previousLabels = currentNote.getRelations().map {
-			return@map Pair(it.id, it.target)
-		}.toMap()
-		for (change in changes) {
-			val attrName = change.first
-			val attrId = change.second
-			val attrValue = change.third
-			if (attrValue == null) {
-				Cache.deleteRelation(currentNote, attrName, attrId!!)
-				continue
+		activity.lifecycleScope.launch {
+			val previousLabels = currentNote.getRelations().map {
+				return@map Pair(it.id, it.target)
+			}.toMap()
+			for (change in changes) {
+				val attrName = change.first
+				val attrId = change.second
+				val attrValue = change.third
+				if (attrValue == null) {
+					Cache.deleteRelation(currentNote, attrName, attrId!!)
+					continue
+				}
+				if (previousLabels[attrId] == attrValue) {
+					continue
+				}
+				val inheritable =
+					currentNote.getRelations().filter { x -> x.name == attrName }
+						.map { x -> x.inheritable }.firstOrNull()
+						?: false
+				Cache.updateRelation(currentNote, attrId, attrName, attrValue, inheritable)
 			}
-			if (previousLabels[attrId] == attrValue) {
-				continue
-			}
-			val inheritable =
-				currentNote.getRelations().filter { x -> x.name == attrName }
-					.map { x -> x.inheritable }.firstOrNull()
-					?: false
-			Cache.updateRelation(currentNote, attrId, attrName, attrValue, inheritable)
+			dialog.dismiss()
+			activity.refreshWidgets(currentNote)
 		}
-		dialog.dismiss()
-		activity.refreshWidgets(currentNote)
 	}
 }

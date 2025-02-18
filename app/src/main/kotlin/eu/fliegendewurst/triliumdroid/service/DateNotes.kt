@@ -2,7 +2,9 @@ package eu.fliegendewurst.triliumdroid.service
 
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.data.Note
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -40,7 +42,7 @@ object DateNotes {
 
 	private var calendarRoot: Note? = null
 
-	fun getCalendarRoot(): Note? {
+	suspend fun getCalendarRoot(): Note? {
 		if (calendarRoot != null) {
 			return calendarRoot
 		}
@@ -53,16 +55,16 @@ object DateNotes {
 		}
 	}
 
-	fun getInboxNote(): Note {
+	suspend fun getInboxNote(): Note = withContext(Dispatchers.IO) {
 		val inboxNotes = Cache.getNotesWithAttribute("inbox", null)
-		return if (inboxNotes.isNotEmpty()) {
+		return@withContext if (inboxNotes.isNotEmpty()) {
 			inboxNotes[0]
 		} else {
 			getTodayNote() ?: Cache.getNote("root")!!
 		}
 	}
 
-	fun getTodayNote(): Note? {
+	suspend fun getTodayNote(): Note? {
 		val date = DateTimeFormatter.ISO_LOCAL_DATE.format(OffsetDateTime.now())
 		return getDayNote(date)
 	}
@@ -70,21 +72,21 @@ object DateNotes {
 	/**
 	 * Format expected: YYYY-MM-DD
 	 */
-	fun getDayNote(isoDate: String): Note? {
+	suspend fun getDayNote(isoDate: String): Note? = withContext(Dispatchers.IO) {
 		val todayNote = Cache.getNotesWithAttribute("dateNote", isoDate)
-		return if (todayNote.isNotEmpty()) {
+		return@withContext if (todayNote.isNotEmpty()) {
 			todayNote[0]
 		} else {
 			// create the new date note
 			val month = YEAR_MONTH.format(OffsetDateTime.now())
-			val monthNote = getMonthNote(month) ?: return null
+			val monthNote = getMonthNote(month) ?: return@withContext null
 			val dayLabel = DAY.format(dateFromIso(isoDate))
 
 			val dayNote = runBlocking { Cache.createChildNote(monthNote, dayLabel) }
 
 			// TODO: set dateNote attribute
 
-			return dayNote
+			return@withContext dayNote
 		}
 	}
 
@@ -98,25 +100,25 @@ object DateNotes {
 	/**
 	 * Format expected: YYYY-MM
 	 */
-	fun getMonthNote(yearMonth: String): Note? {
+	suspend fun getMonthNote(yearMonth: String): Note? = withContext(Dispatchers.IO) {
 		val monthNotes = Cache.getNotesWithAttribute("monthNote", yearMonth)
-		return if (monthNotes.isNotEmpty()) {
+		return@withContext if (monthNotes.isNotEmpty()) {
 			monthNotes[0]
 		} else {
 			// create the new month note
 			val year = YEAR.format(OffsetDateTime.now())
-			val yearNote = getYearNote(year) ?: return null
+			val yearNote = getYearNote(year) ?: return@withContext null
 			val monthLabel = MONTH.format(dateFromIso("$yearMonth-01"))
 
-			val monthNote = runBlocking { Cache.createChildNote(yearNote, monthLabel) }
+			val monthNote = Cache.createChildNote(yearNote, monthLabel)
 
 			// TODO: set monthNote attribute
 
-			return monthNote
+			return@withContext monthNote
 		}
 	}
 
-	fun getYearNote(year: String): Note? {
+	suspend fun getYearNote(year: String): Note? {
 		val yearNotes = Cache.getNotesWithAttribute("yearNote", year)
 		return if (yearNotes.isNotEmpty()) {
 			yearNotes[0]
@@ -124,7 +126,7 @@ object DateNotes {
 			// create the new year note
 			val root = getCalendarRoot() ?: return null
 
-			val yearNote = runBlocking { Cache.createChildNote(root, year) }
+			val yearNote = Cache.createChildNote(root, year)
 
 			// TODO: set yearNote attribute
 

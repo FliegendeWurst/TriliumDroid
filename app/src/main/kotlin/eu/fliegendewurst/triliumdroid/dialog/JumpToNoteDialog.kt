@@ -4,17 +4,20 @@ import android.view.WindowManager
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.TreeItemAdapter
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Branch
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 object JumpToNoteDialog {
 	fun showDialog(activity: MainActivity) {
 		showDialogReturningNote(activity, R.string.jump_to_dialog) {
-			activity.navigateTo(Cache.getNote(it.note)!!)
+			activity.navigateTo(runBlocking { Cache.getNote(it.note)!! })
 		}
 	}
 
@@ -41,21 +44,18 @@ object JumpToNoteDialog {
 				adapter2.submitList(emptyList())
 				return@addTextChangedListener
 			}
-			val results = Cache.getJumpToResults(searchString)
-			val stuff = results.map {
-				Pair(
-					Branch(MainActivity.JUMP_TO_NOTE_ENTRY, it.id, it.id, 0, null, false),
-					0
-				)
-			}.toList()
-			if (adapter2.currentList != stuff) {
-				adapter2.submitList(stuff)
+			activity.lifecycleScope.launch {
+				val results = Cache.getJumpToResults(searchString)
+				val stuff = results.map {
+					Pair(
+						Branch(MainActivity.JUMP_TO_NOTE_ENTRY, it.id, it.id, 0, null, false),
+						0
+					)
+				}.toList()
+				if (adapter2.currentList != stuff) {
+					adapter2.submitList(stuff)
+				}
 			}
-			/* TODO: dispatch sql query on I/O thread
-			lifecycleScope.launch(Dispatchers.IO) {
-
-			}
-			 */
 		}
 	}
 }

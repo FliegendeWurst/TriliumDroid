@@ -23,6 +23,7 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Util
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -268,7 +269,7 @@ class FrontendBackendApi(
 	 * Get a note by its ID.
 	 */
 	fun getNote(noteId: String): Note? {
-		return Cache.getNoteWithContent(noteId)
+		return runBlocking { Cache.getNoteWithContent(noteId) }
 	}
 
 	/**
@@ -283,7 +284,9 @@ class FrontendBackendApi(
 	@JavascriptInterface
 	fun getNotes(noteIds: List<String>, silentNotFoundError: Boolean = false): List<FrontendNote> {
 		// TODO: honor silentNotFoundError
-		return noteIds.map { FrontendNote(Cache.getNoteWithContent(it) ?: return@map null) }
+		return noteIds.map {
+			FrontendNote(runBlocking { Cache.getNoteWithContent(it) } ?: return@map null)
+		}
 			.filterNotNull().toList()
 	}
 
@@ -472,7 +475,7 @@ class FrontendBackendApi(
 	 */
 	@JavascriptInterface
 	fun getTodayNote(rootNote: String?): FrontendNote? {
-		return FrontendNote(DateNotes.getTodayNote() ?: return null)
+		return FrontendNote(runBlocking { DateNotes.getTodayNote() } ?: return null)
 	}
 
 	/**
@@ -483,7 +486,7 @@ class FrontendBackendApi(
 	 */
 	fun getDayNote(day: String, rootNote: String?): Note? {
 		// TODO: root note handling
-		return DateNotes.getDayNote(day)
+		return runBlocking { DateNotes.getDayNote(day) }
 	}
 
 	/**
@@ -519,7 +522,7 @@ class FrontendBackendApi(
 	 */
 	@JavascriptInterface
 	fun getMonthNote(month: String, rootNote: String?): FrontendNote? {
-		return FrontendNote(DateNotes.getMonthNote(month) ?: return null)
+		return FrontendNote(runBlocking { DateNotes.getMonthNote(month) } ?: return null)
 	}
 
 	/**
@@ -532,7 +535,7 @@ class FrontendBackendApi(
 	 */
 	@JavascriptInterface
 	fun getYearNote(year: String, rootNote: String?): FrontendNote? {
-		return FrontendNote(DateNotes.getYearNote(year) ?: return null)
+		return FrontendNote(runBlocking { DateNotes.getYearNote(year) } ?: return null)
 	}
 
 	/**
@@ -541,7 +544,7 @@ class FrontendBackendApi(
 	 * @returns {BNote|null}
 	 */
 	fun getRootCalendarNote(): Note? {
-		return DateNotes.getCalendarRoot()
+		return runBlocking { DateNotes.getCalendarRoot() }
 	}
 
 	@JavascriptInterface

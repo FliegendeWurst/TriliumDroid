@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.databinding.ItemTreeNoteBinding
+import kotlinx.coroutines.runBlocking
 
 
 class TreeItemAdapter(
@@ -41,7 +42,8 @@ class TreeItemAdapter(
 	) :
 		RecyclerView.ViewHolder(itemView) {
 		fun bind(item: Pair<Branch, Int>) {
-			binding.label.text = Cache.getNote(item.first.note)?.title ?: item.first.note
+			binding.label.text =
+				runBlocking { Cache.getNote(item.first.note) }?.title ?: item.first.note
 			val params = binding.label.layoutParams
 			if (params is ViewGroup.MarginLayoutParams) {
 				params.leftMargin = item.second * 20

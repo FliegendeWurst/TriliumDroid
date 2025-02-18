@@ -13,11 +13,13 @@ import android.widget.EditText
 import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
+import kotlinx.coroutines.launch
 
 
 object ModifyLabelsDialog {
@@ -160,25 +162,28 @@ object ModifyLabelsDialog {
 		currentNote: Note,
 		labels: List<Label>
 	) {
-		val previousLabels = currentNote.getLabels().map {
-			return@map Pair(it.name, it.value)
-		}.toMap()
-		for (change in changes) {
-			val attrName = change.key
-			val attrValue = change.value
-			if (attrValue == null) {
-				Cache.deleteLabel(currentNote, attrName)
-				continue
+		activity.lifecycleScope.launch {
+			val previousLabels = currentNote.getLabels().map {
+				return@map Pair(it.name, it.value)
+			}.toMap()
+			for (change in changes) {
+				val attrName = change.key
+				val attrValue = change.value
+				if (attrValue == null) {
+					Cache.deleteLabel(currentNote, attrName)
+					continue
+				}
+				if (previousLabels[attrName] == attrValue) {
+					continue
+				}
+				val inheritable =
+					labels.filter { x -> x.name == attrName }.map { x -> x.inheritable }
+						.firstOrNull()
+						?: false
+				Cache.updateLabel(currentNote, attrName, attrValue, inheritable)
 			}
-			if (previousLabels[attrName] == attrValue) {
-				continue
-			}
-			val inheritable =
-				labels.filter { x -> x.name == attrName }.map { x -> x.inheritable }.firstOrNull()
-					?: false
-			Cache.updateLabel(currentNote, attrName, attrValue, inheritable)
+			dialog.dismiss()
+			activity.refreshWidgets(currentNote)
 		}
-		dialog.dismiss()
-		activity.refreshWidgets(currentNote)
 	}
 }

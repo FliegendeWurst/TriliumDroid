@@ -31,7 +31,7 @@ class NoteMapFragment : Fragment(R.layout.fragment_note_map), NoteRelatedFragmen
 			if (noteId == "GLOBAL") {
 				binding.viewNoteMap.g = createGraphGlobal()
 			} else {
-				binding.viewNoteMap.g = createGraph(Cache.getNote(noteId!!)!!)
+				binding.viewNoteMap.g = createGraph(runBlocking { Cache.getNote(noteId!!)!! })
 			}
 		}
 		return binding.root

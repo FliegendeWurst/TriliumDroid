@@ -1,6 +1,9 @@
 package eu.fliegendewurst.triliumdroid.data
 
 import eu.fliegendewurst.triliumdroid.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.util.*
 
 class Note(
@@ -43,7 +46,9 @@ class Note(
 
 	fun getLabelValue(name: String): Label? {
 		if (!inheritableCached) {
-			cacheInheritableAttributes()
+			runBlocking {
+				cacheInheritableAttributes()
+			}
 		}
 		for (label in labels.orEmpty() + inheritedLabels.orEmpty()) {
 			if (label.name == name) {
@@ -59,7 +64,9 @@ class Note(
 
 	fun getRelationValue(name: String): Relation? {
 		if (!inheritableCached) {
-			cacheInheritableAttributes()
+			runBlocking {
+				cacheInheritableAttributes()
+			}
 		}
 		for (relation in relations.orEmpty() + inheritedRelations.orEmpty()) {
 			if (relation.name == name) {
@@ -69,19 +76,19 @@ class Note(
 		return null
 	}
 
-	fun computeChildren(): SortedSet<Branch> {
+	suspend fun computeChildren(): SortedSet<Branch> = withContext(Dispatchers.IO) {
 		if (children != null) {
-			return children!!
+			return@withContext children!!
 		}
 		Cache.getChildren(id)
-		return children ?: TreeSet()
+		return@withContext children ?: TreeSet()
 	}
 
-	private fun cacheInheritableAttributes() {
+	private suspend fun cacheInheritableAttributes(): Unit = withContext(Dispatchers.IO)  {
 		if (id == "none" || inheritableCached) {
-			return
+			return@withContext
 		}
-		val paths = Cache.getNotePaths(id) ?: return
+		val paths = Cache.getNotePaths(id) ?: return@withContext
 		val allLabels = mutableListOf<Label>()
 		val allRelations = mutableListOf<Relation>()
 		for (path in paths) {
@@ -174,14 +181,18 @@ class Note(
 
 	fun getAttributes(): List<Attribute> {
 		if (!inheritableCached) {
+			runBlocking {
 			cacheInheritableAttributes()
+				}
 		}
 		return labels.orEmpty() + relations.orEmpty() + inheritedLabels.orEmpty() + inheritedRelations.orEmpty()
 	}
 
 	fun getLabels(): List<Label> {
 		if (!inheritableCached) {
-			cacheInheritableAttributes()
+			runBlocking {
+				cacheInheritableAttributes()
+			}
 		}
 		return labels.orEmpty() + inheritedLabels.orEmpty()
 	}
@@ -192,7 +203,9 @@ class Note(
 
 	fun getRelations(): List<Relation> {
 		if (!inheritableCached) {
-			cacheInheritableAttributes()
+			runBlocking {
+				cacheInheritableAttributes()
+			}
 		}
 		return relations.orEmpty() + inheritedRelations.orEmpty()
 	}

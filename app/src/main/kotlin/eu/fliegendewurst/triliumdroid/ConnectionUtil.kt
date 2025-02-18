@@ -114,7 +114,7 @@ object ConnectionUtil {
 		}
 	}
 
-	suspend fun resetClient(applicationContext: Context) = withContext(Dispatchers.IO) {
+	fun resetClient(applicationContext: Context) {
 		client = null
 		var clientBuilder = OkHttpClient.Builder()
 			.cookieJar(object : CookieJar {

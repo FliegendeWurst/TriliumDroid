@@ -19,12 +19,15 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.iterator
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.FrontendBackendApi
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteBinding
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 
 class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
@@ -36,13 +39,13 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 
 	private lateinit var binding: FragmentNoteBinding
 	private var handler: Handler? = null
-	private var id: String? = null
+	private var note: Note? = null
 	private var load: Boolean = false
 	private var subCodeNotes: List<Note>? = null
 	var console: MutableList<ConsoleMessage> = mutableListOf()
 
 	override fun getNoteId(): String? {
-		return id
+		return note?.id
 	}
 
 	@SuppressLint("SetJavaScriptEnabled")
@@ -72,12 +75,15 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 				if (url.startsWith(WEBVIEW_DOMAIN) && url.contains('#')) {
 					val parts = url.split('/')
 					val lastPart = parts.last()
-					if (lastPart == id) {
+					if (lastPart == note?.id) {
 						return
 					}
 					val id = parts.last().trimStart('#')
 					Log.i(TAG, "navigating to note $id")
-					(activity as MainActivity).navigateTo(Cache.getNote(id)!!)
+					val main = activity as MainActivity
+					main.lifecycleScope.launch {
+						main.navigateTo(Cache.getNote(id)!!)
+					}
 				}
 			}
 
@@ -124,18 +130,18 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 					if (id == "favicon.ico") {
 						return null // TODO: catch all invalid IDs
 					}
-					val note = Cache.getNoteWithContent(id)
+					val note = runBlocking { Cache.getNoteWithContent(id) }
 					var content = note?.content
 					var mime = note?.mime
 					if (note == null) {
 						// try attachment
-						val attachment = Cache.getAttachmentWithContent(id)
+						val attachment = runBlocking { Cache.getAttachmentWithContent(id) }
 						content = attachment?.content
 						mime = attachment?.mime
 					}
 					return if (content != null) {
 						var data = content
-						if (note != null && note.id == this@NoteFragment.id && subCodeNotes != null && !note.contentFixed) {
+						if (note != null && note.id == this@NoteFragment.note?.id && subCodeNotes != null && !note.contentFixed) {
 							// append <script> tags to load children
 							if (data.isEmpty()) {
 								data += "<!DOCTYPE html>".encodeToByteArray()
@@ -159,36 +165,39 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		}
 
 		if (load) {
-			load(id)
+			load(note)
 		}
 
 		return binding.root
 	}
 
-	fun loadLater(id: String?) {
+	fun loadLater(note: Note?) {
 		load = true
-		this.id = id
+		this.note = note
 	}
 
 	@SuppressLint("MissingInflatedId")
-	fun load(id: String?) {
+	fun load(noteToLoad: Note?) {
+		var note = noteToLoad
 		// if called before proper creation
 		if (this.activity == null) {
-			loadLater(id)
+			loadLater(note)
 			return
 		}
 		console.clear()
 		subCodeNotes = emptyList()
 
-		this.id = id
+		this.note = note
 		this.load = true
-		Log.i(TAG, "loading $id")
-		if (id == null) {
+		Log.i(TAG, "loading ${note?.id}")
+		if (note == null) {
 			return
 		}
 		Cache.initializeDatabase(requireContext())
-		binding.textId.text = id
-		val note = Cache.getNoteWithContent(id)
+		binding.textId.text = note.id
+		if (note.content == null) {
+			note = runBlocking { Cache.getNoteWithContent(note!!.id) }
+		}
 		if (note == null) {
 			(this@NoteFragment.activity as MainActivity).handleEmptyNote()
 			return
@@ -213,11 +222,14 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 
 			if (note.type == "render") {
 				val renderTarget = note.getRelation("renderNote") ?: return@post
-				load(renderTarget.id)
+				viewLifecycleOwner.lifecycleScope.launch {
+					load(Cache.getNoteWithContent(renderTarget.id))
+				}
 			} else if (note.type == "code") {
 				// code notes automatically load all the scripts in child nodes
 				// -> modify content returned by webview interceptor
-				subCodeNotes = note.children.orEmpty().map { Cache.getNote(it.note)!! }
+				subCodeNotes =
+					note.children.orEmpty().map { runBlocking { Cache.getNote(it.note)!! } }
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)
 			} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)
@@ -237,7 +249,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 				consoleLog,
 				execute,
 				share,
-				id == "root"
+				note.id == "root"
 			)
 
 			if (note.content == null || note.content?.size?.compareTo(0) == 0 || (
@@ -279,12 +291,14 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 				}
 				val newValue = textInput.text
 				if (newValue != attribute.value) {
-					Cache.updateLabel(
-						note,
-						attribute.name,
-						newValue.toString(),
-						attribute.inheritable
-					)
+					runBlocking {
+						Cache.updateLabel(
+							note,
+							attribute.name,
+							newValue.toString(),
+							attribute.inheritable
+						)
+					}
 				}
 			}
 			view.layoutParams = ConstraintLayout.LayoutParams(
