@@ -639,10 +639,10 @@ class FrontendBackendApi(
 	 */
 	fun getAppInfo(): JSONObject {
 		val o = JSONObject()
-		o.put("syncVersion", Cache.CacheDbHelper.SYNC_VERSION)
-		o.put("appVersion", Cache.CacheDbHelper.APP_VERSION)
+		o.put("syncVersion", Cache.Versions.SYNC_VERSION)
+		o.put("appVersion", Cache.Versions.APP_VERSION)
 		o.put("buildRevision", "HEAD")
-		o.put("dbVersion", Cache.CacheDbHelper.DATABASE_VERSION)
+		o.put("dbVersion", Cache.Versions.DATABASE_VERSION)
 		o.put("dataDirectory", "/data/")
 		o.put(
 			"buildDate",

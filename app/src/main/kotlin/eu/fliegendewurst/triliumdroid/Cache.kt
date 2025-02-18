@@ -986,8 +986,9 @@ object Cache {
 		lastSync = System.currentTimeMillis()
 		// first, verify correct sync version
 		ConnectionUtil.getAppInfo {
+			Log.d(TAG, "app info: $it")
 			if (it != null) {
-				if ((it.syncVersion == CacheDbHelper.SYNC_VERSION || it.syncVersion == CacheDbHelper.SYNC_VERSION_0_63_3) && it.dbVersion == CacheDbHelper.DATABASE_VERSION) {
+				if (Versions.SUPPORTED_SYNC_VERSIONS.contains(it.syncVersion) && it.dbVersion == Versions.DATABASE_VERSION) {
 					runBlocking {
 						sync(0, callbackOutstanding, callbackError, callbackDone)
 					}
@@ -1125,9 +1126,9 @@ object Cache {
 		return file.exists()
 	}
 
-	fun initializeDatabase(context: Context) {
+	suspend fun initializeDatabase(context: Context) = withContext(Dispatchers.IO) {
 		if (db != null && db!!.isOpen) {
-			return
+			return@withContext
 		}
 		try {
 			val sql = context.resources.openRawResource(R.raw.schema).bufferedReader()
@@ -1135,7 +1136,7 @@ object Cache {
 			dbHelper = CacheDbHelper(context, sql)
 			db = dbHelper!!.writableDatabase
 		} catch (t: Throwable) {
-			Log.e(TAG, "fatal", t)
+			Log.e(TAG, "fatal ", t)
 		}
 	}
 
@@ -1344,8 +1345,8 @@ object Cache {
 			.replace('T', ' ')
 	}
 
-	class CacheDbHelper(context: Context, private val sql: String) :
-		SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+	private class CacheDbHelper(context: Context, private val sql: String) :
+		SQLiteOpenHelper(context, Versions.DATABASE_NAME, null, Versions.DATABASE_VERSION) {
 
 		override fun onCreate(db: SQLiteDatabase) {
 			try {
@@ -1563,29 +1564,35 @@ object Cache {
 		override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
 			// TODO: do something here
 		}
+	}
 
-		// see https://github.com/TriliumNext/Notes/tree/develop/db
-		// and https://github.com/TriliumNext/Notes/blob/develop/src/services/app_info.ts
-		companion object {
-			const val DATABASE_VERSION_0_59_4 = 213
-			const val DATABASE_VERSION_0_60_4 = 214
-			const val DATABASE_VERSION_0_61_5 = 225
-			const val DATABASE_VERSION_0_62_3 = 227
-			const val DATABASE_VERSION_0_63_3 = 228 // same up to 0.91.6
-			const val SYNC_VERSION_0_59_4 = 29
-			const val SYNC_VERSION_0_60_4 = 29
-			const val SYNC_VERSION_0_62_3 = 31
-			const val SYNC_VERSION_0_63_3 = 32
-			const val SYNC_VERSION_0_90_12 = 33
-			const val SYNC_VERSION_0_91_6 = 34
+	// see https://github.com/TriliumNext/Notes/tree/develop/db
+	// and https://github.com/TriliumNext/Notes/blob/develop/src/services/app_info.ts
+	object Versions {
+		const val DATABASE_VERSION_0_59_4 = 213
+		const val DATABASE_VERSION_0_60_4 = 214
+		const val DATABASE_VERSION_0_61_5 = 225
+		const val DATABASE_VERSION_0_62_3 = 227
+		const val DATABASE_VERSION_0_63_3 = 228 // same up to 0.91.6
+		const val SYNC_VERSION_0_59_4 = 29
+		const val SYNC_VERSION_0_60_4 = 29
+		const val SYNC_VERSION_0_62_3 = 31
+		const val SYNC_VERSION_0_63_3 = 32
+		const val SYNC_VERSION_0_90_12 = 33
+		const val SYNC_VERSION_0_91_6 = 34
 
-			const val DATABASE_VERSION = DATABASE_VERSION_0_63_3
-			const val DATABASE_NAME = "Document.db"
+		val SUPPORTED_SYNC_VERSIONS: Set<Int> = setOf(
+			SYNC_VERSION_0_91_6,
+			SYNC_VERSION_0_90_12,
+			SYNC_VERSION_0_63_3,
+		)
 
-			// sync version is largely irrelevant
-			const val SYNC_VERSION = SYNC_VERSION_0_91_6
-			const val APP_VERSION = "0.91.6"
-		}
+		const val DATABASE_VERSION = DATABASE_VERSION_0_63_3
+		const val DATABASE_NAME = "Document.db"
+
+		// sync version is largely irrelevant
+		const val SYNC_VERSION = SYNC_VERSION_0_91_6
+		const val APP_VERSION = "0.91.6"
 	}
 
 	object CursorFactory : SQLiteDatabase.CursorFactory {

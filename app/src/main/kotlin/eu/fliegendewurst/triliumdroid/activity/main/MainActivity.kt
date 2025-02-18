@@ -227,8 +227,8 @@ class MainActivity : AppCompatActivity() {
 				val text = intent.getStringExtra(Intent.EXTRA_TEXT)
 				if (text != null) {
 					if (Cache.haveDatabase(this)) {
-						Cache.initializeDatabase(applicationContext)
 						runBlocking {
+							Cache.initializeDatabase(applicationContext)
 							val inbox = DateNotes.getInboxNote()
 							val note = Cache.createChildNote(
 								inbox,
@@ -399,11 +399,6 @@ class MainActivity : AppCompatActivity() {
 			performAction(action ?: return@setOnClickListener)
 		}
 
-		if (!Cache.haveDatabase(this)) {
-			val intent = Intent(this, WelcomeActivity::class.java)
-			startActivity(intent)
-		}
-
 		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
 				if (noteHistory.goBack(this@MainActivity)) {
@@ -411,17 +406,13 @@ class MainActivity : AppCompatActivity() {
 				}
 			}
 		})
-
-		if (Cache.haveDatabase(this)) {
-			Cache.initializeDatabase(applicationContext)
-		}
 	}
 
 	override fun onStart() {
 		super.onStart()
 		if (Cache.haveDatabase(this)) {
-			Cache.initializeDatabase(applicationContext)
-			if (prefs.getString("hostname", null) == null) {
+			runBlocking { Cache.initializeDatabase(applicationContext) }
+			if (!prefs.contains("hostname")) {
 				Log.i(TAG, "starting setup!")
 				val intent = Intent(this, SetupActivity::class.java)
 				startActivity(intent)
@@ -439,11 +430,15 @@ class MainActivity : AppCompatActivity() {
 						}
 					})
 					Cache.getTreeData("")
+					refreshTree()
 					showInitialNote(true)
 				}
 			} else if (noteHistory.isEmpty()) {
 				showInitialNote(true)
 			}
+		} else {
+			val intent = Intent(this, WelcomeActivity::class.java)
+			startActivity(intent)
 		}
 		binding.fab.setImageResource(
 			ConfigureFabsDialog.getIcon(
@@ -557,40 +552,34 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun refreshTree() {
-		// TODO: investigate error handling
-		lifecycleScope.launch {
-			val items = Cache.getTreeList("none_root", 0)
-			Log.i(TAG, "about to show ${items.size} tree items")
-			tree!!.submitList(items)
-		}
+		val items = Cache.getTreeList("none_root", 0)
+		Log.i(TAG, "about to show ${items.size} tree items")
+		tree!!.submitList(items)
 	}
 
 	private fun handleError(it: Exception) {
 		var toastText: String? = null
-		if (it is SSLHandshakeException) {
-			val cause = it.cause
-			if (cause is CertificateException) {
-				val cause2 = cause.cause
-				if (cause2 is CertPathValidatorException) {
-					val cert = cause2.certPath.certificates[0]
-					AlertDialog.Builder(this)
-						.setTitle("Trust sync server certificate?")
-						.setMessage(cert.toString())
-						.setPositiveButton(
-							android.R.string.ok
-						) { dialog, _ ->
-							val ks: KeyStore = KeyStore.getInstance("AndroidKeyStore").apply {
-								load(null)
-							}
-							ks.setEntry("syncServer", KeyStore.TrustedCertificateEntry(cert), null)
-							ConnectionUtil.resetClient(applicationContext)
-							startSync(handler)
-							dialog.dismiss()
-						}
-						.setNegativeButton(android.R.string.cancel, null).show()
+		val cause = it.cause
+		val cause2 = cause?.cause
+		if (it is SSLHandshakeException && cause is CertificateException && cause2 is CertPathValidatorException) {
+			val cert = cause2.certPath.certificates[0]
+			AlertDialog.Builder(this)
+				.setTitle("Trust sync server certificate?")
+				.setMessage(cert.toString())
+				.setPositiveButton(
+					android.R.string.ok
+				) { dialog, _ ->
+					val ks: KeyStore = KeyStore.getInstance("AndroidKeyStore").apply {
+						load(null)
+					}
+					ks.setEntry("syncServer", KeyStore.TrustedCertificateEntry(cert), null)
+					ConnectionUtil.resetClient(applicationContext)
+					startSync(handler)
+					dialog.dismiss()
 				}
-			}
+				.setNegativeButton(android.R.string.cancel, null).show()
 		}
+
 		if (it is SSLException && it.message == "Unable to parse TLS packet header") {
 			toastText = "Invalid TLS configuration"
 		}

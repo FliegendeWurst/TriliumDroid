@@ -49,7 +49,7 @@ object ConnectionUtil {
 	private var password: String = "aaaaaa" // easy to catch in logs
 	var instanceId: String? = null
 	private var prefs: SharedPreferences? = null
-	private var syncVersion: Int = Cache.CacheDbHelper.SYNC_VERSION
+	private var syncVersion: Int = Cache.Versions.SYNC_VERSION
 	private var loginFails = 0
 
 	private var dbMismatch: Boolean = false
@@ -79,8 +79,8 @@ object ConnectionUtil {
 		if (documentSecret == null) {
 			loginSuccess = false
 			fetch("/api/setup/sync-seed", null, true, {
-				if (it.getInt("syncVersion") != Cache.CacheDbHelper.SYNC_VERSION && it.getInt("syncVersion") != Cache.CacheDbHelper.SYNC_VERSION_0_63_3) {
-					callbackError(IllegalStateException("wrong sync version"))
+				if (!Cache.Versions.SUPPORTED_SYNC_VERSIONS.contains(it.getInt("syncVersion"))) {
+					callbackError(IllegalStateException("unsupported sync version"))
 					return@fetch
 				}
 				syncVersion = it.getInt("syncVersion")
@@ -351,7 +351,7 @@ object ConnectionUtil {
 						}
 						if (msg.startsWith("Non-matching sync versions, local is version 32, remote is")) {
 							prefs!!.edit()
-								.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_63_3)
+								.putInt("syncVersion", Cache.Versions.SYNC_VERSION_0_63_3)
 								.apply()
 							runBlocking {
 								connect(server, callback, callbackError)
@@ -360,7 +360,7 @@ object ConnectionUtil {
 						}
 						if (msg.startsWith("Non-matching sync versions, local is version 33, remote is")) {
 							prefs!!.edit()
-								.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_90_12)
+								.putInt("syncVersion", Cache.Versions.SYNC_VERSION_0_90_12)
 								.apply()
 							runBlocking {
 								connect(server, callback, callbackError)

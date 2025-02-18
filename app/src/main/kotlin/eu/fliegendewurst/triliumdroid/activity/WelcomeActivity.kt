@@ -3,9 +3,12 @@ package eu.fliegendewurst.triliumdroid.activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.databinding.ActivityWelcomeBinding
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class WelcomeActivity : AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,8 +25,10 @@ class WelcomeActivity : AppCompatActivity() {
 		super.onStart()
 		val prefs = PreferenceManager.getDefaultSharedPreferences(this)
 		if (prefs.contains("hostname") && prefs.getString("hostname", "") != "") {
-			Cache.initializeDatabase(this)
-			finish()
+			lifecycleScope.launch {
+				Cache.initializeDatabase(this@WelcomeActivity)
+				finish()
+			}
 		}
 	}
 }

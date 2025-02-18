@@ -176,7 +176,6 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		this.note = note
 	}
 
-	@SuppressLint("MissingInflatedId")
 	fun load(noteToLoad: Note?) {
 		var note = noteToLoad
 		// if called before proper creation
@@ -193,10 +192,12 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		if (note == null) {
 			return
 		}
-		Cache.initializeDatabase(requireContext())
 		binding.textId.text = note.id
 		if (note.content == null) {
-			note = runBlocking { Cache.getNoteWithContent(note!!.id) }
+			note = runBlocking {
+				Cache.initializeDatabase(requireContext())
+				Cache.getNoteWithContent(note!!.id)
+			}
 		}
 		if (note == null) {
 			(this@NoteFragment.activity as MainActivity).handleEmptyNote()
