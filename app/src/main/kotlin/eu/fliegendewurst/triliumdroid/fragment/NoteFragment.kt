@@ -223,16 +223,16 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			if (note.type == "render") {
 				val renderTarget = note.getRelation("renderNote") ?: return@post
 				viewLifecycleOwner.lifecycleScope.launch {
-					load(Cache.getNoteWithContent(renderTarget.id))
+					load(renderTarget)
 				}
 			} else if (note.type == "code") {
 				// code notes automatically load all the scripts in child nodes
 				// -> modify content returned by webview interceptor
 				subCodeNotes =
 					note.children.orEmpty().map { runBlocking { Cache.getNote(it.note)!! } }
-				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)
+				binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
 			} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
-				binding.webview.loadUrl(WEBVIEW_DOMAIN + id)
+				binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
 			} else {
 				binding.webview.settings.builtInZoomControls = true
 				binding.webview.settings.displayZoomControls = false

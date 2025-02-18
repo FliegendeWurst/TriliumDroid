@@ -32,6 +32,7 @@ jobs:
       - name: Run tests on emulator
         run: ./gradlew :app:pixel9api35DebugAndroidTest
       - name: Upload screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
