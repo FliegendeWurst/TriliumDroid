@@ -257,29 +257,34 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
-                <TextView
-                    android:id="@+id/input_fab"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingTop="@dimen/medium_margin"
-                    android:text="@string/jump_to_dialog"
-                    android:textSize="@dimen/bigger_text_size"
+                    android:orientation="horizontal"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/label_fab" />
+                    app:layout_constraintTop_toBottomOf="@+id/label_fab">
 
-                <Button
-                    android:id="@+id/button_configure_fabs"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:layout_marginStart="4dp"
-                    android:contentDescription="@string/description_modify_fabs"
-                    android:drawableStart="@drawable/bx_cog"
-                    android:padding="0dp"
-                    android:paddingStart="6dp"
-                    app:layout_constraintBaseline_toBaselineOf="@id/input_fab"
-                    app:layout_constraintStart_toEndOf="@id/input_fab"
-                    tools:ignore="RtlSymmetry" />
+                    <TextView
+                        android:id="@+id/input_fab"
+                        style="@style/SettingsTextLabelStyle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingTop="@dimen/medium_margin"
+                        android:text="@string/jump_to_dialog"
+                        android:textSize="@dimen/bigger_text_size" />
+
+                    <Button
+                        android:id="@+id/button_configure_fabs"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_marginStart="4dp"
+                        android:contentDescription="@string/description_modify_fabs"
+                        android:drawableStart="@drawable/bx_cog"
+                        android:padding="0dp"
+                        android:paddingStart="6dp"
+                        tools:ignore="RtlSymmetry" />
+                </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

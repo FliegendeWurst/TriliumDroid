@@ -31,11 +31,13 @@ object ConfigureFabsDialog {
 	)
 
 	fun init(prefs: SharedPreferences) {
+		val haveLeftAction = getLeftAction(prefs) != null
+		val haveRightAction = getRightAction(prefs) != null
 		for (action in actions.keys) {
 			if (getPref(prefs, action) == null) {
 				when (action) {
 					"showNoteTree" -> {
-						setPref(prefs, action, left = true, right = false, show = false)
+						setPref(prefs, action, left = !haveLeftAction, right = false, show = false)
 					}
 
 					"jumpToNote" -> {
@@ -43,7 +45,7 @@ object ConfigureFabsDialog {
 					}
 
 					NOTE_NAVIGATION -> {
-						setPref(prefs, action, left = false, right = true, show = false)
+						setPref(prefs, action, left = false, right = !haveRightAction, show = false)
 					}
 
 					else -> {

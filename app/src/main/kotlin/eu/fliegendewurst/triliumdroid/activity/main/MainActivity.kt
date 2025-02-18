@@ -92,6 +92,7 @@ import java.io.IOException
 import java.security.KeyStore
 import java.security.cert.CertPathValidatorException
 import java.security.cert.CertificateException
+import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
@@ -577,7 +578,9 @@ class MainActivity : AppCompatActivity() {
 						.setNegativeButton(android.R.string.cancel, null).show()
 				}
 			}
-			// TODO ask user if they trust server certificate
+		}
+		if (it is SSLException && it.message == "Unable to parse TLS packet header") {
+			toastText = "Invalid TLS configuration"
 		}
 		if (it is IllegalStateException) {
 			toastText = it.message ?: "IllegalStateException"
