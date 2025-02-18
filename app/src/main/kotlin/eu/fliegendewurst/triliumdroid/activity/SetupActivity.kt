@@ -77,11 +77,9 @@ class SetupActivity : AppCompatActivity() {
 						return@choosePrivateKeyAlias
 					}
 					// test we can actually retrieve the key material
-					var pk: PrivateKey? = null
-					var chain: Array<X509Certificate>? = null
 					runBlocking {
-						pk = KeyChain.getPrivateKey(applicationContext, alias)
-						chain = KeyChain.getCertificateChain(applicationContext, alias)
+						KeyChain.getPrivateKey(applicationContext, alias)
+						KeyChain.getCertificateChain(applicationContext, alias)
 					}
 					prefs.edit().putString("mTLS_cert", alias).apply()
 					runBlocking {

@@ -276,12 +276,16 @@ object ConnectionUtil {
 				override fun onResponse(call: Call, response: Response) {
 					response.use {
 						val resp = response.body!!.string()
-						val obj = JSONObject(resp)
-						if (response.code != 200) {
-							callbackError(IllegalStateException("bad response code"))
-							return
+						try {
+							val obj = JSONObject(resp)
+							if (response.code != 200) {
+								callbackError(IllegalStateException("bad response code"))
+								return
+							}
+							callbackOk(obj)
+						} catch (e: Exception) {
+							callbackError(e)
 						}
-						callbackOk(obj)
 					}
 				}
 
