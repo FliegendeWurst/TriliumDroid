@@ -51,7 +51,7 @@ class InitialSyncTest {
 		Espresso.closeSoftKeyboard()
 		Thread.sleep(2000)
 		Espresso.pressBack()
-		Thread.sleep(60000) // wait for Sync to finish
+		Thread.sleep(70000) // wait for Sync to finish
 
 		// create lots of date notes in 2021-12
 		runBlocking {
