@@ -10,7 +10,6 @@ import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
 import kotlinx.coroutines.runBlocking
-import java.util.*
 
 object CreateNewNoteDialog {
 	fun showDialog(activity: MainActivity, createAsChild: Boolean, currentNote: Note) {

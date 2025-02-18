@@ -982,7 +982,7 @@ object Cache {
 		callbackOutstanding: (Int) -> Unit,
 		callbackError: (Exception) -> Unit,
 		callbackDone: (Pair<Int, Int>) -> Unit
-	) = withContext(Dispatchers.IO) {
+	) {
 		lastSync = System.currentTimeMillis()
 		// first, verify correct sync version
 		ConnectionUtil.getAppInfo {

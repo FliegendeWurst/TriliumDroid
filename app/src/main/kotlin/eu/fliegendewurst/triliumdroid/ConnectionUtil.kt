@@ -21,8 +21,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.HeldCertificate
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
@@ -33,10 +31,8 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
-import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSession
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
@@ -180,10 +176,10 @@ object ConnectionUtil {
 				keyType: String?,
 				issuers: Array<Principal>
 			): Array<String> {
-				if (mtls != null) {
-					return arrayOf(mtls)
+				return if (mtls != null) {
+					arrayOf(mtls)
 				} else {
-					return arrayOf()
+					arrayOf()
 				}
 			}
 
@@ -192,10 +188,10 @@ object ConnectionUtil {
 				issuers: Array<out Principal>?,
 				socket: Socket?
 			): String {
-				if (mtls != null) {
-					return mtls
+				return if (mtls != null) {
+					mtls
 				} else {
-					return ""
+					""
 				}
 			}
 

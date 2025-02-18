@@ -4,5 +4,7 @@
 - Database management: export / delete functions
 - Crash detection and opt-in reporting
 - Sync on launch no longer blocks note loading
+- Sync prompts to accept self-signed server certificate
 - New note navigation view
+- Android 7 support
 - Authentication with mTLS certificate and key

@@ -135,14 +135,16 @@ class MainActivity : AppCompatActivity() {
 				.build()
 		)
 
-		// Create the NotificationChannel.
-		val name = getString(R.string.channel_name)
-		val importance = NotificationManager.IMPORTANCE_DEFAULT
-		val mChannel = NotificationChannel(AlarmReceiver.CHANNEL_ID, name, importance)
-		// Register the channel with the system. You can't change the importance
-		// or other notification behaviors after this.
-		val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-		notificationManager.createNotificationChannel(mChannel)
+		if (Build.VERSION.SDK_INT >= 26) {
+			// Create the NotificationChannel.
+			val name = getString(R.string.channel_name)
+			val importance = NotificationManager.IMPORTANCE_DEFAULT
+			val mChannel = NotificationChannel(AlarmReceiver.CHANNEL_ID, name, importance)
+			// Register the channel with the system. You can't change the importance
+			// or other notification behaviors after this.
+			val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+			notificationManager.createNotificationChannel(mChannel)
+		}
 
 		val oldHandler = Thread.getDefaultUncaughtExceptionHandler()
 

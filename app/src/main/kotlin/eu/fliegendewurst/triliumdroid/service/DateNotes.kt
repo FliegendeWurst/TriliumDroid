@@ -72,21 +72,21 @@ object DateNotes {
 	/**
 	 * Format expected: YYYY-MM-DD
 	 */
-	suspend fun getDayNote(isoDate: String): Note? = withContext(Dispatchers.IO) {
+	suspend fun getDayNote(isoDate: String): Note? {
 		val todayNote = Cache.getNotesWithAttribute("dateNote", isoDate)
-		return@withContext if (todayNote.isNotEmpty()) {
+		return if (todayNote.isNotEmpty()) {
 			todayNote[0]
 		} else {
 			// create the new date note
 			val month = YEAR_MONTH.format(OffsetDateTime.now())
-			val monthNote = getMonthNote(month) ?: return@withContext null
+			val monthNote = getMonthNote(month) ?: return null
 			val dayLabel = DAY.format(dateFromIso(isoDate))
 
-			val dayNote = runBlocking { Cache.createChildNote(monthNote, dayLabel) }
+			val dayNote = Cache.createChildNote(monthNote, dayLabel)
 
 			// TODO: set dateNote attribute
 
-			return@withContext dayNote
+			return dayNote
 		}
 	}
 

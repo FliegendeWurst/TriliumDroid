@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.VERTICAL
@@ -21,7 +20,7 @@ import eu.fliegendewurst.triliumdroid.databinding.FragmentNavigationBinding
 import eu.fliegendewurst.triliumdroid.databinding.ItemNavigationButtonBinding
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.util.ListRecyclerAdapter
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 
 /**
@@ -89,7 +88,9 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 			view.root.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
 
 			view.navigationButtonFiller.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
-			view.navigationButtonFiller.text = ">"
+			if (x.note.id != "root") {
+				view.navigationButtonFiller.text = ">"
+			}
 			(view.navigationButtonFiller.layoutParams as LinearLayout.LayoutParams).weight = 0f
 			view.clickArea.setBackgroundColor(bg)
 
@@ -139,17 +140,13 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 		this.branch = branch
 
 		val main = this.activity as MainActivity
-		lifecycleScope.launch {
+		runBlocking {
 			val notes = note.computeChildren()
 			if (notes.isEmpty()) {
 				main.navigateTo(note, branch)
-				return@launch
+				return@runBlocking
 			}
-			val entries = notes.map {
-				val noteHere = Cache.getNote(it.note)!!
-				Entry(noteHere.icon(), noteHere.title, noteHere, it, 0)
-			}.asReversed()
-			adapter.submitList(entries)
+
 			val entries2 = Cache.getNotePath(note.id).map {
 				val note2 = Cache.getNote(it.note)!!
 				Entry(note2.icon(), note2.title, note2, it, 0)
@@ -158,6 +155,12 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 			adapter2.submitList(entries2.asReversed())
 			binding.navigationListBottom.stopScroll()
 			binding.navigationListBottom.smoothScrollBy(5000, 0)
+
+			val entries = notes.map {
+				val noteHere = Cache.getNote(it.note)!!
+				Entry(noteHere.icon(), noteHere.title, noteHere, it, 0)
+			}.asReversed()
+			adapter.submitList(entries)
 		}
 	}
 

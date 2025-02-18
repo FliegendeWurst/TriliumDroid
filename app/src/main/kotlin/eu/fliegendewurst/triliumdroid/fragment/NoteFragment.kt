@@ -245,7 +245,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 				)
 			}
 
-			(this@NoteFragment.activity as MainActivity).setupActions(
+			((this@NoteFragment.activity ?: return@post) as MainActivity).setupActions(
 				consoleLog,
 				execute,
 				share,
@@ -261,7 +261,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 	}
 
 	fun refreshHeader(note: Note) {
-		if (!this.load) {
+		if (!this.load || context == null) {
 			return
 		}
 		val constraintLayout = binding.noteHeader

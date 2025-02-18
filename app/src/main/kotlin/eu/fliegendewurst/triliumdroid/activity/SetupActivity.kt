@@ -17,8 +17,6 @@ import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import java.security.PrivateKey
-import java.security.cert.X509Certificate
 
 
 class SetupActivity : AppCompatActivity() {
