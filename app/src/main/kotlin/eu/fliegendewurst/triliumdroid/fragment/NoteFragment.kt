@@ -238,7 +238,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 				binding.webview.settings.displayZoomControls = false
 				binding.webview.loadDataWithBaseURL(
 					WEBVIEW_DOMAIN,
-					"<meta name='viewport' content='width=device-width, initial-scale=1'><img style='max-width: 100%' src='/$id'>",
+					"<meta name='viewport' content='width=device-width, initial-scale=1'><img style='max-width: 100%' src='/${note.id}'>",
 					"text/html; charset=UTF-8",
 					"UTF-8",
 					null
