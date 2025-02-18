@@ -8,7 +8,7 @@ import eu.fliegendewurst.triliumdroid.util.Resources
  */
 class MindMap(jsonString: String) {
 	fun template(context: Context): String {
-		return Resources.mindMap_TPL(context)
+		return Resources.mindMapTemplateHtml(context)
 		// TODO: add javascript to drive the mess?
 	}
 }

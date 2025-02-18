@@ -188,11 +188,7 @@ object ConnectionUtil {
 				issuers: Array<out Principal>?,
 				socket: Socket?
 			): String {
-				return if (mtls != null) {
-					mtls
-				} else {
-					""
-				}
+				return mtls ?: ""
 			}
 
 			override fun getServerAliases(

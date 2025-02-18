@@ -5,7 +5,7 @@ import android.content.Context
 object Resources {
 	private var mindMap_TPL: String? = null
 
-	fun mindMap_TPL(context: Context): String {
+	fun mindMapTemplateHtml(context: Context): String {
 		if (mindMap_TPL != null) {
 			return mindMap_TPL!!
 		}

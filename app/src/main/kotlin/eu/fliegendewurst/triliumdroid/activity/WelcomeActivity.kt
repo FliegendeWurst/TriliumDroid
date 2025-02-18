@@ -8,7 +8,6 @@ import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.databinding.ActivityWelcomeBinding
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class WelcomeActivity : AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {

@@ -40,15 +40,13 @@ class Note(
 		return icon ?: "bx bx-file-blank"
 	}
 
-	fun getLabel(name: String): String? {
+	suspend fun getLabel(name: String): String? {
 		return getLabelValue(name)?.value
 	}
 
-	fun getLabelValue(name: String): Label? {
+	suspend fun getLabelValue(name: String): Label? {
 		if (!inheritableCached) {
-			runBlocking {
-				cacheInheritableAttributes()
-			}
+			cacheInheritableAttributes()
 		}
 		for (label in labels.orEmpty() + inheritedLabels.orEmpty()) {
 			if (label.name == name) {
@@ -58,15 +56,13 @@ class Note(
 		return null
 	}
 
-	fun getRelation(name: String): Note? {
+	suspend fun getRelation(name: String): Note? {
 		return getRelationValue(name)?.target
 	}
 
-	fun getRelationValue(name: String): Relation? {
+	suspend fun getRelationValue(name: String): Relation? {
 		if (!inheritableCached) {
-			runBlocking {
-				cacheInheritableAttributes()
-			}
+			cacheInheritableAttributes()
 		}
 		for (relation in relations.orEmpty() + inheritedRelations.orEmpty()) {
 			if (relation.name == name) {
@@ -179,20 +175,16 @@ class Note(
 		inheritedRelations = emptyList()
 	}
 
-	fun getAttributes(): List<Attribute> {
+	suspend fun getAttributes(): List<Attribute> {
 		if (!inheritableCached) {
-			runBlocking {
 			cacheInheritableAttributes()
-				}
 		}
 		return labels.orEmpty() + relations.orEmpty() + inheritedLabels.orEmpty() + inheritedRelations.orEmpty()
 	}
 
-	fun getLabels(): List<Label> {
+	suspend fun getLabels(): List<Label> {
 		if (!inheritableCached) {
-			runBlocking {
-				cacheInheritableAttributes()
-			}
+			cacheInheritableAttributes()
 		}
 		return labels.orEmpty() + inheritedLabels.orEmpty()
 	}
@@ -201,11 +193,9 @@ class Note(
 		this.labels = labels
 	}
 
-	fun getRelations(): List<Relation> {
+	suspend fun getRelations(): List<Relation> {
 		if (!inheritableCached) {
-			runBlocking {
-				cacheInheritableAttributes()
-			}
+			cacheInheritableAttributes()
 		}
 		return relations.orEmpty() + inheritedRelations.orEmpty()
 	}

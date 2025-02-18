@@ -165,7 +165,9 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		}
 
 		if (load) {
-			load(note)
+			viewLifecycleOwner.lifecycleScope.launch {
+				load(note)
+			}
 		}
 
 		return binding.root
@@ -176,7 +178,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		this.note = note
 	}
 
-	fun load(noteToLoad: Note?) {
+	suspend fun load(noteToLoad: Note?) {
 		var note = noteToLoad
 		// if called before proper creation
 		if (this.activity == null) {
@@ -194,16 +196,14 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		}
 		binding.textId.text = note.id
 		if (note.content == null) {
-			note = runBlocking {
-				Cache.initializeDatabase(requireContext())
-				Cache.getNoteWithContent(note!!.id)
-			}
+			Cache.initializeDatabase(requireContext())
+			note = Cache.getNoteWithContent(note.id)
 		}
 		if (note == null) {
 			(this@NoteFragment.activity as MainActivity).handleEmptyNote()
 			return
 		}
-		handler!!.post {
+		viewLifecycleOwner.lifecycleScope.launch {
 			val consoleLog = false
 			var execute = false
 			var share = false
@@ -222,15 +222,13 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			}
 
 			if (note.type == "render") {
-				val renderTarget = note.getRelation("renderNote") ?: return@post
-				viewLifecycleOwner.lifecycleScope.launch {
-					load(renderTarget)
-				}
+				val renderTarget = note.getRelation("renderNote") ?: return@launch
+				load(renderTarget)
 			} else if (note.type == "code") {
 				// code notes automatically load all the scripts in child nodes
 				// -> modify content returned by webview interceptor
 				subCodeNotes =
-					note.children.orEmpty().map { runBlocking { Cache.getNote(it.note)!! } }
+					note.children.orEmpty().map { Cache.getNote(it.note)!! }
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
 			} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
@@ -246,7 +244,8 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 				)
 			}
 
-			((this@NoteFragment.activity ?: return@post) as MainActivity).setupActions(
+			val main = (this@NoteFragment.activity ?: return@launch) as MainActivity
+			main.setupActions(
 				consoleLog,
 				execute,
 				share,
@@ -256,12 +255,12 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			if (note.content == null || note.content?.size?.compareTo(0) == 0 || (
 						note.content?.size == 15 && note.content?.decodeToString() == "<!DOCTYPE html>")
 			) {
-				(this@NoteFragment.activity as MainActivity).handleEmptyNote()
+				main.handleEmptyNote()
 			}
 		}
 	}
 
-	fun refreshHeader(note: Note) {
+	suspend fun refreshHeader(note: Note) {
 		if (!this.load || context == null) {
 			return
 		}

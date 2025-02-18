@@ -18,7 +18,7 @@ abstract class HistoryItem {
 	abstract fun noteId(): String
 	abstract fun branch(): Branch?
 
-	abstract fun setBranch(branch: Branch);
+	abstract fun setBranch(branch: Branch)
 }
 
 class NoteItem(private val note: Note, private var branch: Branch?) : HistoryItem() {

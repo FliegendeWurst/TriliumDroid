@@ -13,21 +13,28 @@ import eu.fliegendewurst.triliumdroid.activity.SetupActivity
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 
 object ConfigureFabsDialog {
+	const val SHOW_NOTE_TREE: String = "showNoteTree"
+	const val JUMP_TO_NOTE: String = "jumpToNote"
 	const val NOTE_NAVIGATION: String = "noteNavigation"
+	const val EDIT_NOTE: String = "editNote"
+	const val SHARE_NOTE: String = "shareNote"
+	const val DELETE_NOTE: String = "deleteNote"
+	const val NOTE_MAP: String = "noteMap"
+	const val SYNC: String = "sync"
 
 	/**
 	 * See [eu.fliegendewurst.triliumdroid.activity.main.MainActivity.performAction],
 	 * and string array "fabs"
 	 */
 	val actions = mapOf(
-		Pair("showNoteTree", R.id.action_show_note_tree),
-		Pair("jumpToNote", R.id.action_jump_to_note),
+		Pair(SHOW_NOTE_TREE, R.id.action_show_note_tree),
+		Pair(JUMP_TO_NOTE, R.id.action_jump_to_note),
 		Pair(NOTE_NAVIGATION, R.id.action_note_navigation),
-		Pair("editNote", R.id.action_edit),
-		Pair("shareNote", R.id.action_share),
-		Pair("deleteNote", R.id.action_delete),
-		Pair("noteMap", R.id.action_note_map),
-		Pair("sync", R.id.action_sync)
+		Pair(EDIT_NOTE, R.id.action_edit),
+		Pair(SHARE_NOTE, R.id.action_share),
+		Pair(DELETE_NOTE, R.id.action_delete),
+		Pair(NOTE_MAP, R.id.action_note_map),
+		Pair(SYNC, R.id.action_sync)
 	)
 
 	fun init(prefs: SharedPreferences) {

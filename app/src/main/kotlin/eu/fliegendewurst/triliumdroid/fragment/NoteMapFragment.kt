@@ -31,7 +31,7 @@ class NoteMapFragment : Fragment(R.layout.fragment_note_map), NoteRelatedFragmen
 			if (noteId == "GLOBAL") {
 				binding.viewNoteMap.g = createGraphGlobal()
 			} else {
-				binding.viewNoteMap.g = createGraph(runBlocking { Cache.getNote(noteId!!)!! })
+				binding.viewNoteMap.g = runBlocking { createGraph(Cache.getNote(noteId!!)!!) }
 			}
 		}
 		return binding.root
@@ -45,7 +45,7 @@ class NoteMapFragment : Fragment(R.layout.fragment_note_map), NoteRelatedFragmen
 		noteId = "GLOBAL"
 	}
 
-	private fun createGraph(note: Note): Graph<Note, Relation> {
+	private suspend fun createGraph(note: Note): Graph<Note, Relation> {
 		val g = Graph<Note, Relation>()
 
 		g.addNodeAtPosition(note, Position(0F, 0F))

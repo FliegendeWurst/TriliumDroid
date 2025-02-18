@@ -67,7 +67,14 @@ import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.DELETE_NOTE
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.EDIT_NOTE
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.JUMP_TO_NOTE
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.NOTE_MAP
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.NOTE_NAVIGATION
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SHARE_NOTE
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SHOW_NOTE_TREE
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SYNC
 import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
@@ -135,7 +142,7 @@ class MainActivity : AppCompatActivity() {
 				.build()
 		)
 
-		if (Build.VERSION.SDK_INT >= 26) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 			// Create the NotificationChannel.
 			val name = getString(R.string.channel_name)
 			val importance = NotificationManager.IMPORTANCE_DEFAULT
@@ -263,7 +270,9 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		tree = TreeItemAdapter({
-			navigateTo(runBlocking { Cache.getNote(it.note)!! }, it)
+			lifecycleScope.launch {
+				navigateTo(Cache.getNoteWithContent(it.note)!!, it)
+			}
 		}, {
 			runBlocking {
 				Cache.toggleBranch(it)
@@ -463,11 +472,11 @@ class MainActivity : AppCompatActivity() {
 
 	private fun performAction(action: String) {
 		when (action) {
-			"showNoteTree" -> {
+			SHOW_NOTE_TREE -> {
 				doMenuAction(R.id.action_show_note_tree)
 			}
 
-			"jumpToNote" -> {
+			JUMP_TO_NOTE -> {
 				doMenuAction(R.id.action_jump_to_note)
 			}
 
@@ -475,23 +484,23 @@ class MainActivity : AppCompatActivity() {
 				doMenuAction(R.id.action_note_navigation)
 			}
 
-			"editNote" -> {
+			EDIT_NOTE -> {
 				doMenuAction(R.id.action_edit)
 			}
 
-			"shareNote" -> {
+			SHARE_NOTE -> {
 				doMenuAction(R.id.action_share)
 			}
 
-			"deleteNote" -> {
+			DELETE_NOTE -> {
 				doMenuAction(R.id.action_delete)
 			}
 
-			"noteMap" -> {
+			NOTE_MAP -> {
 				doMenuAction(R.id.action_note_map)
 			}
 
-			"sync" -> {
+			SYNC -> {
 				doMenuAction(R.id.action_sync)
 			}
 		}
@@ -656,25 +665,23 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun showInitialNote(resetView: Boolean) {
-		lifecycleScope.launch {
-			refreshTree()
-			if (resetView) {
-				var n = firstNote ?: prefs.getString(LAST_NOTE, "root")!!
-				if (Cache.getNote(n) == null) {
-					n = "root" // may happen in case of new database or note deleted
-				}
-				val note = Cache.getNote(n) ?: return@launch
-				navigateTo(note, note.branches.first())
-				// first use: open the drawer
-				if (!prefs.contains(LAST_NOTE)) {
-					binding.drawerLayout.openDrawer(GravityCompat.START)
-				}
-			} else {
-				val noteId = getNoteFragment().getNoteId() ?: return@launch
-				val note = Cache.getNote(noteId) ?: return@launch
-				navigateTo(note)
+	private fun showInitialNote(resetView: Boolean) = lifecycleScope.launch {
+		refreshTree()
+		if (resetView) {
+			var n = firstNote ?: prefs.getString(LAST_NOTE, "root")!!
+			if (Cache.getNote(n) == null) {
+				n = "root" // may happen in case of new database or note deleted
 			}
+			val note = Cache.getNote(n) ?: return@launch
+			navigateTo(note, note.branches.first())
+			// first use: open the drawer
+			if (!prefs.contains(LAST_NOTE)) {
+				binding.drawerLayout.openDrawer(GravityCompat.START)
+			}
+		} else {
+			val noteId = getNoteFragment().getNoteId() ?: return@launch
+			val note = Cache.getNote(noteId) ?: return@launch
+			navigateTo(note)
 		}
 	}
 
@@ -720,7 +727,6 @@ class MainActivity : AppCompatActivity() {
 		consoleVisible = true
 	}
 
-	@SuppressLint("SetJavaScriptEnabled")
 	override fun onOptionsItemSelected(item: MenuItem): Boolean {
 		return doMenuAction(item.itemId) || super.onOptionsItemSelected(item)
 	}
@@ -971,7 +977,7 @@ class MainActivity : AppCompatActivity() {
 		binding.toolbarIcon.text = Icon.getUnicodeCharacter(note?.icon() ?: "bx bx-file-blank")
 	}
 
-	fun refreshWidgets(noteContent: Note) {
+	suspend fun refreshWidgets(noteContent: Note) {
 		// attributes
 		val attributes = noteContent.getLabels()
 		val ownedAttributes = attributes.filter { x -> !x.inherited && !x.templated }
@@ -1072,18 +1078,22 @@ class MainActivity : AppCompatActivity() {
 
 		// note paths
 		val notePaths = findViewById<ListView>(R.id.widget_note_paths_type_content)
-		val paths = runBlocking { Cache.getNotePaths(noteContent.id)!! }
+		val paths = Cache.getNotePaths(noteContent.id)!!
 		val currentPath = noteHistory.branch()
-		val branchToString = { x: List<Branch> ->
-			Pair(
-				x.asReversed()
-					.subList(1, x.size)
-					.joinToString(" > ") { runBlocking { Cache.getNote(it.note)!! }.title },
-				x.first()
+		val pathsR = mutableListOf<Pair<String, Branch>>()
+		for (x in paths) {
+			pathsR.add(
+				Pair(
+					x.asReversed()
+						.subList(1, x.size)
+						.map { Cache.getNote(it.note)!!.title }
+						.joinToString(" > "),
+					x.first()
+				)
 			)
 		}
 		val arrayAdapter =
-			ListAdapter(paths.map(branchToString)) { path: Pair<String, Branch>, convertView: View? ->
+			ListAdapter(pathsR) { path: Pair<String, Branch>, convertView: View? ->
 				val pathString = path.first
 				val pathBranch = path.second
 				var vi = convertView
@@ -1197,7 +1207,9 @@ class MainActivity : AppCompatActivity() {
 				}
 				if (pathSelected.first().cachedTreeIndex != null) {
 					noteHistory.setBranch(pathSelected.first())
-					refreshWidgets(noteContent)
+					lifecycleScope.launch {
+						refreshWidgets(noteContent)
+					}
 					scrollTreeToBranch(pathSelected.first())
 					binding.drawerLayout.closeDrawers()
 					binding.drawerLayout.openDrawer(GravityCompat.START)

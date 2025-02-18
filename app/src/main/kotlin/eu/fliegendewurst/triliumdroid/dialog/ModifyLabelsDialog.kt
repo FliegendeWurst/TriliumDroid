@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 
 
 object ModifyLabelsDialog {
-	fun showDialog(activity: MainActivity, currentNote: Note) {
+	fun showDialog(activity: MainActivity, currentNote: Note) = activity.lifecycleScope.launch {
 		val dialog = AlertDialog.Builder(activity)
 			.setTitle(R.string.dialog_modify_labels)
 			.setView(R.layout.dialog_modify_labels)
@@ -161,29 +161,27 @@ object ModifyLabelsDialog {
 		changes: Map<String, String?>,
 		currentNote: Note,
 		labels: List<Label>
-	) {
-		activity.lifecycleScope.launch {
-			val previousLabels = currentNote.getLabels().map {
-				return@map Pair(it.name, it.value)
-			}.toMap()
-			for (change in changes) {
-				val attrName = change.key
-				val attrValue = change.value
-				if (attrValue == null) {
-					Cache.deleteLabel(currentNote, attrName)
-					continue
-				}
-				if (previousLabels[attrName] == attrValue) {
-					continue
-				}
-				val inheritable =
-					labels.filter { x -> x.name == attrName }.map { x -> x.inheritable }
-						.firstOrNull()
-						?: false
-				Cache.updateLabel(currentNote, attrName, attrValue, inheritable)
+	) = activity.lifecycleScope.launch {
+		val previousLabels = currentNote.getLabels().map {
+			return@map Pair(it.name, it.value)
+		}.toMap()
+		for (change in changes) {
+			val attrName = change.key
+			val attrValue = change.value
+			if (attrValue == null) {
+				Cache.deleteLabel(currentNote, attrName)
+				continue
 			}
-			dialog.dismiss()
-			activity.refreshWidgets(currentNote)
+			if (previousLabels[attrName] == attrValue) {
+				continue
+			}
+			val inheritable =
+				labels.filter { x -> x.name == attrName }.map { x -> x.inheritable }
+					.firstOrNull()
+					?: false
+			Cache.updateLabel(currentNote, attrName, attrValue, inheritable)
 		}
+		dialog.dismiss()
+		activity.refreshWidgets(currentNote)
 	}
 }

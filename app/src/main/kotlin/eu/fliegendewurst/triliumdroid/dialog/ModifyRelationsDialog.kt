@@ -18,7 +18,7 @@ import kotlinx.coroutines.runBlocking
 
 
 object ModifyRelationsDialog {
-	fun showDialog(activity: MainActivity, currentNote: Note) {
+	fun showDialog(activity: MainActivity, currentNote: Note) = activity.lifecycleScope.launch {
 		val dialog = AlertDialog.Builder(activity)
 			.setTitle(R.string.dialog_modify_relations)
 			.setView(R.layout.dialog_modify_relations)
