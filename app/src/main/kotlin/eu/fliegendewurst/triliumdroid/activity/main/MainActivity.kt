@@ -8,7 +8,6 @@ import android.content.ClipData
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.content.res.Resources
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
@@ -51,17 +50,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayoutMediator
-import eu.fliegendewurst.triliumdroid.activity.AboutActivity
 import eu.fliegendewurst.triliumdroid.AlarmReceiver
 import eu.fliegendewurst.triliumdroid.BuildConfig
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.FrontendBackendApi
-import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
-import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
 import eu.fliegendewurst.triliumdroid.R
-import eu.fliegendewurst.triliumdroid.activity.SetupActivity
 import eu.fliegendewurst.triliumdroid.TreeItemAdapter
+import eu.fliegendewurst.triliumdroid.activity.AboutActivity
+import eu.fliegendewurst.triliumdroid.activity.SetupActivity
 import eu.fliegendewurst.triliumdroid.activity.WelcomeActivity
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
@@ -78,6 +75,8 @@ import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
 import eu.fliegendewurst.triliumdroid.dialog.SelectNoteDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.fragment.NavigationFragment
+import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
+import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment
@@ -88,8 +87,12 @@ import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.io.File
 import java.io.IOException
-import javax.net.ssl.SSLProtocolException
+import java.security.KeyStore
+import java.security.cert.CertPathValidatorException
+import java.security.cert.CertificateException
+import javax.net.ssl.SSLHandshakeException
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeBytes
@@ -458,15 +461,15 @@ class MainActivity : AppCompatActivity() {
 	private fun performAction(action: String) {
 		when (action) {
 			"showNoteTree" -> {
-				binding.drawerLayout.openDrawer(GravityCompat.START)
+				doMenuAction(R.id.action_show_note_tree)
 			}
 
 			"jumpToNote" -> {
-				JumpToNoteDialog.showDialog(this)
+				doMenuAction(R.id.action_jump_to_note)
 			}
 
 			NOTE_NAVIGATION -> {
-				showNoteNavigation()
+				doMenuAction(R.id.action_note_navigation)
 			}
 
 			"editNote" -> {
@@ -549,8 +552,32 @@ class MainActivity : AppCompatActivity() {
 
 	private fun handleError(it: Exception) {
 		var toastText: String? = null
-		if (it is SSLProtocolException) {
-			// TODO ask the user if they need mTLS
+		if (it is SSLHandshakeException) {
+			val cause = it.cause
+			if (cause is CertificateException) {
+				val cause2 = cause.cause
+				if (cause2 is CertPathValidatorException) {
+					val cert = cause2.certPath.certificates[0]
+					AlertDialog.Builder(this)
+						.setTitle("Trust sync server certificate?")
+						.setMessage(cert.toString())
+						.setPositiveButton(
+							android.R.string.ok
+						) { dialog, _ ->
+							val ks: KeyStore = KeyStore.getInstance("AndroidKeyStore").apply {
+								load(null)
+							}
+							ks.setEntry("syncServer", KeyStore.TrustedCertificateEntry(cert), null)
+							runBlocking {
+								ConnectionUtil.resetClient(applicationContext)
+							}
+							startSync(handler)
+							dialog.dismiss()
+						}
+						.setNegativeButton(android.R.string.cancel, null).show()
+				}
+			}
+			// TODO ask user if they trust server certificate
 		}
 		if (it is IllegalStateException) {
 			toastText = it.message ?: "IllegalStateException"
@@ -648,6 +675,11 @@ class MainActivity : AppCompatActivity() {
 	override fun onCreateOptionsMenu(m: Menu?): Boolean {
 		val menu = binding.toolbar.menu
 		menuInflater.inflate(R.menu.action_bar, menu)
+		for (action in ConfigureFabsDialog.actions) {
+			val menuItem = menu?.findItem(action.value) ?: continue
+			val pref = ConfigureFabsDialog.getPref(prefs, action.key)!!
+			menuItem.isVisible = pref.show
+		}
 		return true
 	}
 
@@ -689,6 +721,21 @@ class MainActivity : AppCompatActivity() {
 
 	private fun doMenuAction(actionId: Int): Boolean {
 		return when (actionId) {
+			R.id.action_show_note_tree -> {
+				binding.drawerLayout.openDrawer(GravityCompat.START)
+				true
+			}
+
+			R.id.action_jump_to_note -> {
+				JumpToNoteDialog.showDialog(this)
+				true
+			}
+
+			R.id.action_note_navigation -> {
+				showNoteNavigation()
+				true
+			}
+
 			R.id.action_edit -> {
 				when (val fragment = getFragment()) {
 					is NoteFragment -> {

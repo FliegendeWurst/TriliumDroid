@@ -6,6 +6,10 @@ class HistoryList {
 	private var items: MutableList<HistoryItem> = mutableListOf()
 
 	fun addAndRestore(item: HistoryItem, activity: MainActivity) {
+		// Note Navigation done? Remove from history.
+		if (items.lastOrNull() is NavigationItem) {
+			items.removeAt(items.size - 1)
+		}
 		items.add(item)
 		items.last().restore(activity)
 	}

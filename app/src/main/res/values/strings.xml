@@ -55,6 +55,7 @@
     <string name="label_fab_action">Action</string>
     <string name="label_fab_left">L</string>
     <string name="label_fab_right">R</string>
+    <string name="label_fab_toolbar">M</string>
     <string name="label_interface">Interface</string>
     <string name="label_floating_action_buttons">Floating action buttons</string>
     <string name="description_modify_fabs">modify floating action buttons</string>
@@ -97,11 +98,20 @@
     <string name="label_note_type">Note Type</string>
     <string name="label_protect_the_note">Protect the note</string>
     <string name="label_bookmark">Bookmark</string>
+    <string name="label_status">Status</string>
+    <string name="status_unknown">Unknown</string>
+    <string name="status_db_mismatch">Database mismatch</string>
+    <string name="status_login_fail">Login failed (check password)</string>
+    <string name="status_connection_fail">Connection failed (check network)</string>
+    <string name="status_sync_success">Last sync: %1$s minutes ago</string>
+    <string name="action_show_note_tree">Show note tree</string>
+    <string name="action_note_navigation">Navigate note tree</string>
+    <string name="fab_setup_hint">L = Left action, R = right action, M = toolbar action</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>
         <item>Jump to note</item>
-        <item>Navigate note tree</item>
+        <item>@string/action_note_navigation</item>
         <item>Edit note</item>
         <item>Share note</item>
         <item>Delete note</item>

@@ -14,7 +14,6 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
-import androidx.core.graphics.toColorLong
 import androidx.core.graphics.withScale
 import androidx.core.graphics.withTranslation
 import eu.fliegendewurst.triliumdroid.R

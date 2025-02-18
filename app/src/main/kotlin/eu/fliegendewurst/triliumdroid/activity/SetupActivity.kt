@@ -34,6 +34,31 @@ class SetupActivity : AppCompatActivity() {
 		binding = ActivitySetupBinding.inflate(layoutInflater)
 		prefs = PreferenceManager.getDefaultSharedPreferences(this)
 		setContentView(binding.root)
+
+		binding.toolbar.setNavigationIcon(R.drawable.ic_arrow_left_vector)
+		binding.toolbar.setNavigationOnClickListener {
+			finish()
+		}
+		binding.toolbar.setTitle(R.string.action_settings)
+
+		val s = ConnectionUtil.status()
+		var status: Int? = R.string.status_unknown
+		if (s.dbMismatch) {
+			status = R.string.status_db_mismatch
+		} else if (!s.loginSuccess) {
+			status = R.string.status_login_fail
+		} else if (!s.connectSuccess) {
+			status = R.string.status_connection_fail
+		} else if (s.lastSync != null) {
+			status = null
+			val deltaSeconds = (System.currentTimeMillis() - s.lastSync) / 1000
+			binding.status.text =
+				resources.getString(R.string.status_sync_success, (deltaSeconds / 60).toString())
+		}
+		if (status != null) {
+			binding.status.setText(status)
+		}
+
 		binding.server.setText(prefs.getString("hostname", ""))
 		binding.password.setText(
 			prefs.getString(
@@ -171,6 +196,7 @@ class SetupActivity : AppCompatActivity() {
 					android.R.string.ok
 				) { _, _ ->
 					Cache.nukeDatabase(this)
+					binding.status.setText(R.string.status_unknown)
 				}
 				.setNegativeButton(android.R.string.cancel, null).show()
 		}
@@ -179,15 +205,15 @@ class SetupActivity : AppCompatActivity() {
 	private fun setText() {
 		var x = ""
 		val labels = resources.getStringArray(R.array.fabs)
-		for (action in ConfigureFabsDialog.actions) {
-			if (ConfigureFabsDialog.getPref(prefs, action)!!.first) {
-				val label = labels[ConfigureFabsDialog.actions.indexOf(action)]
+		for (action in ConfigureFabsDialog.actions.keys) {
+			if (ConfigureFabsDialog.getPref(prefs, action)!!.left) {
+				val label = labels[ConfigureFabsDialog.actions.keys.indexOf(action)]
 				x = label
 			}
 		}
-		for (action in ConfigureFabsDialog.actions) {
-			if (ConfigureFabsDialog.getPref(prefs, action)!!.second) {
-				val label = labels[ConfigureFabsDialog.actions.indexOf(action)]
+		for (action in ConfigureFabsDialog.actions.keys) {
+			if (ConfigureFabsDialog.getPref(prefs, action)!!.right) {
+				val label = labels[ConfigureFabsDialog.actions.keys.indexOf(action)]
 				x = "$x, $label"
 			}
 		}

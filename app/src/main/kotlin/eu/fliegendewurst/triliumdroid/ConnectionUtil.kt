@@ -33,8 +33,10 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSession
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509KeyManager
 import javax.net.ssl.X509TrustManager
@@ -53,6 +55,10 @@ object ConnectionUtil {
 	private var prefs: SharedPreferences? = null
 	private var syncVersion: Int = Cache.CacheDbHelper.SYNC_VERSION
 	private var loginFails = 0
+
+	private var dbMismatch: Boolean = false
+	private var loginSuccess: Boolean = false
+	private var connectSuccess: Boolean = false
 
 	suspend fun setup(
 		applicationContext: Context,
@@ -75,6 +81,7 @@ object ConnectionUtil {
 		}
 		val documentSecret = prefs.getString("documentSecret", null)
 		if (documentSecret == null) {
+			loginSuccess = false
 			fetch("/api/setup/sync-seed", null, true, {
 				if (it.getInt("syncVersion") != Cache.CacheDbHelper.SYNC_VERSION && it.getInt("syncVersion") != Cache.CacheDbHelper.SYNC_VERSION_0_63_3) {
 					callbackError(IllegalStateException("wrong sync version"))
@@ -89,6 +96,7 @@ object ConnectionUtil {
 					if (name == "documentSecret") {
 						prefs.edit().putString("documentSecret", value)
 							.putInt("syncVersion", syncVersion).apply()
+						loginSuccess = true
 						runBlocking {
 							connect(server, callback, callbackError)
 						}
@@ -101,6 +109,7 @@ object ConnectionUtil {
 				callbackError(it)
 			})
 		} else {
+			loginSuccess = true
 			connect(server, callback, callbackError)
 		}
 	}
@@ -136,80 +145,97 @@ object ConnectionUtil {
 				}
 			})
 
-		val mtls = prefs!!.getString("mTLS_cert", null)
-		while (mtls != null) {
-			// TODO: handle null | Exception
-			val pk: PrivateKey?
-			val chain: Array<X509Certificate>?
+		var pk: PrivateKey? = null
+		var chain: Array<X509Certificate>? = null
 
+		val mtls = prefs!!.getString("mTLS_cert", null)
+		if (mtls != null) {
 			try {
 				pk = KeyChain.getPrivateKey(applicationContext, mtls)
 				chain = KeyChain.getCertificateChain(applicationContext, mtls)
 			} catch (t: Throwable) {
 				Log.e(TAG, "failed to read mTLS key ", t)
-				break
 			}
 			if (pk == null || chain == null) {
 				Log.e(TAG, "got null response from KeyChain getPrivateKey or getCertificateChain")
-				break
 			}
+		}
 
-			val trustManagerFactory =
-				TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-			trustManagerFactory.init(null as KeyStore?)
-			val trustManagers = trustManagerFactory.trustManagers
+		val trustManagerFactory =
+			TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+		val ks: KeyStore = KeyStore.getInstance("AndroidKeyStore").apply {
+			load(null)
+		}
+		val serverCert = ks.getCertificate("syncServer")
+		trustManagerFactory.init(ks)
+		val trustManagers = trustManagerFactory.trustManagers
 
 
-			val keyManagerFactory =
-				KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
-			keyManagerFactory.init(null, null)
+		val keyManagerFactory =
+			KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
+		keyManagerFactory.init(null, null)
 
-			val km = object : X509KeyManager {
-				override fun getClientAliases(
-					keyType: String?,
-					issuers: Array<Principal>
-				): Array<String> {
+		val km = object : X509KeyManager {
+			override fun getClientAliases(
+				keyType: String?,
+				issuers: Array<Principal>
+			): Array<String> {
+				if (mtls != null) {
 					return arrayOf(mtls)
-				}
-
-				override fun chooseClientAlias(
-					keyType: Array<out String>?,
-					issuers: Array<out Principal>?,
-					socket: Socket?
-				): String {
-					return mtls
-				}
-
-				override fun getServerAliases(
-					keyType: String?,
-					issuers: Array<Principal>
-				): Array<String> {
+				} else {
 					return arrayOf()
 				}
+			}
 
-				override fun chooseServerAlias(
-					keyType: String?,
-					issuers: Array<Principal>,
-					socket: Socket
-				): String {
+			override fun chooseClientAlias(
+				keyType: Array<out String>?,
+				issuers: Array<out Principal>?,
+				socket: Socket?
+			): String {
+				if (mtls != null) {
+					return mtls
+				} else {
 					return ""
-				}
-
-				override fun getCertificateChain(alias: String?): Array<X509Certificate> {
-					return chain
-				}
-
-				override fun getPrivateKey(alias: String?): PrivateKey {
-					return pk
 				}
 			}
 
-			val sslContext = SSLContext.getInstance("TLS")
-			sslContext.init(arrayOf(km), trustManagers, null)
+			override fun getServerAliases(
+				keyType: String?,
+				issuers: Array<Principal>
+			): Array<String> {
+				return arrayOf()
+			}
 
-			clientBuilder = clientBuilder
-				.sslSocketFactory(sslContext.socketFactory, trustManagers[0] as X509TrustManager)
-			break
+			override fun chooseServerAlias(
+				keyType: String?,
+				issuers: Array<Principal>,
+				socket: Socket
+			): String {
+				return ""
+			}
+
+			override fun getCertificateChain(alias: String?): Array<X509Certificate> {
+				return chain ?: emptyArray()
+			}
+
+			override fun getPrivateKey(alias: String?): PrivateKey {
+				return pk!!
+			}
+		}
+
+		val sslContext = SSLContext.getInstance("TLS")
+		sslContext.init(arrayOf(km), trustManagers, null)
+
+		clientBuilder = clientBuilder
+			.sslSocketFactory(sslContext.socketFactory, trustManagers[0] as X509TrustManager)
+
+		if (serverCert != null) {
+			clientBuilder =
+				clientBuilder.hostnameVerifier { _, session ->
+					session.peerCertificates.contains(
+						serverCert
+					)
+				}
 		}
 
 		client = clientBuilder
@@ -308,31 +334,34 @@ object ConnectionUtil {
 			.post(jsonObject.toString().toRequestBody(JSON))
 			.build()
 		Log.i(TAG, req.url.encodedPath)
+		dbMismatch = false
+		connectSuccess = false
 		client!!.newCall(req).enqueue(object : Callback {
 			override fun onResponse(call: Call, response: Response) {
-				val resp = response.body!!.string()
+				val resp = response.body?.string() ?: "(no body)"
 				if (response.code != 200) {
 					Log.e(TAG, "login received response $resp")
 					try {
 						val json = JSONObject(resp)
 						val msg = json.getString("message")
 						if (msg.startsWith("Sync login credentials are incorrect. It looks like you're trying to sync two different initialized documents which is not possible.")) {
+							dbMismatch = true
 							callbackError(MismatchedDatabaseException)
 							return
 						}
 						if (msg.startsWith("Non-matching sync versions, local is version 32, remote is")) {
-							prefs?.edit()
-								?.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_63_3)
-								?.apply()
+							prefs!!.edit()
+								.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_63_3)
+								.apply()
 							runBlocking {
 								connect(server, callback, callbackError)
 							}
 							return
 						}
 						if (msg.startsWith("Non-matching sync versions, local is version 33, remote is")) {
-							prefs?.edit()
-								?.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_90_12)
-								?.apply()
+							prefs!!.edit()
+								.putInt("syncVersion", Cache.CacheDbHelper.SYNC_VERSION_0_90_12)
+								.apply()
 							runBlocking {
 								connect(server, callback, callbackError)
 							}
@@ -349,6 +378,7 @@ object ConnectionUtil {
 				Log.d(TAG, "login received response $resp")
 				response.use {
 					loginFails = 0
+					connectSuccess = true
 					callback()
 				}
 			}
@@ -452,6 +482,10 @@ object ConnectionUtil {
 		})
 	}
 
+	fun status(): SyncStatus {
+		return SyncStatus(dbMismatch, loginSuccess, connectSuccess, Cache.lastSync)
+	}
+
 	data class AppInfo(
 		val appVersion: String, // packageJson.version,
 		val dbVersion: Int, // APP_DB_VERSION,
@@ -461,5 +495,12 @@ object ConnectionUtil {
 		val dataDirectory: String, // TRILIUM_DATA_DIR,
 		val clipperProtocolVersion: String, // CLIPPER_PROTOCOL_VERSION,
 		val utcDateTime: String, // new Date().toISOString() // for timezone inference
+	)
+
+	data class SyncStatus(
+		val dbMismatch: Boolean,
+		val loginSuccess: Boolean,
+		val connectSuccess: Boolean,
+		val lastSync: Long?,
 	)
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,408 +7,455 @@
     android:orientation="vertical"
     tools:context=".activity.SetupActivity">
 
-    <LinearLayout
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/Theme.TriliumDroid.AppBarOverlay"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.DayNight" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <TextView
-            style="@style/SettingsSectionLabelStyle"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/settings_sync_server_header" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/settings_server"
-            style="@style/SettingsHolderTextViewOneLinerStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/server_label"
-                style="@style/SettingsTextLabelStyle"
-                android:layout_width="wrap_content"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/server_label"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:text="@string/settings_sync_server_header" />
 
-            <EditText
-                android:id="@+id/server"
-                android:layout_width="200dp"
-                android:layout_height="45dp"
-                android:hint="@string/server_placeholder"
-                android:importantForAutofill="no"
-                android:inputType="textUri"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/server_label" />
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_status"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                    android:id="@+id/status_label"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_status"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-        <include layout="@layout/divider" />
+                <TextView
+                    android:id="@+id/status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="@dimen/abc_edit_text_inset_horizontal_material"
+                    android:paddingTop="@dimen/abc_edit_text_inset_top_material"
+                    android:paddingRight="@dimen/abc_edit_text_inset_horizontal_material"
+                    android:paddingBottom="@dimen/abc_edit_text_inset_bottom_material"
+                    android:text="@string/status_unknown"
+                    android:textSize="@dimen/big_text_size"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/status_label" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/settings_password"
-            style="@style/SettingsHolderTextViewOneLinerStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <include layout="@layout/divider" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_server"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/server_label"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/server_label"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <EditText
+                    android:id="@+id/server"
+                    android:layout_width="200dp"
+                    android:layout_height="45dp"
+                    android:hint="@string/server_placeholder"
+                    android:importantForAutofill="no"
+                    android:inputType="textUri"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/server_label" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <include layout="@layout/divider" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_password"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/password_label"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/password_label"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <EditText
+                    android:id="@+id/password"
+                    android:layout_width="200dp"
+                    android:layout_height="45dp"
+                    android:autofillHints="password"
+                    android:hint="@string/password_placeholder"
+                    android:inputType="textPassword"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/password_label" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <include layout="@layout/divider" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_mtls"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/label_mtls"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_mtls_authentication"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <Button
+                    android:id="@+id/button_configure_mtls"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
+                    android:padding="0dp"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:text="@string/button_add_certificate_and_key"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/label_mtls"
+                    tools:ignore="RtlSymmetry" />
+
+                <Button
+                    android:id="@+id/button_configure_mtls_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
+                    android:padding="0dp"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:text="@string/button_clear_mtls_auth"
+                    app:layout_constraintStart_toEndOf="@id/button_configure_mtls"
+                    app:layout_constraintTop_toBottomOf="@id/label_mtls"
+                    tools:ignore="RtlSymmetry" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!--
+            <include layout="@layout/divider" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_sync_interval"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/label_interval"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sync interval (not yet configurable)"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <EditText
+                    android:id="@+id/input_sync_interval"
+                    android:layout_width="200dp"
+                    android:layout_height="45dp"
+                    android:importantForAutofill="no"
+                    android:inputType="textUri"
+                    android:text="App start + manually"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/label_interval" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+            -->
+
+            <include
+                layout="@layout/divider"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/divider_height"
+                android:layout_marginBottom="2dp" />
+
 
             <TextView
-                android:id="@+id/password_label"
-                style="@style/SettingsTextLabelStyle"
-                android:layout_width="wrap_content"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/password_label"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:text="@string/label_interface" />
 
-            <EditText
-                android:id="@+id/password"
-                android:layout_width="200dp"
-                android:layout_height="45dp"
-                android:autofillHints="password"
-                android:hint="@string/password_placeholder"
-                android:inputType="textPassword"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/password_label" />
+            <!--
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_theme"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-        <include layout="@layout/divider" />
+                <TextView
+                    android:id="@+id/label_theme"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Theme (not yet configurable)"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/settings_mtls"
-            style="@style/SettingsHolderTextViewOneLinerStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                <EditText
+                    android:id="@+id/input_theme"
+                    android:layout_width="200dp"
+                    android:layout_height="45dp"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:text="Light"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/label_theme" />
 
-            <TextView
-                android:id="@+id/label_mtls"
-                style="@style/SettingsTextLabelStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/label_mtls_authentication"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <Button
-                android:id="@+id/button_configure_mtls"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginStart="4dp"
-                android:padding="0dp"
-                android:paddingStart="6dp"
-                android:paddingEnd="6dp"
-                android:text="@string/button_add_certificate_and_key"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/label_mtls"
-                tools:ignore="RtlSymmetry" />
+            <include layout="@layout/divider" />
 
-            <Button
-                android:id="@+id/button_configure_mtls_2"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginStart="4dp"
-                android:padding="0dp"
-                android:paddingStart="6dp"
-                android:paddingEnd="6dp"
-                android:text="@string/button_clear_mtls_auth"
-                app:layout_constraintStart_toEndOf="@id/button_configure_mtls"
-                app:layout_constraintTop_toBottomOf="@id/label_mtls"
-                tools:ignore="RtlSymmetry" />
+    -->
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_fab"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-        <!--
-        <include layout="@layout/divider" />
+                <TextView
+                    android:id="@+id/label_fab"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_floating_action_buttons"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/settings_sync_interval"
-            style="@style/SettingsHolderTextViewOneLinerStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/input_fab"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="@dimen/medium_margin"
+                    android:text="@string/jump_to_dialog"
+                    android:textSize="@dimen/bigger_text_size"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/label_fab" />
 
-            <TextView
-                android:id="@+id/label_interval"
-                style="@style/SettingsTextLabelStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Sync interval (not yet configurable)"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                <Button
+                    android:id="@+id/button_configure_fabs"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
+                    android:contentDescription="@string/description_modify_fabs"
+                    android:drawableStart="@drawable/bx_cog"
+                    android:padding="0dp"
+                    android:paddingStart="6dp"
+                    app:layout_constraintBaseline_toBaselineOf="@id/input_fab"
+                    app:layout_constraintStart_toEndOf="@id/input_fab"
+                    tools:ignore="RtlSymmetry" />
 
-            <EditText
-                android:id="@+id/input_sync_interval"
-                android:layout_width="200dp"
-                android:layout_height="45dp"
-                android:importantForAutofill="no"
-                android:inputType="textUri"
-                android:text="App start + manually"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/label_interval" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-        -->
+            <!--
 
-        <include
-            layout="@layout/divider"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/divider_height"
-            android:layout_marginBottom="2dp" />
+            <include layout="@layout/divider" />
 
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_colors"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-        <TextView
-            style="@style/SettingsSectionLabelStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/label_interface" />
+                <TextView
+                    android:id="@+id/label_colors"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_background_colors"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-        <!--
+                <Button
+                    android:id="@+id/button_configure_primary_color"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
+                    android:contentDescription="@string/description_modify_primary_color"
+                    android:drawableStart="@drawable/bx_cog"
+                    android:padding="0dp"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:text="@string/label_primary_color"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/label_colors"
+                    tools:ignore="RtlSymmetry" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/settings_theme"
-            style="@style/SettingsHolderTextViewOneLinerStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                <Button
+                    android:id="@+id/button_configure_secondary_color"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
+                    android:contentDescription="@string/description_modify_secondary_color"
+                    android:drawableStart="@drawable/bx_cog"
+                    android:padding="0dp"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:text="@string/label_secondary_color"
+                    app:layout_constraintStart_toEndOf="@id/button_configure_primary_color"
+                    app:layout_constraintTop_toBottomOf="@id/label_colors"
+                    tools:ignore="RtlSymmetry" />
 
-            <TextView
-                android:id="@+id/label_theme"
-                style="@style/SettingsTextLabelStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Theme (not yet configurable)"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <EditText
-                android:id="@+id/input_theme"
-                android:layout_width="200dp"
-                android:layout_height="45dp"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:text="Light"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/label_theme" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <include layout="@layout/divider" />
-
--->
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/settings_fab"
-            style="@style/SettingsHolderTextViewOneLinerStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/label_fab"
-                style="@style/SettingsTextLabelStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/label_floating_action_buttons"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/input_fab"
-                style="@style/SettingsTextLabelStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="@dimen/medium_margin"
-                android:text="@string/jump_to_dialog"
-                android:textSize="@dimen/bigger_text_size"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/label_fab" />
-
-            <Button
-                android:id="@+id/button_configure_fabs"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginStart="4dp"
-                android:contentDescription="@string/description_modify_fabs"
-                android:drawableStart="@drawable/bx_cog"
-                android:padding="0dp"
-                android:paddingStart="6dp"
-                app:layout_constraintBaseline_toBaselineOf="@id/input_fab"
-                app:layout_constraintStart_toEndOf="@id/input_fab"
-                tools:ignore="RtlSymmetry" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <!--
-
-        <include layout="@layout/divider" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/settings_colors"
-            style="@style/SettingsHolderTextViewOneLinerStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/label_colors"
-                style="@style/SettingsTextLabelStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/label_background_colors"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <Button
-                android:id="@+id/button_configure_primary_color"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginStart="4dp"
-                android:contentDescription="@string/description_modify_primary_color"
-                android:drawableStart="@drawable/bx_cog"
-                android:padding="0dp"
-                android:paddingStart="6dp"
-                android:paddingEnd="6dp"
-                android:text="@string/label_primary_color"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/label_colors"
-                tools:ignore="RtlSymmetry" />
-
-            <Button
-                android:id="@+id/button_configure_secondary_color"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:layout_marginStart="4dp"
-                android:contentDescription="@string/description_modify_secondary_color"
-                android:drawableStart="@drawable/bx_cog"
-                android:padding="0dp"
-                android:paddingStart="6dp"
-                android:paddingEnd="6dp"
-                android:text="@string/label_secondary_color"
-                app:layout_constraintStart_toEndOf="@id/button_configure_primary_color"
-                app:layout_constraintTop_toBottomOf="@id/label_colors"
-                tools:ignore="RtlSymmetry" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        -->
-
-        <include
-            layout="@layout/divider"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/divider_height"
-            android:layout_marginBottom="2dp" />
-
-        <TextView
-            style="@style/SettingsSectionLabelStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/label_miscellaneous" />
-
-        <Button
-            android:id="@+id/button_export_database"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_marginStart="@dimen/settings_label_start_margin"
-            android:layout_marginTop="@dimen/normal_margin"
-            android:layout_marginEnd="@dimen/settings_label_start_margin"
-            android:layout_marginBottom="@dimen/normal_margin"
-            android:drawableStart="@drawable/bx_save"
-            android:paddingStart="6dp"
-            android:text="@string/button_export_database"
-            tools:ignore="RtlSymmetry" />
-
-        <include layout="@layout/divider" />
-
-        <Button
-            android:id="@+id/button_nuke_database"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_marginStart="@dimen/settings_label_start_margin"
-            android:layout_marginTop="@dimen/normal_margin"
-            android:layout_marginEnd="@dimen/settings_label_start_margin"
-            android:layout_marginBottom="@dimen/normal_margin"
-            android:drawableStart="@drawable/bx_trash"
-            android:paddingStart="6dp"
-            android:text="@string/button_delete_database"
-            tools:ignore="RtlSymmetry" />
-
-        <include
-            layout="@layout/divider"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/divider_height"
-            android:layout_marginBottom="2dp" />
-
-        <!--
-        <TextView
-            style="@style/SettingsSectionLabelStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Behaviour" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/settings_revision_interval"
-            style="@style/SettingsHolderTextViewOneLinerStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/label_revision_interval"
-                style="@style/SettingsTextLabelStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Note revision interval (not yet configurable)"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <EditText
-                android:id="@+id/input_revision_interval"
-                android:layout_width="200dp"
-                android:layout_height="45dp"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:text="Never"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/label_revision_interval" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <include layout="@layout/divider" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/settings_migrate"
-            style="@style/SettingsHolderTextViewOneLinerStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/label_migrate"
-                style="@style/SettingsTextLabelStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Migrate to new DB versions (not yet configurable)"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <EditText
-                android:id="@+id/input_migrate"
-                android:layout_width="200dp"
-                android:layout_height="45dp"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:text="Never"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/label_migrate" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <include
-            layout="@layout/divider"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/divider_height"
-            android:layout_marginBottom="2dp" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             -->
 
-        <!-- TODO: backup -->
+            <include
+                layout="@layout/divider"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/divider_height"
+                android:layout_marginBottom="2dp" />
 
-    </LinearLayout>
+            <TextView
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/label_miscellaneous" />
 
-</ScrollView>
+            <Button
+                android:id="@+id/button_export_database"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="@dimen/settings_label_start_margin"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/settings_label_start_margin"
+                android:layout_marginBottom="@dimen/normal_margin"
+                android:drawableStart="@drawable/bx_save"
+                android:paddingStart="6dp"
+                android:text="@string/button_export_database"
+                tools:ignore="RtlSymmetry" />
+
+            <include layout="@layout/divider" />
+
+            <Button
+                android:id="@+id/button_nuke_database"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="@dimen/settings_label_start_margin"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/settings_label_start_margin"
+                android:layout_marginBottom="@dimen/normal_margin"
+                android:drawableStart="@drawable/bx_trash"
+                android:paddingStart="6dp"
+                android:text="@string/button_delete_database"
+                tools:ignore="RtlSymmetry" />
+
+            <include
+                layout="@layout/divider"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/divider_height"
+                android:layout_marginBottom="2dp" />
+
+            <!--
+            <TextView
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Behaviour" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_revision_interval"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/label_revision_interval"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Note revision interval (not yet configurable)"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <EditText
+                    android:id="@+id/input_revision_interval"
+                    android:layout_width="200dp"
+                    android:layout_height="45dp"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:text="Never"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/label_revision_interval" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <include layout="@layout/divider" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_migrate"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/label_migrate"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Migrate to new DB versions (not yet configurable)"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <EditText
+                    android:id="@+id/input_migrate"
+                    android:layout_width="200dp"
+                    android:layout_height="45dp"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:text="Never"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/label_migrate" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <include
+                layout="@layout/divider"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/divider_height"
+                android:layout_marginBottom="2dp" />
+
+                -->
+
+            <!-- TODO: backup -->
+
+        </LinearLayout>
+
+    </ScrollView>
+</LinearLayout>

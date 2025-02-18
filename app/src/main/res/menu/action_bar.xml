@@ -2,14 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!--
-    <item
-        android:id="@+id/action_add"
-        android:icon="@drawable/bx_plus_circle"
-        android:title="@string/action_share"
-        app:showAsAction="ifRoom" />
-    -->
-
     <item
         android:id="@+id/action_edit"
         android:icon="@drawable/bx_edit_alt"
@@ -27,6 +19,21 @@
         android:icon="@drawable/bx_play"
         android:title="@string/action_execute"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_show_note_tree"
+        android:title="@string/action_show_note_tree"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_jump_to_note"
+        android:title="@string/jump_to_dialog"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_note_navigation"
+        android:title="@string/action_note_navigation"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/action_note_map"
