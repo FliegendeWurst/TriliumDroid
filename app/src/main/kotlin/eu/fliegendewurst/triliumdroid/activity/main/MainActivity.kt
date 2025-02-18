@@ -677,7 +677,7 @@ class MainActivity : AppCompatActivity() {
 		menuInflater.inflate(R.menu.action_bar, menu)
 		for (action in ConfigureFabsDialog.actions) {
 			val menuItem = menu?.findItem(action.value) ?: continue
-			val pref = ConfigureFabsDialog.getPref(prefs, action.key)!!
+			val pref = ConfigureFabsDialog.getPref(prefs, action.key) ?: continue
 			menuItem.isVisible = pref.show
 		}
 		return true
