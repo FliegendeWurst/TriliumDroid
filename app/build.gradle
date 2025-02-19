@@ -17,7 +17,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments useTestStorageService: "true"
 
-        buildConfigField "long", "TIMESTAMP", "1734200570000L"
+        buildConfigField "long", "TIMESTAMP", "1739960195000L"
     }
 
     buildTypes {
