@@ -9,13 +9,17 @@ import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.File
 
 
@@ -75,12 +79,12 @@ class SetupActivity : AppCompatActivity() {
 						return@choosePrivateKeyAlias
 					}
 					// test we can actually retrieve the key material
-					runBlocking {
-						KeyChain.getPrivateKey(applicationContext, alias)
-						KeyChain.getCertificateChain(applicationContext, alias)
-					}
-					prefs.edit().putString("mTLS_cert", alias).apply()
-					runBlocking {
+					lifecycleScope.launch {
+						withContext(Dispatchers.IO) {
+							KeyChain.getPrivateKey(applicationContext, alias)
+							KeyChain.getCertificateChain(applicationContext, alias)
+						}
+						prefs.edit().putString("mTLS_cert", alias).apply()
 						ConnectionUtil.resetClient(applicationContext)
 					}
 				},

@@ -582,9 +582,11 @@ class MainActivity : AppCompatActivity() {
 						load(null)
 					}
 					ks.setEntry("syncServer", KeyStore.TrustedCertificateEntry(cert), null)
-					ConnectionUtil.resetClient(applicationContext)
-					startSync(handler)
-					dialog.dismiss()
+					lifecycleScope.launch {
+						ConnectionUtil.resetClient(applicationContext)
+						startSync(handler)
+						dialog.dismiss()
+					}
 				}
 				.setNegativeButton(android.R.string.cancel, null).show()
 		}

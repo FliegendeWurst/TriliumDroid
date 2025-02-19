@@ -110,7 +110,10 @@ object ConnectionUtil {
 		}
 	}
 
-	fun resetClient(applicationContext: Context) {
+	/**
+	 * May **block** the I/O thread if [KeyChain.getPrivateKey] does not return quickly.
+	 */
+	suspend fun resetClient(applicationContext: Context) = withContext(Dispatchers.IO) {
 		client = null
 		var clientBuilder = OkHttpClient.Builder()
 			.cookieJar(object : CookieJar {
