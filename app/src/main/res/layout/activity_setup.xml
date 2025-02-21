@@ -82,7 +82,7 @@
                 <EditText
                     android:id="@+id/server"
                     android:layout_width="200dp"
-                    android:layout_height="45dp"
+                    android:layout_height="wrap_content"
                     android:hint="@string/server_placeholder"
                     android:importantForAutofill="no"
                     android:inputType="textUri"
@@ -111,7 +111,7 @@
                 <EditText
                     android:id="@+id/password"
                     android:layout_width="200dp"
-                    android:layout_height="45dp"
+                    android:layout_height="wrap_content"
                     android:autofillHints="password"
                     android:hint="@string/password_placeholder"
                     android:inputType="textPassword"
@@ -140,7 +140,7 @@
                 <Button
                     android:id="@+id/button_configure_mtls"
                     android:layout_width="wrap_content"
-                    android:layout_height="36dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:padding="0dp"
                     android:paddingStart="6dp"
@@ -153,7 +153,7 @@
                 <Button
                     android:id="@+id/button_configure_mtls_2"
                     android:layout_width="wrap_content"
-                    android:layout_height="36dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:padding="0dp"
                     android:paddingStart="6dp"
@@ -161,7 +161,50 @@
                     android:text="@string/button_clear_mtls_auth"
                     app:layout_constraintStart_toEndOf="@id/button_configure_mtls"
                     app:layout_constraintTop_toBottomOf="@id/label_mtls"
-                    tools:ignore="RtlSymmetry" />
+                    tools:ignore="RtlSymmetry,DuplicateSpeakableTextCheck" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <include layout="@layout/divider" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_ssid_limit"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/label_ssid_limit"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_limit_sync_to_network"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <Button
+                    android:id="@+id/button_configure_ssid"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:padding="0dp"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:text="@string/button_current_network"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/label_ssid_limit" />
+
+                <Button
+                    android:id="@+id/button_configure_ssid_clear"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:padding="0dp"
+                    android:paddingStart="6dp"
+                    android:paddingEnd="6dp"
+                    android:text="@string/button_clear_sync_network"
+                    app:layout_constraintStart_toEndOf="@id/button_configure_ssid"
+                    app:layout_constraintTop_toBottomOf="@id/label_ssid_limit" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -356,7 +399,7 @@
             <Button
                 android:id="@+id/button_export_database"
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/settings_label_start_margin"
                 android:layout_marginTop="@dimen/normal_margin"
                 android:layout_marginEnd="@dimen/settings_label_start_margin"
@@ -371,7 +414,7 @@
             <Button
                 android:id="@+id/button_nuke_database"
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/settings_label_start_margin"
                 android:layout_marginTop="@dimen/normal_margin"
                 android:layout_marginEnd="@dimen/settings_label_start_margin"

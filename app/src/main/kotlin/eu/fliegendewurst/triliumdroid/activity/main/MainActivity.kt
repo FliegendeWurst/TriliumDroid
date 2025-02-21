@@ -127,6 +127,11 @@ class MainActivity : AppCompatActivity() {
 	// navigation history
 	private val noteHistory = HistoryList()
 
+	/**
+	 * Show the next sync error as [SyncErrorFragment] instead of just Toast.
+	 */
+	private var showSyncError = false
+
 	companion object {
 		private const val TAG = "MainActivity"
 		const val JUMP_TO_NOTE_ENTRY = "JUMP_TO_NOTE_ENTRY"
@@ -431,7 +436,7 @@ class MainActivity : AppCompatActivity() {
 				startActivity(intent)
 			} else if (Cache.lastSync == null && noteHistory.isEmpty()) {
 				lifecycleScope.launch {
-					ConnectionUtil.setup(applicationContext, prefs, {
+					ConnectionUtil.setup(this@MainActivity, prefs, {
 						handler.post {
 							startSync(handler)
 						}
@@ -587,8 +592,9 @@ class MainActivity : AppCompatActivity() {
 					}
 					ks.setEntry("syncServer", KeyStore.TrustedCertificateEntry(cert), null)
 					lifecycleScope.launch {
-						ConnectionUtil.resetClient(applicationContext)
-						startSync(handler)
+						ConnectionUtil.resetClient(this@MainActivity) {
+							startSync(handler)
+						}
 						dialog.dismiss()
 					}
 				}
@@ -620,11 +626,12 @@ class MainActivity : AppCompatActivity() {
 			this, toastText,
 			Toast.LENGTH_LONG
 		).show()
-		if (getFragment() is EmptyFragment || getFragment() is SyncErrorFragment) {
+		if (getFragment() is EmptyFragment || getFragment() is SyncErrorFragment || showSyncError) {
 			val frag = SyncErrorFragment()
 			frag.showError(it)
 			showFragment(frag, true)
 		}
+		showSyncError = false
 	}
 
 	private fun startSync(handler: Handler, resetView: Boolean = true) {
@@ -637,7 +644,7 @@ class MainActivity : AppCompatActivity() {
 		snackbar.show()
 		lifecycleScope.launch(Dispatchers.IO) {
 			Cache.initializeDatabase(applicationContext)
-			ConnectionUtil.setup(applicationContext, prefs, {
+			ConnectionUtil.setup(this@MainActivity, prefs, {
 				lifecycleScope.launch {
 					Cache.syncStart({
 						handler.post {
@@ -660,6 +667,7 @@ class MainActivity : AppCompatActivity() {
 							snackbar.show()
 							Cache.getTreeData("")
 							showInitialNote(resetView)
+							showSyncError = false
 						}
 					})
 				}
@@ -864,6 +872,7 @@ class MainActivity : AppCompatActivity() {
 			}
 
 			R.id.action_sync -> {
+				showSyncError = true
 				startSync(handler, false)
 				true
 			}

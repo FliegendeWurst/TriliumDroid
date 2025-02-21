@@ -4,8 +4,12 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.security.KeyChain
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.service.Util
+import eu.fliegendewurst.triliumdroid.util.GetSSID
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.Call
@@ -57,26 +61,41 @@ object ConnectionUtil {
 	private var connectSuccess: Boolean = false
 
 	suspend fun setup(
-		applicationContext: Context,
+		activity: AppCompatActivity,
 		prefs: SharedPreferences,
 		callback: () -> Unit,
 		callbackError: (Exception) -> Unit
-	) = withContext(Dispatchers.IO) {
+	) {
 		ConnectionUtil.prefs = prefs
 
 		if (client == null) {
-			resetClient(applicationContext)
+			resetClient(activity) {
+				activity.lifecycleScope.launch {
+					setupInternal(callback, callbackError)
+				}
+			}
+		} else {
+			setupInternal(callback, callbackError)
 		}
+	}
 
-		server = prefs.getString("hostname", null)!!
-		password = prefs.getString("password", null)!!
-		instanceId = prefs.getString("instanceId", null)
+	private suspend fun setupInternal(
+		callback: () -> Unit,
+		callbackError: (Exception) -> Unit
+	) {
+		if (prefs == null) {
+			callbackError(IllegalStateException("SharedPreferences null"))
+			return
+		}
+		server = prefs!!.getString("hostname", null)!!
+		password = prefs!!.getString("password", null)!!
+		instanceId = prefs!!.getString("instanceId", null)
 		if (instanceId == null) {
 			instanceId = "mobile" + Util.randomString(6)
-			prefs.edit().putString("instanceId", instanceId).apply()
+			prefs!!.edit().putString("instanceId", instanceId).apply()
 		}
 		Log.d(TAG, "setup with server = $server, instance ID = $instanceId")
-		val documentSecret = prefs.getString("documentSecret", null)
+		val documentSecret = prefs!!.getString("documentSecret", null)
 		if (documentSecret == null) {
 			loginSuccess = false
 			fetch("/api/setup/sync-seed", null, true, {
@@ -91,7 +110,7 @@ object ConnectionUtil {
 					val name = opt.getString("name")
 					val value = opt.getString("value")
 					if (name == "documentSecret") {
-						prefs.edit().putString("documentSecret", value)
+						prefs!!.edit().putString("documentSecret", value)
 							.putInt("syncVersion", syncVersion).apply()
 						loginSuccess = true
 						runBlocking {
@@ -114,8 +133,24 @@ object ConnectionUtil {
 	/**
 	 * May **block** the I/O thread if [KeyChain.getPrivateKey] does not return quickly.
 	 */
-	suspend fun resetClient(applicationContext: Context) = withContext(Dispatchers.IO) {
+	suspend fun resetClient(activity: AppCompatActivity, callback: () -> Unit) {
 		client = null
+
+		val limitToSSID = prefs!!.getString("syncSSID", null)
+		if (limitToSSID != null) {
+			GetSSID(activity) {
+				if (limitToSSID == it) {
+					activity.lifecycleScope.launch {
+						reset(activity.applicationContext, callback)
+					}
+				}
+			}.getSSID()
+			return
+		}
+		reset(activity.applicationContext, callback)
+	}
+
+	private suspend fun reset(appContext: Context, done: () -> Unit) = withContext(Dispatchers.IO) {
 		var clientBuilder = OkHttpClient.Builder()
 			.cookieJar(object : CookieJar {
 				// TODO: this is a terrible cookie jar
@@ -148,11 +183,11 @@ object ConnectionUtil {
 		var pk: PrivateKey? = null
 		var chain: Array<X509Certificate>? = null
 
-		val mtls = prefs!!.getString("mTLS_cert", null)
-		if (mtls != null) {
+		val mTLS = prefs!!.getString("mTLS_cert", null)
+		if (mTLS != null) {
 			try {
-				pk = KeyChain.getPrivateKey(applicationContext, mtls)
-				chain = KeyChain.getCertificateChain(applicationContext, mtls)
+				pk = KeyChain.getPrivateKey(appContext, mTLS)
+				chain = KeyChain.getCertificateChain(appContext, mTLS)
 			} catch (t: Throwable) {
 				Log.e(TAG, "failed to read mTLS key ", t)
 			}
@@ -180,8 +215,8 @@ object ConnectionUtil {
 				keyType: String?,
 				issuers: Array<Principal>
 			): Array<String> {
-				return if (mtls != null) {
-					arrayOf(mtls)
+				return if (mTLS != null) {
+					arrayOf(mTLS)
 				} else {
 					arrayOf()
 				}
@@ -192,7 +227,7 @@ object ConnectionUtil {
 				issuers: Array<out Principal>?,
 				socket: Socket?
 			): String {
-				return mtls ?: ""
+				return mTLS ?: ""
 			}
 
 			override fun getServerAliases(
@@ -236,21 +271,22 @@ object ConnectionUtil {
 
 		client = clientBuilder
 			.build()
+		done.invoke()
 	}
 
-	suspend fun fetch(
+	fun fetch(
 		path: String,
 		formBody: FormBody?,
 		userPasswordAuth: Boolean,
 		callbackOk: (JSONObject) -> Unit,
 		callbackError: (Exception) -> Unit
-	) = withContext(Dispatchers.IO) {
+	) {
 		try {
 			Request.Builder().url("$server$path")
 		} catch (e: Exception) {
 			// bad URL
 			callbackError.invoke(IllegalArgumentException("bad fetch URL $server$path"))
-			return@withContext
+			return
 		}
 		var reqBuilder = Request.Builder()
 			.url("$server$path")
@@ -297,7 +333,7 @@ object ConnectionUtil {
 		}
 	}
 
-	private fun hmac(documentSecret: String, timestamp: String): String {
+	private fun calculateHMAC(documentSecret: String, timestamp: String): String {
 		val hMacSHA256 = Mac.getInstance("HmacSHA256")
 		val secretKey = SecretKeySpec(documentSecret.encodeToByteArray(), "HmacSHA256")
 		hMacSHA256.init(secretKey)
@@ -310,8 +346,14 @@ object ConnectionUtil {
 		callback: () -> Unit,
 		callbackError: (Exception) -> Unit
 	): Unit = withContext(Dispatchers.IO) {
+		if (client == null) {
+			Log.w(TAG, "client not active")
+			callbackError(IllegalStateException("client not active"))
+			return@withContext
+		}
 		if (server.isEmpty()) {
 			Log.e(TAG, "empty sync URL")
+			callbackError(IllegalStateException("empty sync URL"))
 			return@withContext
 		}
 		try {
@@ -323,7 +365,7 @@ object ConnectionUtil {
 		}
 
 		val utc = Cache.utcDateModified()
-		val hash = hmac(prefs!!.getString("documentSecret", null)!!, utc)
+		val hash = calculateHMAC(prefs!!.getString("documentSecret", null)!!, utc)
 		val jsonObject = JSONObject()
 		jsonObject.put("timestamp", utc)
 		jsonObject.put("hash", hash)

@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- used to limit sync activity to specific networks -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- TODO: investigate whether the permission below works at all -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -9,8 +13,10 @@
     <queries>
         <intent>
             <!-- required to initiate Email intents -->
-            <action android:name="android.intent.action.SENDTO"/>
-            <data android:scheme="mailto" android:host="*" />
+            <action android:name="android.intent.action.SENDTO" />
+            <data
+                android:host="*"
+                android:scheme="mailto" />
         </intent>
     </queries>
 
@@ -33,6 +39,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="text/plain" />
                 <data android:mimeType="text/html" />
             </intent-filter>

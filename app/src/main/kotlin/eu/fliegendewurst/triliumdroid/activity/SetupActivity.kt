@@ -16,9 +16,9 @@ import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
+import eu.fliegendewurst.triliumdroid.util.GetSSID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -85,7 +85,7 @@ class SetupActivity : AppCompatActivity() {
 							KeyChain.getCertificateChain(applicationContext, alias)
 						}
 						prefs.edit().putString("mTLS_cert", alias).apply()
-						ConnectionUtil.resetClient(applicationContext)
+						ConnectionUtil.resetClient(this@SetupActivity) {}
 					}
 				},
 				null, // List of acceptable key types. null for any
@@ -102,6 +102,31 @@ class SetupActivity : AppCompatActivity() {
 			binding.buttonConfigureMtls2.isEnabled = false
 		}
 		binding.buttonConfigureMtls2.isEnabled = mtlsCert != null
+
+		val ssidLimitActive = prefs.contains("syncSSID")
+		binding.buttonConfigureSsid.isEnabled = !ssidLimitActive
+		binding.buttonConfigureSsidClear.isEnabled = ssidLimitActive
+		binding.buttonConfigureSsid.setOnClickListener {
+			GetSSID(this@SetupActivity) {
+				lifecycleScope.launch {
+					if (it == null) {
+						return@launch
+					}
+					prefs.edit().putString("syncSSID", it).apply()
+					binding.buttonConfigureSsid.isEnabled = false
+					binding.buttonConfigureSsidClear.isEnabled = true
+					ConnectionUtil.resetClient(this@SetupActivity) {}
+				}
+			}.getSSID()
+		}
+		binding.buttonConfigureSsidClear.setOnClickListener {
+			prefs.edit().remove("syncSSID").apply()
+			binding.buttonConfigureSsid.isEnabled = true
+			binding.buttonConfigureSsidClear.isEnabled = false
+			lifecycleScope.launch {
+				ConnectionUtil.resetClient(this@SetupActivity) {}
+			}
+		}
 
 		ConfigureFabsDialog.init(prefs)
 		setText()
