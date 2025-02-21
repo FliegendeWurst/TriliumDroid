@@ -319,7 +319,11 @@ class MainActivity : AppCompatActivity() {
 								note
 							)
 						}
-						for (buttonId in Preferences.prefs.all.keys.filter { pref -> pref.startsWith("button") }) {
+						for (buttonId in Preferences.prefs.all.keys.filter { pref ->
+							pref.startsWith(
+								"button"
+							)
+						}) {
 							val view = LayoutInflater.from(this@MainActivity)
 								.inflate(R.layout.button, it.binding.buttons, true)
 							view.findViewById<ImageButton>(R.id.button_custom).setOnClickListener {
@@ -682,12 +686,12 @@ class MainActivity : AppCompatActivity() {
 		if (resetView) {
 			val lastNote = Preferences.lastNote()
 			// first use: open the drawer
-			if (lastNote == null) {
+			if (lastNote == null && Cache.lastSync != null) {
 				binding.drawerLayout.openDrawer(GravityCompat.START)
 				return@launch
 			}
 			var n = firstNote ?: lastNote
-			if (Cache.getNote(n) == null) {
+			if (n == null || Cache.getNote(n) == null) {
 				n = "root" // may happen in case of new database or note deleted
 			}
 			val note = Cache.getNote(n) ?: return@launch
