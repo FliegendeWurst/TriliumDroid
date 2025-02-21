@@ -1,4 +1,4 @@
-# Trilium Notes for Android
+# Trilium Notes for Android ![test workflow](https://github.com/FliegendeWurst/TriliumDroid/actions/workflows/test.yaml/badge.svg) <a href="https://hosted.weblate.org/engage/triliumdroid/"><img src="https://hosted.weblate.org/widget/triliumdroid/app/svg-badge.svg" alt="translation status" /></a>
 
 <img align="right" src="./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" />
 
@@ -14,7 +14,7 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 - Displaying/editing note attributes (labels and relations)
 - Attribute inheritance and templating
 - Displaying note icon
-- Displaying note paths
+- Displaying/modifying note paths
 - Displaying/collapsing/expanding note tree
 - Navigating using internal links
 - Browsing external links
@@ -22,8 +22,10 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 - Local/global note map view
 - Basic Scripting
 - Upgrading to newer database versions / Trilium versions
-- Sharing content to save as new note
-- Support for Android 8.0+
+- Receive shared content to save as new note
+- Support for Android 7.0+
+- Translated UI
+- Light/Dark Theme following system preference
 
 ## Usage
 
@@ -48,12 +50,10 @@ There is also some preliminary support for scripting, but it doesn't work exactl
 - Jump to note dialog: smart sort
 - Modifying note icon
 - Advanced Scripting
-- Dark Theme
 - Included notes
 - Encrypted notes
 - Undeleting content
 - Erasing notes
-- Support for Android 7.1, 7.0 (likely to come eventually [1](https://stackoverflow.com/questions/57203186/datetimeformatter-is-not-working-in-android-versions-lower-than-8))
 - Support for Android <= 6.0 (very low priority)
 - Special layout for tablet screens
 - F-Droid compatible gradle repositories (AztecEditor is not in Maven Central)
@@ -87,7 +87,8 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-Parts of this program that are derived from zadam's [Trilium Notes](https://github.com/zadam/trilium/), the AGPL-3.0 applies.  
+Parts of this program are derived from zadam's [Trilium Notes](https://github.com/zadam/trilium/), the AGPL-3.0 applies.  
+Parts of this program are derived from Elian Doran's [TriliumNext Notes](https://github.com/TriliumNext/Notes), the AGPL-3.0 applies.  
 The MIT License applies to the [boxicons](https://boxicons.com/) included in the project (see `boxicons_LICENSE.txt`).  
 The GPL-3.0 license applies to the styles derived from [Simple-Commons](https://github.com/SimpleMobileTools/Simple-Commons).  
 The MPL-2.0 license applies to the included [AztecEditor-Android](https://github.com/wordpress-mobile/AztecEditor-Android/).  

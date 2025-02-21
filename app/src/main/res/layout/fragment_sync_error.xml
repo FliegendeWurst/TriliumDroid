@@ -9,7 +9,7 @@
         android:id="@+id/label_sync_error_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Sync error"
+        android:text="@string/label_sync_error"
         android:textSize="@dimen/xxxl_text_size"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -30,7 +30,6 @@
         android:layout_height="wrap_content"
         android:fontFamily="monospace"
         android:paddingTop="@dimen/normal_margin"
-        android:text="An error occurred whilst trying to synchronize the database."
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/label_sync_error_hint" />
 
