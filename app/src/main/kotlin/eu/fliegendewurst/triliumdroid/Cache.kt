@@ -36,7 +36,9 @@ import java.security.MessageDigest
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Calendar
+import java.util.TreeSet
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -48,14 +50,14 @@ object Cache {
 	@SuppressLint("SimpleDateFormat")
 	private val localTime: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
 
-	private var notes: MutableMap<String, Note> = HashMap()
+	private var notes: MutableMap<String, Note> = ConcurrentHashMap()
 
 	/**
 	 * Branches indexed by branch id.
 	 */
-	private var branches: MutableMap<String, Branch> = HashMap()
+	private var branches: MutableMap<String, Branch> = ConcurrentHashMap()
 
-	private var branchPosition: MutableMap<String, Int> = HashMap()
+	private var branchPosition: MutableMap<String, Int> = ConcurrentHashMap()
 
 	private var dbHelper: CacheDbHelper? = null
 	private var db: SQLiteDatabase? = null
