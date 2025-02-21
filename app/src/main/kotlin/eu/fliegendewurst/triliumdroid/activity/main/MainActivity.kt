@@ -6,7 +6,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ClipData
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.net.Uri
@@ -92,6 +91,7 @@ import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.util.CrashReport
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
+import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -109,7 +109,6 @@ import kotlin.io.path.writeBytes
 class MainActivity : AppCompatActivity() {
 	private lateinit var binding: ActivityMainBinding
 	lateinit var handler: Handler
-	private lateinit var prefs: SharedPreferences
 
 	// menu items
 	private var consoleLogMenuItem: MenuItem? = null
@@ -135,8 +134,6 @@ class MainActivity : AppCompatActivity() {
 	companion object {
 		private const val TAG = "MainActivity"
 		const val JUMP_TO_NOTE_ENTRY = "JUMP_TO_NOTE_ENTRY"
-		private const val LAST_NOTE = "LastNote"
-		private const val LAST_REPORT = "LastReport"
 		var tree: TreeItemAdapter? = null
 	}
 
@@ -169,7 +166,7 @@ class MainActivity : AppCompatActivity() {
 			)
 		}
 
-		val lastReported = prefs.getString(LAST_REPORT, "2020") ?: "2020"
+		val lastReported = Preferences.lastReport() ?: "2020"
 		val pendingReports = CrashReport.pendingReports(this).filter { x -> x.name > lastReported }
 		val toReport = pendingReports.maxByOrNull { x -> x.name }
 		if (toReport != null) {
@@ -184,8 +181,7 @@ class MainActivity : AppCompatActivity() {
 				.setPositiveButton(
 					android.R.string.ok
 				) { _, _ ->
-					prefs.edit().putString(LAST_REPORT, toReport.name)
-						.apply()
+					Preferences.setLastReport(toReport.name)
 					// read report and create email
 					val intent = Intent(Intent.ACTION_SENDTO).apply {
 						data = Uri.parse("mailto:")
@@ -233,7 +229,8 @@ class MainActivity : AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		firstNote = intent.extras?.getString("note")
-		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+
+		Preferences.prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 
 		if (intent?.action == Intent.ACTION_SEND) {
 			if (intent.type == "text/plain" || intent.type == "text/html") {
@@ -322,11 +319,11 @@ class MainActivity : AppCompatActivity() {
 								note
 							)
 						}
-						for (buttonId in prefs.all.keys.filter { pref -> pref.startsWith("button") }) {
+						for (buttonId in Preferences.prefs.all.keys.filter { pref -> pref.startsWith("button") }) {
 							val view = LayoutInflater.from(this@MainActivity)
 								.inflate(R.layout.button, it.binding.buttons, true)
 							view.findViewById<ImageButton>(R.id.button_custom).setOnClickListener {
-								val script = prefs.getString(buttonId, "() => {}")
+								val script = Preferences.prefs.getString(buttonId, "() => {}")
 								Log.i(TAG, "executing button script $script")
 								runScript(getNoteFragment(), "($script)()")
 							}
@@ -406,11 +403,11 @@ class MainActivity : AppCompatActivity() {
 		}
 
 		binding.fab.setOnClickListener {
-			val action = ConfigureFabsDialog.getRightAction(prefs)
+			val action = ConfigureFabsDialog.getRightAction()
 			performAction(action ?: return@setOnClickListener)
 		}
 		binding.fabTree.setOnClickListener {
-			val action = ConfigureFabsDialog.getLeftAction(prefs)
+			val action = ConfigureFabsDialog.getLeftAction()
 			performAction(action ?: return@setOnClickListener)
 		}
 		// hide FABs until ready
@@ -430,13 +427,13 @@ class MainActivity : AppCompatActivity() {
 		super.onStart()
 		if (Cache.haveDatabase(this)) {
 			runBlocking { Cache.initializeDatabase(applicationContext) }
-			if (!prefs.contains("hostname")) {
+			if (Preferences.hostname() == null) {
 				Log.i(TAG, "starting setup!")
 				val intent = Intent(this, SetupActivity::class.java)
 				startActivity(intent)
 			} else if (Cache.lastSync == null && noteHistory.isEmpty()) {
 				lifecycleScope.launch {
-					ConnectionUtil.setup(this@MainActivity, prefs, {
+					ConnectionUtil.setup(this@MainActivity, {
 						handler.post {
 							startSync(handler)
 						}
@@ -462,16 +459,12 @@ class MainActivity : AppCompatActivity() {
 		}
 		binding.fab.setImageResource(
 			ConfigureFabsDialog.getIcon(
-				ConfigureFabsDialog.getRightAction(
-					prefs
-				)
+				ConfigureFabsDialog.getRightAction()
 			)
 		)
 		binding.fabTree.setImageResource(
 			ConfigureFabsDialog.getIcon(
-				ConfigureFabsDialog.getLeftAction(
-					prefs
-				)
+				ConfigureFabsDialog.getLeftAction()
 			)
 		)
 	}
@@ -644,7 +637,7 @@ class MainActivity : AppCompatActivity() {
 		snackbar.show()
 		lifecycleScope.launch(Dispatchers.IO) {
 			Cache.initializeDatabase(applicationContext)
-			ConnectionUtil.setup(this@MainActivity, prefs, {
+			ConnectionUtil.setup(this@MainActivity, {
 				lifecycleScope.launch {
 					Cache.syncStart({
 						handler.post {
@@ -687,16 +680,18 @@ class MainActivity : AppCompatActivity() {
 	private fun showInitialNote(resetView: Boolean) = lifecycleScope.launch {
 		refreshTree()
 		if (resetView) {
-			var n = firstNote ?: prefs.getString(LAST_NOTE, "root")!!
+			val lastNote = Preferences.lastNote()
+			// first use: open the drawer
+			if (lastNote == null) {
+				binding.drawerLayout.openDrawer(GravityCompat.START)
+				return@launch
+			}
+			var n = firstNote ?: lastNote
 			if (Cache.getNote(n) == null) {
 				n = "root" // may happen in case of new database or note deleted
 			}
 			val note = Cache.getNote(n) ?: return@launch
 			navigateTo(note, note.branches.firstOrNull())
-			// first use: open the drawer
-			if (!prefs.contains(LAST_NOTE)) {
-				binding.drawerLayout.openDrawer(GravityCompat.START)
-			}
 		} else {
 			val noteId = getNoteFragment().getNoteId() ?: return@launch
 			val note = Cache.getNote(noteId) ?: return@launch
@@ -709,7 +704,7 @@ class MainActivity : AppCompatActivity() {
 		menuInflater.inflate(R.menu.action_bar, menu)
 		for (action in ConfigureFabsDialog.actions) {
 			val menuItem = menu?.findItem(action.value) ?: continue
-			val pref = ConfigureFabsDialog.getPref(prefs, action.key) ?: continue
+			val pref = ConfigureFabsDialog.getPref(action.key) ?: continue
 			menuItem.isVisible = pref.show
 		}
 		return true
@@ -1256,7 +1251,7 @@ class MainActivity : AppCompatActivity() {
 
 	fun load(note: Note, branch: Branch?) {
 		Log.i(TAG, "loading note ${note.id} @ branch ${branch?.id}")
-		prefs.edit().putString(LAST_NOTE, note.id).apply()
+		Preferences.setLastNote(note.id)
 		// make sure note is visible
 		val path = Cache.getNotePath(note.id)
 		val expandedAny = ensurePathIsExpanded(path)

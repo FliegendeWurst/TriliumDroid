@@ -23,6 +23,7 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Util
+import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.time.Instant
@@ -137,12 +138,11 @@ class FrontendBackendApi(
 		}
 		val action = opts.getString("action")
 		Log.i(TAG, "addButtonToToolbar $title $icon $action")
-		val prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
-		if (prefs.contains("button$title")) {
-			prefs.edit().putString("button$title", action).apply()
+		if (Preferences.prefs.contains("button$title")) {
+			Preferences.prefs.edit().putString("button$title", action).apply()
 		} else {
-			val countButton = prefs.getInt("countButton", 0) + 1
-			prefs.edit()
+			val countButton = Preferences.prefs.getInt("countButton", 0) + 1
+			Preferences.prefs.edit()
 				.putInt("countButton", countButton)
 				.putString("button$title", action).apply()
 		}

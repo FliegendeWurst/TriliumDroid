@@ -2,7 +2,6 @@ package eu.fliegendewurst.triliumdroid.activity
 
 import android.app.Activity
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.security.KeyChain
 import android.util.Log
@@ -10,13 +9,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import eu.fliegendewurst.triliumdroid.util.GetSSID
+import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,12 +28,10 @@ class SetupActivity : AppCompatActivity() {
 	}
 
 	private lateinit var binding: ActivitySetupBinding
-	private lateinit var prefs: SharedPreferences
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		binding = ActivitySetupBinding.inflate(layoutInflater)
-		prefs = PreferenceManager.getDefaultSharedPreferences(this)
 		setContentView(binding.root)
 
 		binding.toolbar.setNavigationIcon(R.drawable.ic_arrow_left_vector)
@@ -61,15 +58,10 @@ class SetupActivity : AppCompatActivity() {
 			binding.status.setText(status)
 		}
 
-		binding.server.setText(prefs.getString("hostname", ""))
-		binding.password.setText(
-			prefs.getString(
-				"password",
-				""
-			)
-		)
+		binding.server.setText(Preferences.hostname() ?: "")
+		binding.password.setText(Preferences.password() ?: "")
 
-		val mtlsCert = prefs.getString("mTLS_cert", null)
+		val mtlsCert = Preferences.mTLS()
 		binding.buttonConfigureMtls.setOnClickListener {
 			KeyChain.choosePrivateKeyAlias(
 				this@SetupActivity,
@@ -84,7 +76,7 @@ class SetupActivity : AppCompatActivity() {
 							KeyChain.getPrivateKey(applicationContext, alias)
 							KeyChain.getCertificateChain(applicationContext, alias)
 						}
-						prefs.edit().putString("mTLS_cert", alias).apply()
+						Preferences.setMTLS(alias)
 						ConnectionUtil.resetClient(this@SetupActivity) {}
 					}
 				},
@@ -97,13 +89,13 @@ class SetupActivity : AppCompatActivity() {
 		}
 		binding.buttonConfigureMtls.isEnabled = mtlsCert == null
 		binding.buttonConfigureMtls2.setOnClickListener {
-			prefs.edit().remove("mTLS_cert").apply()
+			Preferences.clearMTLS()
 			binding.buttonConfigureMtls.isEnabled = true
 			binding.buttonConfigureMtls2.isEnabled = false
 		}
 		binding.buttonConfigureMtls2.isEnabled = mtlsCert != null
 
-		val ssidLimitActive = prefs.contains("syncSSID")
+		val ssidLimitActive = Preferences.syncSSID() != null
 		binding.buttonConfigureSsid.isEnabled = !ssidLimitActive
 		binding.buttonConfigureSsidClear.isEnabled = ssidLimitActive
 		binding.buttonConfigureSsid.setOnClickListener {
@@ -112,7 +104,7 @@ class SetupActivity : AppCompatActivity() {
 					if (it == null) {
 						return@launch
 					}
-					prefs.edit().putString("syncSSID", it).apply()
+					Preferences.setSyncSSID(it)
 					binding.buttonConfigureSsid.isEnabled = false
 					binding.buttonConfigureSsidClear.isEnabled = true
 					ConnectionUtil.resetClient(this@SetupActivity) {}
@@ -120,7 +112,7 @@ class SetupActivity : AppCompatActivity() {
 			}.getSSID()
 		}
 		binding.buttonConfigureSsidClear.setOnClickListener {
-			prefs.edit().remove("syncSSID").apply()
+			Preferences.clearSyncSSID()
 			binding.buttonConfigureSsid.isEnabled = true
 			binding.buttonConfigureSsidClear.isEnabled = false
 			lifecycleScope.launch {
@@ -128,7 +120,7 @@ class SetupActivity : AppCompatActivity() {
 			}
 		}
 
-		ConfigureFabsDialog.init(prefs)
+		ConfigureFabsDialog.init()
 		setText()
 
 		val exportLauncher =
@@ -145,7 +137,7 @@ class SetupActivity : AppCompatActivity() {
 			}
 
 		binding.buttonConfigureFabs.setOnClickListener {
-			ConfigureFabsDialog.showDialog(this, prefs) {
+			ConfigureFabsDialog.showDialog(this) {
 				setText()
 			}
 		}
@@ -231,13 +223,13 @@ class SetupActivity : AppCompatActivity() {
 		var x = ""
 		val labels = resources.getStringArray(R.array.fabs)
 		for (action in ConfigureFabsDialog.actions.keys) {
-			if (ConfigureFabsDialog.getPref(prefs, action)!!.left) {
+			if (ConfigureFabsDialog.getPref(action)!!.left) {
 				val label = labels[ConfigureFabsDialog.actions.keys.indexOf(action)]
 				x = label
 			}
 		}
 		for (action in ConfigureFabsDialog.actions.keys) {
-			if (ConfigureFabsDialog.getPref(prefs, action)!!.right) {
+			if (ConfigureFabsDialog.getPref(action)!!.right) {
 				val label = labels[ConfigureFabsDialog.actions.keys.indexOf(action)]
 				x = "$x, $label"
 			}
@@ -252,9 +244,7 @@ class SetupActivity : AppCompatActivity() {
 		if (!(server.startsWith("http://") || server.startsWith("https://"))) {
 			server = "http://${server}"
 		}
-		prefs.edit()
-			.putString("hostname", server)
-			.putString("password", password)
-			.apply()
+		Preferences.setHostname(server)
+		Preferences.setPassword(password)
 	}
 }

@@ -1,3 +1,5 @@
 - New sync error screen with suggestions for common misconfigurations
 - New option to limit sync activity to specific network
 - Fix sync error after updating sync server
+- Fix crash when following a link to a deleted note
+- Fix rare crash on launch

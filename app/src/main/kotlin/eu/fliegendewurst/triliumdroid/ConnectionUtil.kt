@@ -1,7 +1,6 @@
 package eu.fliegendewurst.triliumdroid
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.security.KeyChain
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -9,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.util.CookieJar
 import eu.fliegendewurst.triliumdroid.util.GetSSID
+import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -50,7 +50,6 @@ object ConnectionUtil {
 	private var server: String = "http://0.0.0.0"
 	private var password: String = "aaaaaa" // easy to catch in logs
 	var instanceId: String? = null
-	private var prefs: SharedPreferences? = null
 	private var syncVersion: Int = Cache.Versions.SYNC_VERSION
 	private var loginFails = 0
 
@@ -60,12 +59,9 @@ object ConnectionUtil {
 
 	suspend fun setup(
 		activity: AppCompatActivity,
-		prefs: SharedPreferences,
 		callback: () -> Unit,
 		callbackError: (Exception) -> Unit
 	) {
-		ConnectionUtil.prefs = prefs
-
 		if (client == null) {
 			resetClient(activity) {
 				activity.lifecycleScope.launch {
@@ -81,19 +77,15 @@ object ConnectionUtil {
 		callback: () -> Unit,
 		callbackError: (Exception) -> Unit
 	) {
-		if (prefs == null) {
-			callbackError(IllegalStateException("SharedPreferences null"))
-			return
-		}
-		server = prefs!!.getString("hostname", null)!!
-		password = prefs!!.getString("password", null)!!
-		instanceId = prefs!!.getString("instanceId", null)
+		server = Preferences.hostname()!!
+		password = Preferences.password()!!
+		instanceId = Preferences.instanceId()
 		if (instanceId == null) {
 			instanceId = "mobile" + Util.randomString(6)
-			prefs!!.edit().putString("instanceId", instanceId).apply()
+			Preferences.setInstanceId(instanceId!!)
 		}
 		Log.d(TAG, "setup with server = $server, instance ID = $instanceId")
-		val documentSecret = prefs!!.getString("documentSecret", null)
+		val documentSecret = Preferences.documentSecret()
 		if (documentSecret == null) {
 			loginSuccess = false
 			fetch("/api/setup/sync-seed", null, true, {
@@ -108,8 +100,8 @@ object ConnectionUtil {
 					val name = opt.getString("name")
 					val value = opt.getString("value")
 					if (name == "documentSecret") {
-						prefs!!.edit().putString("documentSecret", value)
-							.putInt("syncVersion", syncVersion).apply()
+						Preferences.setDocumentSecret(value)
+						Preferences.setSyncVersion(syncVersion)
 						loginSuccess = true
 						runBlocking {
 							connect(server, callback, callbackError)
@@ -134,7 +126,7 @@ object ConnectionUtil {
 	suspend fun resetClient(activity: AppCompatActivity, callback: () -> Unit) {
 		client = null
 
-		val limitToSSID = prefs!!.getString("syncSSID", null)
+		val limitToSSID = Preferences.syncSSID()
 		if (limitToSSID != null) {
 			GetSSID(activity) {
 				if (limitToSSID == it) {
@@ -155,7 +147,7 @@ object ConnectionUtil {
 		var pk: PrivateKey? = null
 		var chain: Array<X509Certificate>? = null
 
-		val mTLS = prefs!!.getString("mTLS_cert", null)
+		val mTLS = Preferences.mTLS()
 		if (mTLS != null) {
 			try {
 				pk = KeyChain.getPrivateKey(appContext, mTLS)
@@ -337,11 +329,11 @@ object ConnectionUtil {
 		}
 
 		val utc = Cache.utcDateModified()
-		val hash = calculateHMAC(prefs!!.getString("documentSecret", null)!!, utc)
+		val hash = calculateHMAC(Preferences.documentSecret()!!, utc)
 		val jsonObject = JSONObject()
 		jsonObject.put("timestamp", utc)
 		jsonObject.put("hash", hash)
-		syncVersion = prefs?.getInt("syncVersion", syncVersion) ?: syncVersion
+		syncVersion = Preferences.syncVersion() ?: syncVersion
 		jsonObject.put("syncVersion", syncVersion)
 		val req = Request.Builder()
 			.url("$server/api/login/sync")
@@ -365,9 +357,7 @@ object ConnectionUtil {
 						}
 						for (version in Cache.Versions.SUPPORTED_SYNC_VERSIONS) {
 							if (msg.startsWith("Non-matching sync versions, local is version $version, remote is")) {
-								prefs!!.edit()
-									.putInt("syncVersion", version)
-									.apply()
+								Preferences.setSyncVersion(version)
 								runBlocking {
 									connect(server, callback, callbackError)
 								}

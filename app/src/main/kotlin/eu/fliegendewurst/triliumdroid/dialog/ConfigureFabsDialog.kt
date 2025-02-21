@@ -1,6 +1,5 @@
 package eu.fliegendewurst.triliumdroid.dialog
 
-import android.content.SharedPreferences
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
@@ -11,6 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.SetupActivity
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
+import eu.fliegendewurst.triliumdroid.util.Preferences
 
 object ConfigureFabsDialog {
 	const val SHOW_NOTE_TREE: String = "showNoteTree"
@@ -37,26 +37,26 @@ object ConfigureFabsDialog {
 		Pair(SYNC, R.id.action_sync)
 	)
 
-	fun init(prefs: SharedPreferences) {
-		val haveLeftAction = getLeftAction(prefs) != null
-		val haveRightAction = getRightAction(prefs) != null
+	fun init() {
+		val haveLeftAction = getLeftAction() != null
+		val haveRightAction = getRightAction() != null
 		for (action in actions.keys) {
-			if (getPref(prefs, action) == null) {
+			if (getPref(action) == null) {
 				when (action) {
 					"showNoteTree" -> {
-						setPref(prefs, action, left = !haveLeftAction, right = false, show = false)
+						setPref(action, left = !haveLeftAction, right = false, show = false)
 					}
 
 					"jumpToNote" -> {
-						setPref(prefs, action, left = false, right = false, show = false)
+						setPref(action, left = false, right = false, show = false)
 					}
 
 					NOTE_NAVIGATION -> {
-						setPref(prefs, action, left = false, right = !haveRightAction, show = false)
+						setPref(action, left = false, right = !haveRightAction, show = false)
 					}
 
 					else -> {
-						setPref(prefs, action, left = false, right = false, show = true)
+						setPref(action, left = false, right = false, show = true)
 					}
 				}
 			}
@@ -65,7 +65,6 @@ object ConfigureFabsDialog {
 
 	fun showDialog(
 		activity: SetupActivity,
-		prefs: SharedPreferences,
 		callback: () -> Unit,
 	) {
 		val dialog = AlertDialog.Builder(activity)
@@ -94,7 +93,7 @@ object ConfigureFabsDialog {
 			}
 			vi!!.findViewById<TextView>(R.id.label_fab_action).text =
 				labels[actions.keys.indexOf(action)]
-			val settings = getPref(prefs, action)!!
+			val settings = getPref(action)!!
 			val left = vi.findViewById<RadioButton>(R.id.button_fab_left)
 			val right = vi.findViewById<RadioButton>(R.id.button_fab_right)
 			val show = vi.findViewById<CheckBox>(R.id.checkbox_fab_show)
@@ -105,42 +104,42 @@ object ConfigureFabsDialog {
 			right.isChecked = settings.right
 			show.isChecked = settings.show
 			left.setOnCheckedChangeListener { _, isChecked ->
-				setPref(prefs, action, isChecked, settings.right, settings.show)
+				setPref(action, isChecked, settings.right, settings.show)
 				for (otherAction in actions.keys) {
 					if (action == otherAction) {
 						continue
 					}
-					val o = getPref(prefs, otherAction)!!
+					val o = getPref(otherAction)!!
 					if (o.left) {
-						setPref(prefs, otherAction, false, o.right, o.show)
+						setPref(otherAction, false, o.right, o.show)
 					}
 				}
 				(list.adapter as ListAdapter<*>).notifyDataSetChanged()
 			}
 			right.setOnCheckedChangeListener { _, isChecked ->
-				setPref(prefs, action, settings.left, isChecked, settings.show)
+				setPref(action, settings.left, isChecked, settings.show)
 				for (otherAction in actions.keys) {
 					if (action == otherAction) {
 						continue
 					}
-					val o = getPref(prefs, otherAction)!!
+					val o = getPref(otherAction)!!
 					if (o.right) {
-						setPref(prefs, otherAction, o.left, false, o.show)
+						setPref(otherAction, o.left, false, o.show)
 					}
 				}
 				(list.adapter as ListAdapter<*>).notifyDataSetChanged()
 			}
 			show.setOnCheckedChangeListener { _, isChecked ->
-				setPref(prefs, action, settings.left, settings.right, isChecked)
+				setPref(action, settings.left, settings.right, isChecked)
 			}
 			return@ListAdapter vi
 		}
 	}
 
 	fun getPref(
-		prefs: SharedPreferences,
 		action: String
 	): ActionPref? {
+		val prefs = Preferences.prefs
 		val left = if (prefs.contains("fab_${action}_left")) {
 			prefs.getBoolean("fab_${action}_left", false)
 		} else {
@@ -171,35 +170,24 @@ object ConfigureFabsDialog {
 	)
 
 	private fun setPref(
-		prefs: SharedPreferences,
 		action: String,
 		left: Boolean,
 		right: Boolean,
 		show: Boolean
 	) {
-		prefs.edit()
+		Preferences.prefs.edit()
 			.putBoolean("fab_${action}_left", left)
 			.putBoolean("fab_${action}_right", right)
 			.putBoolean("fab_${action}_show", show)
 			.apply()
 	}
 
-	fun getLeftAction(prefs: SharedPreferences): String? {
-		for (action in actions.keys) {
-			if (prefs.getBoolean("fab_${action}_left", false)) {
-				return action
-			}
-		}
-		return null
+	fun getLeftAction(): String? {
+		return actions.keys.firstOrNull { Preferences.isLeftAction(it) }
 	}
 
-	fun getRightAction(prefs: SharedPreferences): String? {
-		for (action in actions.keys) {
-			if (prefs.getBoolean("fab_${action}_right", false)) {
-				return action
-			}
-		}
-		return null
+	fun getRightAction(): String? {
+		return actions.keys.firstOrNull { Preferences.isRightAction(it) }
 	}
 
 	fun getIcon(action: String?): Int {

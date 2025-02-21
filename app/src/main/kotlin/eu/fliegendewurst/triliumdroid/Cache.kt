@@ -24,6 +24,7 @@ import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.service.Util
+import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -1149,11 +1150,7 @@ object Cache {
 			db = null
 			dbHelper = null
 		}
-		PreferenceManager.getDefaultSharedPreferences(context).edit()
-			.remove("documentSecret")
-			.remove("syncVersion")
-			.remove("instanceId")
-			.apply()
+		Preferences.clearSyncContext()
 		File(context.filesDir.parent, "databases/Document.db").delete()
 		notes.clear()
 		branches.clear()

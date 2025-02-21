@@ -1,6 +1,5 @@
 package eu.fliegendewurst.triliumdroid.util
 
-import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
@@ -14,10 +13,6 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class GetSSID(private val context: AppCompatActivity, private val callback: (String?) -> Unit) {
 	companion object {

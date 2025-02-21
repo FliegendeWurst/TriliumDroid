@@ -4,9 +4,9 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.databinding.ActivityWelcomeBinding
+import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.launch
 
 class WelcomeActivity : AppCompatActivity() {
@@ -22,8 +22,7 @@ class WelcomeActivity : AppCompatActivity() {
 
 	override fun onStart() {
 		super.onStart()
-		val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-		if (prefs.contains("hostname") && prefs.getString("hostname", "") != "") {
+		if (Preferences.hostname() != null) {
 			lifecycleScope.launch {
 				Cache.initializeDatabase(this@WelcomeActivity)
 				finish()
