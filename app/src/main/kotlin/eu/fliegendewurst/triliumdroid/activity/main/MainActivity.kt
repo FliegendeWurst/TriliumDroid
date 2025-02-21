@@ -675,7 +675,7 @@ class MainActivity : AppCompatActivity() {
 				n = "root" // may happen in case of new database or note deleted
 			}
 			val note = Cache.getNote(n) ?: return@launch
-			navigateTo(note, note.branches.first())
+			navigateTo(note, note.branches.firstOrNull())
 			// first use: open the drawer
 			if (!prefs.contains(LAST_NOTE)) {
 				binding.drawerLayout.openDrawer(GravityCompat.START)
