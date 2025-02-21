@@ -87,6 +87,7 @@ import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment
+import eu.fliegendewurst.triliumdroid.fragment.SyncErrorFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.util.CrashReport
@@ -446,9 +447,11 @@ class MainActivity : AppCompatActivity() {
 					showInitialNote(true)
 				}
 			} else if (noteHistory.isEmpty()) {
+				Log.d(TAG, "last sync is ${Cache.lastSync}, showing initial note")
 				showInitialNote(true)
 			}
 		} else {
+			Log.d(TAG, "no database, starting welcome activity")
 			val intent = Intent(this, WelcomeActivity::class.java)
 			startActivity(intent)
 		}
@@ -617,6 +620,11 @@ class MainActivity : AppCompatActivity() {
 			this, toastText,
 			Toast.LENGTH_LONG
 		).show()
+		if (getFragment() is EmptyFragment || getFragment() is SyncErrorFragment) {
+			val frag = SyncErrorFragment()
+			frag.showError(it)
+			showFragment(frag, true)
+		}
 	}
 
 	private fun startSync(handler: Handler, resetView: Boolean = true) {
@@ -1285,7 +1293,7 @@ class MainActivity : AppCompatActivity() {
 	private fun getFragment(): Fragment {
 		val hostFragment =
 			supportFragmentManager.findFragmentById(R.id.fragment_container)
-		return if (hostFragment is NoteFragment || hostFragment is NoteEditFragment || hostFragment is EmptyFragment || hostFragment is NoteMapFragment || hostFragment is NavigationFragment) {
+		return if (hostFragment is NoteFragment || hostFragment is NoteEditFragment || hostFragment is EmptyFragment || hostFragment is NoteMapFragment || hostFragment is NavigationFragment || hostFragment is SyncErrorFragment) {
 			hostFragment
 		} else {
 			val frags = (hostFragment as NavHostFragment).childFragmentManager.fragments

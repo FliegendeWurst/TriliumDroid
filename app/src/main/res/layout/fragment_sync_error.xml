@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="@dimen/activity_margin">
+
+    <TextView
+        android:id="@+id/label_sync_error_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sync error"
+        android:textSize="@dimen/xxxl_text_size"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/label_sync_error_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/normal_margin"
+        android:text="@string/error_generic"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/label_sync_error_title" />
+
+    <TextView
+        android:id="@+id/label_sync_error_causes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:paddingTop="@dimen/normal_margin"
+        android:text="An error occurred whilst trying to synchronize the database."
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/label_sync_error_hint" />
+
+    <!--
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:paddingTop="@dimen/normal_margin"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/label_sync_error_causes"
+        app:layout_constraintVertical_weight="1">
+
+        <TextView
+            android:id="@+id/label_sync_error_stacktrace"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:text="An error occurred whilst trying to synchronize the database." />
+    </ScrollView>
+    -->
+</androidx.constraintlayout.widget.ConstraintLayout>

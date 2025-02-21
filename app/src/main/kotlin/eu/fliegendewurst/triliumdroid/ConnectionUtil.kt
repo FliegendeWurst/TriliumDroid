@@ -75,6 +75,7 @@ object ConnectionUtil {
 			instanceId = "mobile" + Util.randomString(6)
 			prefs.edit().putString("instanceId", instanceId).apply()
 		}
+		Log.d(TAG, "setup with server = $server, instance ID = $instanceId")
 		val documentSecret = prefs.getString("documentSecret", null)
 		if (documentSecret == null) {
 			loginSuccess = false
@@ -272,11 +273,11 @@ object ConnectionUtil {
 					response.use {
 						val resp = response.body!!.string()
 						try {
-							val obj = JSONObject(resp)
 							if (response.code != 200) {
-								callbackError(IllegalStateException("bad response code"))
+								callbackError(IllegalStateException("bad sync-seed response code ${response.code}, $resp"))
 								return
 							}
+							val obj = JSONObject(resp)
 							callbackOk(obj)
 						} catch (e: Exception) {
 							callbackError(e)

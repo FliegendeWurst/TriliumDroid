@@ -36,7 +36,7 @@ class HistoryList {
 		}
 	}
 
-	fun isEmpty(): Boolean = items.isEmpty()
+	fun isEmpty(): Boolean = items.isEmpty() || (items.size == 1 && items.first() is StartItem)
 
 	fun noteId(): String = items.last().noteId()
 	fun branch(): Branch? = items.last().branch()

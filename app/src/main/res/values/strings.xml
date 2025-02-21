@@ -107,6 +107,9 @@
     <string name="action_show_note_tree">Show note tree</string>
     <string name="action_note_navigation">Navigate note tree</string>
     <string name="fab_setup_hint">L = Left action, R = right action, M = toolbar action</string>
+    <string name="error_generic">An error occurred whilst trying to synchronize the database.</string>
+    <string name="error_connect">The app could not connect to the sync server.</string>
+    <string name="error_unknown_host">The hostname of the sync server could not be resolved.</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

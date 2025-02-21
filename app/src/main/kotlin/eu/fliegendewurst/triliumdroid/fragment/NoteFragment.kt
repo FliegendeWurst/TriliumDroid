@@ -82,7 +82,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 					Log.i(TAG, "navigating to note $id")
 					val main = activity as MainActivity
 					main.lifecycleScope.launch {
-						main.navigateTo(Cache.getNote(id)!!)
+						main.navigateTo(Cache.getNote(id) ?: return@launch)
 					}
 				}
 			}
