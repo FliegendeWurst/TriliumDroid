@@ -21,6 +21,16 @@ abstract class HistoryItem {
 	abstract fun setBranch(branch: Branch)
 }
 
+class StartItem : HistoryItem() {
+	override fun restore(activity: MainActivity): Boolean = true
+
+	override fun noteId(): String = "root"
+
+	override fun branch(): Branch? = null
+
+	override fun setBranch(branch: Branch) {}
+}
+
 class NoteItem(private val note: Note, private var branch: Branch?) : HistoryItem() {
 	override fun restore(activity: MainActivity): Boolean {
 		if (note.id == "DELETED") {

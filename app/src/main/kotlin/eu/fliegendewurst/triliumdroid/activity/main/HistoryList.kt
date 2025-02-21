@@ -3,11 +3,14 @@ package eu.fliegendewurst.triliumdroid.activity.main
 import eu.fliegendewurst.triliumdroid.data.Branch
 
 class HistoryList {
-	private var items: MutableList<HistoryItem> = mutableListOf()
+	private var items: MutableList<HistoryItem> = mutableListOf(
+		StartItem()
+	)
 
 	fun addAndRestore(item: HistoryItem, activity: MainActivity) {
 		// Note Navigation done? Remove from history.
-		if (items.lastOrNull() is NavigationItem) {
+		val last = items.lastOrNull()
+		if (last is NavigationItem || last is StartItem) {
 			items.removeAt(items.size - 1)
 		}
 		items.add(item)

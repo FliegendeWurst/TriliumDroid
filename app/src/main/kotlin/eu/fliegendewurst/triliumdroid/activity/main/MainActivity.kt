@@ -407,6 +407,9 @@ class MainActivity : AppCompatActivity() {
 			val action = ConfigureFabsDialog.getLeftAction(prefs)
 			performAction(action ?: return@setOnClickListener)
 		}
+		// hide FABs until ready
+		binding.fabTree.hide()
+		binding.fab.hide()
 
 		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
@@ -506,16 +509,14 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun showNoteNavigation() {
-		lifecycleScope.launch {
-			var note = Cache.getNote(noteHistory.noteId())!!
-			var branch = noteHistory.branch() ?: note.branches[0]
-			if (note.computeChildren().isEmpty()) {
-				note = Cache.getNote(branch.parentNote)!!
-				branch = note.branches[0] // TODO
-			}
-			noteHistory.addAndRestore(NavigationItem(note, branch), this@MainActivity)
+	private fun showNoteNavigation() = lifecycleScope.launch {
+		var note = Cache.getNote(noteHistory.noteId()) ?: return@launch
+		var branch = noteHistory.branch() ?: note.branches[0]
+		if (note.computeChildren().isEmpty()) {
+			note = Cache.getNote(branch.parentNote)!!
+			branch = note.branches[0] // TODO
 		}
+		noteHistory.addAndRestore(NavigationItem(note, branch), this@MainActivity)
 	}
 
 	private var loadedNoteId: String? = null
@@ -968,10 +969,8 @@ class MainActivity : AppCompatActivity() {
 		)
 	}
 
-	fun navigateToPath(notePath: String) {
-		lifecycleScope.launch {
-			navigateTo(Cache.getNote(notePath.split("/").last())!!)
-		}
+	fun navigateToPath(notePath: String) = lifecycleScope.launch {
+		navigateTo(Cache.getNote(notePath.split("/").last())!!)
 	}
 
 	private fun refreshTitle(note: Note?) {
