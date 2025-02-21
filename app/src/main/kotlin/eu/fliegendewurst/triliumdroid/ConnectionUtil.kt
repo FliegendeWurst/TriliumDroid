@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.service.Util
+import eu.fliegendewurst.triliumdroid.util.CookieJar
 import eu.fliegendewurst.triliumdroid.util.GetSSID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -14,10 +15,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
-import okhttp3.Cookie
-import okhttp3.CookieJar
 import okhttp3.FormBody
-import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -152,33 +150,7 @@ object ConnectionUtil {
 
 	private suspend fun reset(appContext: Context, done: () -> Unit) = withContext(Dispatchers.IO) {
 		var clientBuilder = OkHttpClient.Builder()
-			.cookieJar(object : CookieJar {
-				// TODO: this is a terrible cookie jar
-				private var cookieStore: MutableList<Cookie> = ArrayList()
-				override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-					for (cookie in cookies) {
-						Log.i(
-							TAG,
-							"cookie ${cookie.path} ${cookie.name} = ${cookie.value.length} characters"
-						)
-						var added = false
-						for (i in cookieStore.indices) {
-							if (cookieStore[i].name == cookie.name) {
-								cookieStore[i] = cookie
-								added = true
-								break
-							}
-						}
-						if (!added) {
-							cookieStore.add(cookie)
-						}
-					}
-				}
-
-				override fun loadForRequest(url: HttpUrl): List<Cookie> {
-					return cookieStore
-				}
-			})
+			.cookieJar(CookieJar())
 
 		var pk: PrivateKey? = null
 		var chain: Array<X509Certificate>? = null
