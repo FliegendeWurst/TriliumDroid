@@ -11,6 +11,7 @@ These features of the original are implemented:
 - Note attributes can be used for note organization, querying and advanced scripting
 - Scripting
 - Scales well in both usability and performance upwards of 10000 notes
+- Night theme
 
 The following features are only available in the desktop client.
 They will be implemented in the app at a later time.
@@ -24,6 +25,5 @@ They will be implemented in the app at a later time.
 - Relation maps and link maps for visualizing notes and their relations
 - REST API for automation
 - Scales well in both usability and performance upwards of 100000 notes
-- Night theme
 - Evernote and Markdown import & export
 - Web Clipper for easy saving of web content

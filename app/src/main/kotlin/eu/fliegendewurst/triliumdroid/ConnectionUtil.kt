@@ -348,23 +348,16 @@ object ConnectionUtil {
 							callbackError(MismatchedDatabaseException)
 							return
 						}
-						if (msg.startsWith("Non-matching sync versions, local is version 32, remote is")) {
-							prefs!!.edit()
-								.putInt("syncVersion", Cache.Versions.SYNC_VERSION_0_63_3)
-								.apply()
-							runBlocking {
-								connect(server, callback, callbackError)
+						for (version in Cache.Versions.SUPPORTED_SYNC_VERSIONS) {
+							if (msg.startsWith("Non-matching sync versions, local is version $version, remote is")) {
+								prefs!!.edit()
+									.putInt("syncVersion", version)
+									.apply()
+								runBlocking {
+									connect(server, callback, callbackError)
+								}
+								return
 							}
-							return
-						}
-						if (msg.startsWith("Non-matching sync versions, local is version 33, remote is")) {
-							prefs!!.edit()
-								.putInt("syncVersion", Cache.Versions.SYNC_VERSION_0_90_12)
-								.apply()
-							runBlocking {
-								connect(server, callback, callbackError)
-							}
-							return
 						}
 						callbackError(IllegalStateException(msg))
 						return
