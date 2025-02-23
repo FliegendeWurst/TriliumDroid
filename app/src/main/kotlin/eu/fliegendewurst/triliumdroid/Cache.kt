@@ -16,7 +16,6 @@ import android.icu.text.SimpleDateFormat
 import android.os.Build
 import android.util.Log
 import androidx.core.database.sqlite.transaction
-import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.data.Attachment
 import eu.fliegendewurst.triliumdroid.data.Branch
@@ -61,7 +60,8 @@ object Cache {
 	private var branchPosition: MutableMap<String, Int> = ConcurrentHashMap()
 
 	private var dbHelper: CacheDbHelper? = null
-	private var db: SQLiteDatabase? = null
+	var db: SQLiteDatabase? = null
+		private set
 
 	var lastSync: Long? = null
 
@@ -94,7 +94,7 @@ object Cache {
 
 	suspend fun getNoteWithContent(id: String): Note? {
 		Log.d(TAG, "fetching note $id")
-		if (notes.containsKey(id) && notes[id]!!.mime != "INVALID" && notes[id]!!.content != null) {
+		if (notes.containsKey(id) && notes[id]!!.mime != "INVALID" && notes[id]!!.content() != null) {
 			return notes[id]
 		}
 		return getNoteInternal(id)
@@ -109,7 +109,7 @@ object Cache {
 			getNoteInternal(id)
 		}
 		val data = content.encodeToByteArray()
-		notes[id]!!.content = data
+		notes[id]!!.updateContent(data)
 
 		var blobId = ""
 		db!!.rawQuery(
@@ -130,7 +130,7 @@ object Cache {
 		db!!.execSQL(
 			"UPDATE blobs SET content = ?, dateModified = ?, utcDateModified = ? " +
 					"WHERE blobId = ?",
-			arrayOf(Base64.encode(data), date, utc, blobId)
+			arrayOf(Base64.encode(notes[id]!!.rawContent()!!), date, utc, blobId)
 		)
 		val md = MessageDigest.getInstance("SHA-1")
 		md.update(data, 0, data.size)
@@ -532,8 +532,11 @@ object Cache {
 	}
 
 	suspend fun renameNote(note: Note, title: String) = withContext(Dispatchers.IO) {
-		note.title = title
-		db!!.execSQL("UPDATE notes SET title = ? WHERE noteId = ?", arrayOf(title, note.id))
+		note.updateTitle(title)
+		db!!.execSQL(
+			"UPDATE notes SET title = ? WHERE noteId = ?",
+			arrayOf(note.rawTitle(), note.id)
+		)
 		db!!.registerEntityChangeNote(note)
 	}
 
@@ -575,10 +578,10 @@ object Cache {
 					it.getString(6),
 					it.getString(7),
 					it.getString(8),
-					it.getInt(11),
+					it.getInt(11) != 0,
 					it.getString(12)
 				)
-				note!!.content = if (!it.isNull(0)) {
+				val noteContent = if (!it.isNull(0)) {
 					val content = it.getBlob(0)
 					val base64String = content.decodeToString()
 					val trimmed = base64String.substring(0..base64String.length - 2)
@@ -600,6 +603,7 @@ object Cache {
 				} else {
 					ByteArray(0)
 				}
+				note!!.updateContentRaw(noteContent)
 			}
 			while (!it.isAfterLast) {
 				if (!it.isNull(3)) {
@@ -631,7 +635,7 @@ object Cache {
 										"INVALID",
 										"INVALID",
 										"INVALID",
-										0,
+										false,
 										"INVALID"
 									)
 							}
@@ -710,7 +714,7 @@ object Cache {
 					it.getString(3),
 					"INVALID",
 					"INVALID",
-					0,
+					false,
 					"INVALID"
 				)
 				notes.add(note)
@@ -758,7 +762,7 @@ object Cache {
 				val type = it.getString(8)
 				val dateCreated = it.getString(9)
 				val dateModified = it.getString(10)
-				val isProtected = it.getInt(11)
+				val isProtected = it.getInt(11) != 0
 				val blobId = it.getString(12)
 				val b = Branch(
 					branchId,
@@ -1063,8 +1067,7 @@ object Cache {
 						val keys = entity.keys().asSequence().toList()
 
 						if (entityName == "notes") {
-							notes[entityName]?.title = "INVALID"
-							notes[entityName]?.content = null
+							notes[entityName]?.makeInvalid()
 							notes.remove(entityName)
 						}
 
@@ -1265,6 +1268,10 @@ object Cache {
 		updateRelation(note, null, "internalLink", getNote(target) ?: return@withContext, false)
 	}
 
+	/**
+	 * Get all notes with their relations.
+	 * WARNING: the returned notes ONLY have their title and relations set.
+	 */
 	suspend fun getAllNotesWithRelations(): List<Note> = withContext(Dispatchers.IO) {
 		val list = mutableListOf<Note>()
 		val relations = mutableListOf<Triple<String, String, Pair<String, String>>>()
@@ -1274,11 +1281,14 @@ object Cache {
 					"title," + // 1
 					"attributes.name," + // 2
 					"attributes.value," + // 3
-					"attributes.type," + // 4
-					"attributes.attributeId " + // 5
+					"attributes.attributeId " + // 4
 					"FROM notes " +
 					"LEFT JOIN attributes USING(noteId) " +
-					"WHERE notes.isDeleted = 0 AND SUBSTR(noteId, 1, 1) != '_'",
+					"WHERE notes.isDeleted = 0 " +
+					"AND attributes.isDeleted = 0 " +
+					"AND attributes.type == 'relation' " +
+					"AND SUBSTR(noteId, 1, 1) != '_' " +
+					"ORDER BY noteId",
 			arrayOf()
 		).use {
 			var currentNote: Note? = null
@@ -1288,15 +1298,14 @@ object Cache {
 				val title = it.getString(1)
 				val attrName = it.getString(2)
 				val attrValue = it.getString(3)
-				val attrType = it.getString(4)
-				val attrId = it.getString(5)
-				if (currentNote == null || currentNote.title != title) {
+				val attrId = it.getString(4)
+				if (currentNote == null || currentNote.id != id) {
 					if (currentNote != null) {
 						list.add(currentNote)
 					}
-					currentNote = Note(id, "", title, "", "", "", 0, "")
+					currentNote = Note(id, "", title, "", "", "", false, "")
 				}
-				if (attrType == "relation" && attrValue != null && !attrValue.startsWith('_') && !attrName.startsWith(
+				if (attrValue != null && !attrValue.startsWith('_') && !attrName.startsWith(
 						"child:"
 					)
 				) {
@@ -1625,7 +1634,14 @@ private suspend fun SQLiteDatabase.registerEntityChangeNote(
 	registerEntityChange(
 		"notes",
 		note.id,
-		arrayOf(note.id, note.title, note.isProtected.toString(), note.type, note.mime, note.blobId)
+		arrayOf(
+			note.id,
+			note.rawTitle(),
+			note.isProtected.boolToInt(),
+			note.type,
+			note.mime,
+			note.blobId
+		)
 	)
 }
 
@@ -1692,3 +1708,8 @@ private suspend fun SQLiteDatabase.registerEntityChange(
 	)
 }
 
+private fun Boolean.boolToInt(): String = if (this) {
+	"1"
+} else {
+	"0"
+}

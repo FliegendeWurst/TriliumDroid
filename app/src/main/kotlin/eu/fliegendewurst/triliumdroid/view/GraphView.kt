@@ -341,7 +341,8 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 
 				for (ns in g.nodes) {
 					val pos = g.vertexPositions[ns]!!
-					val width = ns.title.length * 15
+					val title = ns.title()
+					val width = title.length * 15
 					drawOval(
 						pos.x - width / 2F,
 						pos.y - height - offset,
@@ -356,7 +357,7 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 						pos.y + height - offset,
 						paint
 					)
-					drawText(ns.title, pos.x, pos.y, fontPaint)
+					drawText(title, pos.x, pos.y, fontPaint)
 				}
 			}
 

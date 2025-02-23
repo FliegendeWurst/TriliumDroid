@@ -15,7 +15,6 @@ import android.webkit.JavascriptInterface
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.os.bundleOf
-import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Attribute
 import eu.fliegendewurst.triliumdroid.data.Branch
@@ -672,7 +671,7 @@ class FrontendBackendApi(
 		}
 		val obj = JSONObject()
 		obj.put("id", note.id)
-		obj.put("title", note.title)
+		obj.put("title", note.title())
 		// TODO
 		return obj
 	}

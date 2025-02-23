@@ -60,7 +60,7 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 
 		if (id != null) {
 			val note = runBlocking { Cache.getNoteWithContent(id!!) } ?: return
-			val content = note.content?.decodeToString() ?: return
+			val content = note.content()?.decodeToString() ?: return
 			Aztec.with(binding.visual, binding.source, binding.formattingToolbar, this)
 				.addPlugin(object : IToolbarButton {
 					override val action: IToolbarAction
@@ -92,7 +92,7 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 						) {
 							if (prev.isBlank()) {
 								val noteLinked = runBlocking { Cache.getNote(it.note)!! }
-								prev = noteLinked.title
+								prev = noteLinked.title()
 							}
 							// TODO: make this the full path #root/note1/note2/it.note
 							val url = "#${it.note}"

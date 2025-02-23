@@ -1,23 +1,34 @@
 package eu.fliegendewurst.triliumdroid.data
 
-import eu.fliegendewurst.triliumdroid.*
+import android.util.Log
+import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.SortedSet
+import java.util.TreeSet
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 class Note(
 	var id: String,
 	val mime: String,
-	var title: String,
+	private var title: String,
 	var type: String,
 	val created: String,
 	var modified: String,
-	var isProtected: Int,
+	var isProtected: Boolean,
 	var blobId: String
-) : Comparable<Note> {
-	var content: ByteArray? = null
+) : Comparable<Note>, ProtectedSession.NotifyProtectedSessionEnd {
+	companion object {
+		private const val TAG = "Note"
+	}
+
+	private var content: ByteArray? = null
 	var contentFixed: Boolean = false
+		private set
+	private var contentDecrypted: ByteArray? = null
+	private var titleDecrypted: String? = null
 	private var labels: List<Label>? = null
 	private var relations: List<Relation>? = null
 	private var inheritedLabels: List<Label>? = null
@@ -80,7 +91,7 @@ class Note(
 		return@withContext children ?: TreeSet()
 	}
 
-	private suspend fun cacheInheritableAttributes(): Unit = withContext(Dispatchers.IO)  {
+	private suspend fun cacheInheritableAttributes(): Unit = withContext(Dispatchers.IO) {
 		if (id == "none" || inheritableCached) {
 			return@withContext
 		}
@@ -208,8 +219,92 @@ class Note(
 		this.relations = relations
 	}
 
+	fun makeInvalid() {
+		this.titleDecrypted = null
+		updateTitle("INVALID")
+		this.content = null
+		this.contentDecrypted = null
+	}
+
+	fun updateTitle(newTitle: String) {
+		if (isProtected && !ProtectedSession.isActive()) {
+			Log.e(TAG, "cannot rename protected note")
+			return
+		} else if (isProtected && ProtectedSession.isActive()) {
+			this.titleDecrypted = newTitle
+			// TODO: encrypt
+		} else {
+			this.title = newTitle
+		}
+	}
+
+	@OptIn(ExperimentalEncodingApi::class)
+	fun title() = if (isProtected && !ProtectedSession.isActive()) {
+		"[protected]"
+	} else if (isProtected && ProtectedSession.isActive()) {
+		titleDecrypted = ProtectedSession.decrypt(Base64.decode(this.title))!!.decodeToString()
+		ProtectedSession.addListener(this)
+		titleDecrypted!!
+	} else {
+		title
+	}
+
+	fun rawTitle() = title
+
+	@OptIn(ExperimentalEncodingApi::class)
+	fun content() = if (content == null) {
+		null
+	} else if (isProtected && !ProtectedSession.isActive()) {
+		"[protected]".encodeToByteArray()
+	} else if (isProtected && ProtectedSession.isActive()) {
+		if (contentDecrypted != null) {
+			contentDecrypted
+		} else {
+			contentDecrypted = ProtectedSession.decrypt(Base64.decode(content!!))
+			ProtectedSession.addListener(this)
+			contentDecrypted
+		}
+	} else {
+		content
+	}
+
+	/**
+	 * Get note content encoded for database.
+	 * If [isProtected], encrypted and Base64-encoded.
+	 */
+	fun rawContent() = content
+
+	fun fixContent(fixed: ByteArray) {
+		if (isProtected) {
+			this.contentDecrypted = fixed
+		} else {
+			this.content = fixed
+		}
+		this.contentFixed = true
+	}
+
+	/**
+	 * Set user-facing note content.
+	 */
+	fun updateContent(new: ByteArray) {
+		if (isProtected) {
+			this.contentDecrypted = new
+			// TODO: encrypt
+		} else {
+			this.content = new
+		}
+	}
+
+	fun updateContentRaw(new: ByteArray) {
+		this.content = new
+	}
+
 	override fun compareTo(other: Note): Int {
 		return id.compareTo(other.id)
+	}
+
+	override fun sessionExpired() {
+		contentDecrypted = null
 	}
 
 	override fun toString(): String {

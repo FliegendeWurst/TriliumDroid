@@ -80,6 +80,7 @@ import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
 import eu.fliegendewurst.triliumdroid.dialog.SelectNoteDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
+import eu.fliegendewurst.triliumdroid.fragment.EncryptedNoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.NavigationFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
@@ -89,6 +90,7 @@ import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment
 import eu.fliegendewurst.triliumdroid.fragment.SyncErrorFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Icon
+import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import eu.fliegendewurst.triliumdroid.util.CrashReport
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import eu.fliegendewurst.triliumdroid.util.Preferences
@@ -263,7 +265,10 @@ class MainActivity : AppCompatActivity() {
 		setSupportActionBar(toolbar)
 		binding.toolbarTitle.setOnClickListener {
 			val note = getNoteLoaded() ?: return@setOnClickListener
-			AskForNameDialog.showDialog(this, R.string.dialog_rename_note, note.title) {
+			if (note.isProtected && !ProtectedSession.isActive()) {
+				return@setOnClickListener
+			}
+			AskForNameDialog.showDialog(this, R.string.dialog_rename_note, note.title()) {
 				lifecycleScope.launch {
 					Cache.renameNote(note, it)
 					refreshTree()
@@ -790,15 +795,16 @@ class MainActivity : AppCompatActivity() {
 			R.id.action_share -> {
 				val id = getNoteFragment().getNoteId() ?: return true
 				val note = runBlocking { Cache.getNoteWithContent(id)!! }
+				val content = note.content() ?: return true
 				val sendIntent: Intent = Intent().apply {
 					action = Intent.ACTION_SEND
 					if (note.type == "text" || note.type == "code") {
 						if (note.mime == "text/html") {
-							val html = String(note.content!!)
+							val html = String(content)
 							putExtra(Intent.EXTRA_HTML_TEXT, html)
 							putExtra(Intent.EXTRA_TEXT, html.parseAsHtml())
 						} else {
-							putExtra(Intent.EXTRA_TEXT, String(note.content!!))
+							putExtra(Intent.EXTRA_TEXT, String(content))
 						}
 					} else if (note.type == "image") {
 						var f = Path(
@@ -806,7 +812,7 @@ class MainActivity : AppCompatActivity() {
 							"images"
 						)
 						f = f.createDirectories().resolve("${note.id}.${note.mime.split('/')[1]}")
-						f.writeBytes(note.content!!)
+						f.writeBytes(content)
 						val contentUri = FileProvider.getUriForFile(
 							this@MainActivity,
 							applicationContext.packageName + ".provider",
@@ -824,7 +830,7 @@ class MainActivity : AppCompatActivity() {
 					type = note.mime
 				}
 
-				val shareIntent = Intent.createChooser(sendIntent, note.title)
+				val shareIntent = Intent.createChooser(sendIntent, note.title())
 				startActivity(shareIntent)
 				true
 			}
@@ -832,10 +838,10 @@ class MainActivity : AppCompatActivity() {
 			R.id.action_execute -> {
 				Log.i(TAG, "executing code note")
 				val noteFrag = getNoteFragment()
-				val noteId = getNoteFragment().getNoteId()
+				val noteId = noteFrag.getNoteId()
 				if (noteId != null) {
-					val script =
-						String(runBlocking { Cache.getNoteWithContent(noteId)!! }.content!!)
+					val note = runBlocking { Cache.getNoteWithContent(noteId)!! }
+					val script = String(note.content() ?: return true)
 					runScript(noteFrag, script)
 				}
 				true
@@ -990,8 +996,12 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun refreshTitle(note: Note?) {
-		binding.toolbarTitle.text = note?.title ?: "(nothing loaded)"
+		binding.toolbarTitle.text = note?.title() ?: "(nothing loaded)"
 		binding.toolbarIcon.text = Icon.getUnicodeCharacter(note?.icon() ?: "bx bx-file-blank")
+	}
+
+	fun reloadNote() {
+		noteHistory.restore(this)
 	}
 
 	suspend fun refreshWidgets(noteContent: Note) {
@@ -1058,7 +1068,7 @@ class MainActivity : AppCompatActivity() {
 				}
 				vi!!.findViewById<TextView>(R.id.label_relation_name).text = attribute.name
 				val button = vi!!.findViewById<Button>(R.id.button_relation_target)
-				button.text = attribute.target?.title ?: "none"
+				button.text = attribute.target?.title() ?: "none"
 				button.setOnClickListener {
 					navigateTo(attribute.target ?: return@setOnClickListener)
 				}
@@ -1085,7 +1095,7 @@ class MainActivity : AppCompatActivity() {
 					}
 					vi!!.findViewById<TextView>(R.id.label_relation_name).text = attribute.name
 					val button = vi!!.findViewById<Button>(R.id.button_relation_target)
-					button.text = attribute.target?.title ?: "none"
+					button.text = attribute.target?.title() ?: "none"
 					button.setOnClickListener {
 						navigateTo(attribute.target ?: return@setOnClickListener)
 					}
@@ -1103,7 +1113,7 @@ class MainActivity : AppCompatActivity() {
 				Pair(
 					x.asReversed()
 						.subList(1, x.size)
-						.map { Cache.getNote(it.note)!!.title }
+						.map { Cache.getNote(it.note)!!.title() }
 						.joinToString(" > "),
 					x.first()
 				)
@@ -1265,7 +1275,11 @@ class MainActivity : AppCompatActivity() {
 		tree!!.select(note.id)
 		lifecycleScope.launch {
 			val noteContent = Cache.getNoteWithContent(note.id)!!
-			getNoteFragment().load(noteContent)
+			if (noteContent.isProtected && !ProtectedSession.isActive()) {
+				showFragment(EncryptedNoteFragment(), true)
+			} else {
+				getNoteFragment().load(noteContent)
+			}
 			binding.drawerLayout.closeDrawers()
 			refreshTitle(noteContent)
 			if (branch != null) {
@@ -1301,11 +1315,19 @@ class MainActivity : AppCompatActivity() {
 	private fun getFragment(): Fragment {
 		val hostFragment =
 			supportFragmentManager.findFragmentById(R.id.fragment_container)
-		return if (hostFragment is NoteFragment || hostFragment is NoteEditFragment || hostFragment is EmptyFragment || hostFragment is NoteMapFragment || hostFragment is NavigationFragment || hostFragment is SyncErrorFragment) {
-			hostFragment
-		} else {
-			val frags = (hostFragment as NavHostFragment).childFragmentManager.fragments
-			frags[0]
+		return when (hostFragment) {
+			is NoteFragment, is NoteEditFragment, is EmptyFragment, is NoteMapFragment, is NavigationFragment, is SyncErrorFragment, is EncryptedNoteFragment -> {
+				hostFragment
+			}
+
+			is NavHostFragment -> {
+				val frags = hostFragment.childFragmentManager.fragments
+				frags[0]
+			}
+
+			else -> {
+				return hostFragment!!
+			}
 		}
 	}
 

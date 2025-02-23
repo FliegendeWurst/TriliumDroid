@@ -7,6 +7,10 @@ class HistoryList {
 		StartItem()
 	)
 
+	fun restore(activity: MainActivity) {
+		items.last().restore(activity)
+	}
+
 	fun addAndRestore(item: HistoryItem, activity: MainActivity) {
 		// Note Navigation done? Remove from history.
 		val last = items.lastOrNull()
