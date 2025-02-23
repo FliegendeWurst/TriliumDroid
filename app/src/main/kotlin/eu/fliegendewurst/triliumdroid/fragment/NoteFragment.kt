@@ -78,7 +78,10 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 					if (lastPart == note?.id) {
 						return
 					}
-					val id = parts.last().trimStart('#')
+					var id = parts.last().trimStart('#')
+					if (id.contains('#')) {
+						id = id.split('#').last()
+					}
 					Log.i(TAG, "navigating to note $id")
 					val main = activity as MainActivity
 					main.lifecycleScope.launch {

@@ -85,14 +85,18 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 					override fun toggle() {
 						val start = binding.visual.selectionStart
 						val end = binding.visual.selectionEnd
-						val prev = binding.visual.getSelectedText()
+						var prev = binding.visual.getSelectedText()
 						JumpToNoteDialog.showDialogReturningNote(
 							requireContext() as MainActivity,
 							R.string.dialog_select_note
 						) {
+							if (prev.isBlank()) {
+								val noteLinked = runBlocking { Cache.getNote(it.note)!! }
+								prev = noteLinked.title
+							}
+							// TODO: make this the full path #root/note1/note2/it.note
 							val url = "#${it.note}"
 							val builder = SpannableStringBuilder(prev)
-							// TODO: set data-note-path?
 							val newSpan = AztecURLSpan(url, AztecAttributes())
 							builder.setSpan(newSpan, 0, 0, Spannable.SPAN_MARK_MARK)
 							builder.setSpan(
