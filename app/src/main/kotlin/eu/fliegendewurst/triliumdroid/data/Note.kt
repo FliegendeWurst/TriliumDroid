@@ -226,13 +226,15 @@ class Note(
 		this.contentDecrypted = null
 	}
 
+	@OptIn(ExperimentalEncodingApi::class)
 	fun updateTitle(newTitle: String) {
 		if (isProtected && !ProtectedSession.isActive()) {
 			Log.e(TAG, "cannot rename protected note")
 			return
 		} else if (isProtected && ProtectedSession.isActive()) {
 			this.titleDecrypted = newTitle
-			// TODO: encrypt
+			this.title =
+				Base64.encode(ProtectedSession.encrypt(titleDecrypted!!.encodeToByteArray())!!)
 		} else {
 			this.title = newTitle
 		}
@@ -286,10 +288,16 @@ class Note(
 	/**
 	 * Set user-facing note content.
 	 */
+	@OptIn(ExperimentalEncodingApi::class)
 	fun updateContent(new: ByteArray) {
-		if (isProtected) {
+		if (isProtected && !ProtectedSession.isActive()) {
+			Log.e(TAG, "tried to update protected note without session")
+			return
+		}
+		if (isProtected && ProtectedSession.isActive()) {
 			this.contentDecrypted = new
-			// TODO: encrypt
+			this.content =
+				Base64.encode(ProtectedSession.encrypt(contentDecrypted!!)!!).encodeToByteArray()
 		} else {
 			this.content = new
 		}
@@ -297,6 +305,7 @@ class Note(
 
 	fun updateContentRaw(new: ByteArray) {
 		this.content = new
+		this.contentDecrypted = null
 	}
 
 	override fun compareTo(other: Note): Int {

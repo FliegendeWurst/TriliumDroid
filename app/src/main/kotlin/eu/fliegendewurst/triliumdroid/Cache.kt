@@ -15,6 +15,7 @@ import android.database.sqlite.SQLiteQuery
 import android.icu.text.SimpleDateFormat
 import android.os.Build
 import android.util.Log
+import androidx.core.database.getBlobOrNull
 import androidx.core.database.sqlite.transaction
 import eu.fliegendewurst.triliumdroid.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.data.Attachment
@@ -129,8 +130,7 @@ object Cache {
 		val utc = utcDateModified()
 		db!!.execSQL(
 			"UPDATE blobs SET content = ?, dateModified = ?, utcDateModified = ? " +
-					"WHERE blobId = ?",
-			arrayOf(Base64.encode(notes[id]!!.rawContent()!!), date, utc, blobId)
+					"WHERE blobId = ?", arrayOf(notes[id]!!.rawContent()!!, date, utc, blobId)
 		)
 		val md = MessageDigest.getInstance("SHA-1")
 		md.update(data, 0, data.size)
@@ -582,24 +582,17 @@ object Cache {
 					it.getString(12)
 				)
 				val noteContent = if (!it.isNull(0)) {
-					val content = it.getBlob(0)
-					val base64String = content.decodeToString()
-					val trimmed = base64String.substring(0..base64String.length - 2)
-					if (trimmed.isBlank()) {
-						ByteArray(0)
-					} else {
-						var decoded = trimmed.decodeBase64()?.utf8() ?: ""
-						// fixup useless nested divs
-						while (true) {
-							val contentFixed = FIXER.matchEntire(decoded)
-							if (contentFixed != null) {
-								decoded = contentFixed.groups[2]!!.value
-							} else {
-								break
-							}
+					var content = it.getBlob(0).decodeToString()
+					// fixup useless nested divs
+					while (true) {
+						val contentFixed = FIXER.matchEntire(content)
+						if (contentFixed != null) {
+							content = contentFixed.groups[2]!!.value
+						} else {
+							break
 						}
-						decoded.toByteArray()
 					}
+					content.toByteArray()
 				} else {
 					ByteArray(0)
 				}
@@ -683,18 +676,7 @@ object Cache {
 						id,
 						it.getString(1),
 					)
-					note!!.content = if (!it.isNull(0)) {
-						val content = it.getBlob(0)
-						val base64String = content.decodeToString()
-						val trimmed = base64String.substring(0..base64String.length - 2)
-						if (trimmed.isBlank()) {
-							ByteArray(0)
-						} else {
-							trimmed.decodeBase64()!!.toByteArray()
-						}
-					} else {
-						ByteArray(0)
-					}
+					note!!.content = it.getBlobOrNull(0)
 				}
 			}
 			return@withContext note
@@ -974,10 +956,29 @@ object Cache {
 									x = it.getString(i)
 								}
 							}
-							if (x is ByteArray) {
-								obj.put(it.getColumnName(i), Base64.encode(x))
+							val column = it.getColumnName(i)
+							if (x == null) {
+								obj.put(column, null)
+								continue
+							}
+							if (column == "content") {
+								val data = when (x) {
+									is String -> {
+										x.encodeToByteArray()
+									}
+
+									is ByteArray -> {
+										x
+									}
+
+									else -> {
+										// impossible / null
+										ByteArray(0)
+									}
+								}
+								obj.put(column, Base64.encode(data))
 							} else {
-								obj.put(it.getColumnName(i), x)
+								obj.put(column, x)
 							}
 						}
 					}
@@ -1073,10 +1074,13 @@ object Cache {
 
 						val cv = ContentValues(entity.length())
 						keys.map { fieldName ->
-							val x = entity.get(fieldName)
+							var x = entity.get(fieldName)
 							if (x == JSONObject.NULL) {
 								cv.putNull(fieldName)
 							} else {
+								if (fieldName == "content") {
+									x = (x as String).decodeBase64()!!.toByteArray()
+								}
 								when (x) {
 									is String -> {
 										cv.put(fieldName, x)
