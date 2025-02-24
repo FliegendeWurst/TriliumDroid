@@ -1,11 +1,11 @@
 package eu.fliegendewurst.triliumdroid.activity
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.databinding.ActivityWelcomeBinding
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureSyncDialog
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.launch
 
@@ -15,8 +15,7 @@ class WelcomeActivity : AppCompatActivity() {
 		val binding = ActivityWelcomeBinding.inflate(layoutInflater)
 		setContentView(binding.root)
 		binding.buttonSetupSync.setOnClickListener {
-			val intent = Intent(this, SetupActivity::class.java)
-			startActivity(intent)
+			ConfigureSyncDialog.showDialog(this)
 		}
 	}
 

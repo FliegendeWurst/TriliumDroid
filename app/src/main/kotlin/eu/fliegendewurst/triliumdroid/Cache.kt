@@ -15,14 +15,16 @@ import android.database.sqlite.SQLiteQuery
 import android.icu.text.SimpleDateFormat
 import android.os.Build
 import android.util.Log
+import androidx.core.database.getBlobOrNull
+import androidx.core.database.getStringOrNull
 import androidx.core.database.sqlite.transaction
-import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.data.Attachment
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
+import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +63,8 @@ object Cache {
 	private var branchPosition: MutableMap<String, Int> = ConcurrentHashMap()
 
 	private var dbHelper: CacheDbHelper? = null
-	private var db: SQLiteDatabase? = null
+	var db: SQLiteDatabase? = null
+		private set
 
 	var lastSync: Long? = null
 
@@ -94,7 +97,7 @@ object Cache {
 
 	suspend fun getNoteWithContent(id: String): Note? {
 		Log.d(TAG, "fetching note $id")
-		if (notes.containsKey(id) && notes[id]!!.mime != "INVALID" && notes[id]!!.content != null) {
+		if (notes.containsKey(id) && notes[id]!!.mime != "INVALID" && notes[id]!!.content() != null) {
 			return notes[id]
 		}
 		return getNoteInternal(id)
@@ -109,7 +112,7 @@ object Cache {
 			getNoteInternal(id)
 		}
 		val data = content.encodeToByteArray()
-		notes[id]!!.content = data
+		notes[id]!!.updateContent(data)
 
 		var blobId = ""
 		db!!.rawQuery(
@@ -129,8 +132,7 @@ object Cache {
 		val utc = utcDateModified()
 		db!!.execSQL(
 			"UPDATE blobs SET content = ?, dateModified = ?, utcDateModified = ? " +
-					"WHERE blobId = ?",
-			arrayOf(Base64.encode(data), date, utc, blobId)
+					"WHERE blobId = ?", arrayOf(notes[id]!!.rawContent()!!, date, utc, blobId)
 		)
 		val md = MessageDigest.getInstance("SHA-1")
 		md.update(data, 0, data.size)
@@ -151,12 +153,26 @@ object Cache {
 			)
 		)
 		db!!.execSQL(
-			"UPDATE notes SET dateModified = ?, utcDateModified = ? " +
+			"UPDATE notes SET dateModified = ?, utcDateModified = ?, isProtected = ? " +
 					"WHERE noteId = ?",
-			arrayOf(date, utc, id)
+			arrayOf(date, utc, notes[id]!!.isProtected.boolToIntValue(), id)
 		)
 		notes[id]!!.modified = date
 		db!!.registerEntityChangeNote(notes[id]!!)
+	}
+
+	suspend fun changeNoteProtection(id: String, protection: Boolean) {
+		if (!ProtectedSession.isActive()) {
+			return
+		}
+		if (!notes.containsKey(id)) {
+			getNoteInternal(id)
+		}
+		val note = notes[id]
+		if (note == null) {
+			return
+		}
+		note.changeProtection(protection)
 	}
 
 	suspend fun updateLabel(note: Note, name: String, value: String, inheritable: Boolean) =
@@ -532,8 +548,11 @@ object Cache {
 	}
 
 	suspend fun renameNote(note: Note, title: String) = withContext(Dispatchers.IO) {
-		note.title = title
-		db!!.execSQL("UPDATE notes SET title = ? WHERE noteId = ?", arrayOf(title, note.id))
+		note.updateTitle(title)
+		db!!.execSQL(
+			"UPDATE notes SET title = ? WHERE noteId = ?",
+			arrayOf(note.rawTitle(), note.id)
+		)
 		db!!.registerEntityChangeNote(note)
 	}
 
@@ -575,31 +594,25 @@ object Cache {
 					it.getString(6),
 					it.getString(7),
 					it.getString(8),
-					it.getInt(11),
+					it.getInt(11) != 0,
 					it.getString(12)
 				)
-				note!!.content = if (!it.isNull(0)) {
-					val content = it.getBlob(0)
-					val base64String = content.decodeToString()
-					val trimmed = base64String.substring(0..base64String.length - 2)
-					if (trimmed.isBlank()) {
-						ByteArray(0)
-					} else {
-						var decoded = trimmed.decodeBase64()?.utf8() ?: ""
-						// fixup useless nested divs
-						while (true) {
-							val contentFixed = FIXER.matchEntire(decoded)
-							if (contentFixed != null) {
-								decoded = contentFixed.groups[2]!!.value
-							} else {
-								break
-							}
+				val noteContent = if (!it.isNull(0)) {
+					var content = it.getBlob(0).decodeToString()
+					// fixup useless nested divs
+					while (true) {
+						val contentFixed = FIXER.matchEntire(content)
+						if (contentFixed != null) {
+							content = contentFixed.groups[2]!!.value
+						} else {
+							break
 						}
-						decoded.toByteArray()
 					}
+					content.toByteArray()
 				} else {
 					ByteArray(0)
 				}
+				note!!.updateContentRaw(noteContent)
 			}
 			while (!it.isAfterLast) {
 				if (!it.isNull(3)) {
@@ -631,7 +644,7 @@ object Cache {
 										"INVALID",
 										"INVALID",
 										"INVALID",
-										0,
+										false,
 										"INVALID"
 									)
 							}
@@ -679,18 +692,7 @@ object Cache {
 						id,
 						it.getString(1),
 					)
-					note!!.content = if (!it.isNull(0)) {
-						val content = it.getBlob(0)
-						val base64String = content.decodeToString()
-						val trimmed = base64String.substring(0..base64String.length - 2)
-						if (trimmed.isBlank()) {
-							ByteArray(0)
-						} else {
-							trimmed.decodeBase64()!!.toByteArray()
-						}
-					} else {
-						ByteArray(0)
-					}
+					note!!.content = it.getBlobOrNull(0)
 				}
 			}
 			return@withContext note
@@ -710,7 +712,7 @@ object Cache {
 					it.getString(3),
 					"INVALID",
 					"INVALID",
-					0,
+					false,
 					"INVALID"
 				)
 				notes.add(note)
@@ -758,7 +760,7 @@ object Cache {
 				val type = it.getString(8)
 				val dateCreated = it.getString(9)
 				val dateModified = it.getString(10)
-				val isProtected = it.getInt(11)
+				val isProtected = it.getInt(11) != 0
 				val blobId = it.getString(12)
 				val b = Branch(
 					branchId,
@@ -970,10 +972,29 @@ object Cache {
 									x = it.getString(i)
 								}
 							}
-							if (x is ByteArray) {
-								obj.put(it.getColumnName(i), Base64.encode(x))
+							val column = it.getColumnName(i)
+							if (x == null) {
+								obj.put(column, null)
+								continue
+							}
+							if (column == "content") {
+								val data = when (x) {
+									is String -> {
+										x.encodeToByteArray()
+									}
+
+									is ByteArray -> {
+										x
+									}
+
+									else -> {
+										// impossible / null
+										ByteArray(0)
+									}
+								}
+								obj.put(column, Base64.encode(data))
 							} else {
-								obj.put(it.getColumnName(i), x)
+								obj.put(column, x)
 							}
 						}
 					}
@@ -1063,17 +1084,19 @@ object Cache {
 						val keys = entity.keys().asSequence().toList()
 
 						if (entityName == "notes") {
-							notes[entityName]?.title = "INVALID"
-							notes[entityName]?.content = null
+							notes[entityName]?.makeInvalid()
 							notes.remove(entityName)
 						}
 
 						val cv = ContentValues(entity.length())
 						keys.map { fieldName ->
-							val x = entity.get(fieldName)
+							var x = entity.get(fieldName)
 							if (x == JSONObject.NULL) {
 								cv.putNull(fieldName)
 							} else {
+								if (fieldName == "content") {
+									x = (x as String).decodeBase64()!!.toByteArray()
+								}
 								when (x) {
 									is String -> {
 										cv.put(fieldName, x)
@@ -1141,6 +1164,33 @@ object Cache {
 		} catch (t: Throwable) {
 			Log.e(TAG, "fatal ", t)
 		}
+		// perform migrations as needed
+		val migrationLevel = Preferences.databaseMigration()
+		val decoded = mutableListOf<Pair<String, ByteArray>>()
+		if (migrationLevel < 1) {
+			// base64-decode all blobs.content values
+			CursorFactory.selectionArgs = arrayOf()
+			db!!.rawQueryWithFactory(
+				CursorFactory,
+				"SELECT blobId, content FROM blobs",
+				arrayOf(),
+				"notes"
+			).use {
+				while (it.moveToNext()) {
+					val id = it.getString(0)
+					val content = it.getStringOrNull(1)
+					if (content != null) {
+						decoded.add(Pair(id, Base64.decode(content)))
+					}
+				}
+			}
+			for (p in decoded) {
+				val cv = ContentValues()
+				cv.put("content", p.second)
+				db!!.update("blobs", cv, "blobId = ?", arrayOf(p.first))
+			}
+		}
+		Preferences.setDatabaseMigration(1)
 	}
 
 	fun nukeDatabase(context: Context) {
@@ -1156,6 +1206,8 @@ object Cache {
 		branches.clear()
 		branchPosition.clear()
 		lastSync = null
+		// DB migrations are only for fixups
+		Preferences.setDatabaseMigration(1)
 	}
 
 	fun closeDatabase() {
@@ -1265,6 +1317,10 @@ object Cache {
 		updateRelation(note, null, "internalLink", getNote(target) ?: return@withContext, false)
 	}
 
+	/**
+	 * Get all notes with their relations.
+	 * WARNING: the returned notes ONLY have their title and relations set.
+	 */
 	suspend fun getAllNotesWithRelations(): List<Note> = withContext(Dispatchers.IO) {
 		val list = mutableListOf<Note>()
 		val relations = mutableListOf<Triple<String, String, Pair<String, String>>>()
@@ -1274,11 +1330,14 @@ object Cache {
 					"title," + // 1
 					"attributes.name," + // 2
 					"attributes.value," + // 3
-					"attributes.type," + // 4
-					"attributes.attributeId " + // 5
+					"attributes.attributeId " + // 4
 					"FROM notes " +
 					"LEFT JOIN attributes USING(noteId) " +
-					"WHERE notes.isDeleted = 0 AND SUBSTR(noteId, 1, 1) != '_'",
+					"WHERE notes.isDeleted = 0 " +
+					"AND attributes.isDeleted = 0 " +
+					"AND attributes.type == 'relation' " +
+					"AND SUBSTR(noteId, 1, 1) != '_' " +
+					"ORDER BY noteId",
 			arrayOf()
 		).use {
 			var currentNote: Note? = null
@@ -1288,15 +1347,14 @@ object Cache {
 				val title = it.getString(1)
 				val attrName = it.getString(2)
 				val attrValue = it.getString(3)
-				val attrType = it.getString(4)
-				val attrId = it.getString(5)
-				if (currentNote == null || currentNote.title != title) {
+				val attrId = it.getString(4)
+				if (currentNote == null || currentNote.id != id) {
 					if (currentNote != null) {
 						list.add(currentNote)
 					}
-					currentNote = Note(id, "", title, "", "", "", 0, "")
+					currentNote = Note(id, "", title, "", "", "", false, "")
 				}
-				if (attrType == "relation" && attrValue != null && !attrValue.startsWith('_') && !attrName.startsWith(
+				if (attrValue != null && !attrValue.startsWith('_') && !attrName.startsWith(
 						"child:"
 					)
 				) {
@@ -1366,6 +1424,8 @@ object Cache {
 				).use {
 					Log.i(TAG, "successfully created ${it.count} tables")
 				}
+				// DB migrations are only for fixups
+				Preferences.setDatabaseMigration(1)
 			} catch (t: Throwable) {
 				Log.e(TAG, "fatal error creating database", t)
 			}
@@ -1625,7 +1685,14 @@ private suspend fun SQLiteDatabase.registerEntityChangeNote(
 	registerEntityChange(
 		"notes",
 		note.id,
-		arrayOf(note.id, note.title, note.isProtected.toString(), note.type, note.mime, note.blobId)
+		arrayOf(
+			note.id,
+			note.rawTitle(),
+			note.isProtected.boolToInt(),
+			note.type,
+			note.mime,
+			note.blobId
+		)
 	)
 }
 
@@ -1692,3 +1759,14 @@ private suspend fun SQLiteDatabase.registerEntityChange(
 	)
 }
 
+private fun Boolean.boolToIntValue(): Int = if (this) {
+	1
+} else {
+	0
+}
+
+private fun Boolean.boolToInt(): String = if (this) {
+	"1"
+} else {
+	"0"
+}

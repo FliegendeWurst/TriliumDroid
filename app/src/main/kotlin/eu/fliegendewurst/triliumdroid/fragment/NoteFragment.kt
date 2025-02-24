@@ -78,7 +78,10 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 					if (lastPart == note?.id) {
 						return
 					}
-					val id = parts.last().trimStart('#')
+					var id = parts.last().trimStart('#')
+					if (id.contains('#')) {
+						id = id.split('#').last()
+					}
 					Log.i(TAG, "navigating to note $id")
 					val main = activity as MainActivity
 					main.lifecycleScope.launch {
@@ -131,7 +134,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 						return null // TODO: catch all invalid IDs
 					}
 					val note = runBlocking { Cache.getNoteWithContent(id) }
-					var content = note?.content
+					var content = note?.content()
 					var mime = note?.mime
 					if (note == null) {
 						// try attachment
@@ -149,8 +152,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 							for (n in subCodeNotes!!) {
 								data += "<script src='/${n.id}'></script>".encodeToByteArray()
 							}
-							note.content = data
-							note.contentFixed = true
+							note.fixContent(data)
 						}
 						if (mime == "text/html") {
 							data += "<style>@media (prefers-color-scheme: dark) { * { color: white; background-color: black; } }</style>".encodeToByteArray()
@@ -195,7 +197,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			return
 		}
 		binding.textId.text = note.id
-		if (note.content == null) {
+		if (note.content() == null) {
 			Cache.initializeDatabase(requireContext())
 			note = Cache.getNoteWithContent(note.id)
 		}
@@ -213,7 +215,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			if (note.mime.contains("env=frontend")) {
 				execute = true
 			}
-			if (note.content?.size?.compareTo(0).let { (it ?: 0) > 0 } && arrayOf(
+			if (note.content()?.size?.compareTo(0).let { (it ?: 0) > 0 } && arrayOf(
 					"text",
 					"code",
 					"image"
@@ -252,8 +254,9 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 				note.id == "root"
 			)
 
-			if (note.content == null || note.content?.size?.compareTo(0) == 0 || (
-						note.content?.size == 15 && note.content?.decodeToString() == "<!DOCTYPE html>")
+			if (note.content() == null || note.content()?.size == 0 || (
+						note.content()?.size == 15 && note.content()
+							?.decodeToString() == "<!DOCTYPE html>")
 			) {
 				main.handleEmptyNote()
 			}

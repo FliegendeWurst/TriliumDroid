@@ -53,6 +53,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_basic_properties_type_content" />
 
+        <!--
         <CheckBox
             android:id="@+id/widget_basic_properties_created_content"
             style="@style/WidgetTableRowLabel"
@@ -61,5 +62,6 @@
             android:text="@string/label_bookmark"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_basic_properties_encrypt_content" />
+            -->
     </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>

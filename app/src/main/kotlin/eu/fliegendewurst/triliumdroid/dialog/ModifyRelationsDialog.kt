@@ -104,9 +104,9 @@ object ModifyRelationsDialog {
 				val prevChange =
 					changes.find { x -> x.first == attribute.name && x.second == attribute.id }
 				if (prevChange != null) {
-					button.text = prevChange.third?.title ?: "none"
+					button.text = prevChange.third?.title() ?: "none"
 				} else {
-					button.text = attribute.target?.title ?: "none"
+					button.text = attribute.target?.title() ?: "none"
 				}
 				button.setOnClickListener {
 					JumpToNoteDialog.showDialogReturningNote(

@@ -15,6 +15,7 @@ object Preferences {
 	private const val LAST_REPORT = "LastReport"
 	private const val LAST_NOTE = "LastNote"
 	private const val SYNC_VERSION = "syncVersion"
+	private const val DB_MIGRATION = "dbMigration"
 
 	fun hostname(): String? = prefs.getString(HOSTNAME, null)
 	fun password(): String? = prefs.getString(PASSWORD, null)
@@ -24,6 +25,7 @@ object Preferences {
 	fun mTLS(): String? = prefs.getString(MTLS_CERT, null)
 	fun lastReport(): String? = prefs.getString(LAST_REPORT, null)
 	fun lastNote(): String? = prefs.getString(LAST_NOTE, null)
+	fun databaseMigration(): Int = prefs.getInt(DB_MIGRATION, 0)
 	fun syncVersion(): Int? = if (prefs.contains(SYNC_VERSION)) {
 		prefs.getInt(SYNC_VERSION, 0)
 	} else {
@@ -43,6 +45,8 @@ object Preferences {
 	fun setMTLS(alias: String) = prefs.edit().putString(MTLS_CERT, alias).apply()
 	fun setDocumentSecret(newValue: String) =
 		prefs.edit().putString(DOCUMENT_SECRET, newValue).apply()
+
+	fun setDatabaseMigration(newValue: Int) = prefs.edit().putInt(DB_MIGRATION, newValue).apply()
 
 	fun clearMTLS() = prefs.edit().remove(MTLS_CERT).apply()
 	fun clearSyncSSID() = prefs.edit().remove(SYNC_SSID).apply()

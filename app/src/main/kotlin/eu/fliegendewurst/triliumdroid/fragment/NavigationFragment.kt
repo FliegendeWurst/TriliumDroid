@@ -149,7 +149,7 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 
 			val entries2 = Cache.getNotePath(note.id).map {
 				val note2 = Cache.getNote(it.note)!!
-				Entry(note2.icon(), note2.title, note2, it, 0)
+				Entry(note2.icon(), note2.title(), note2, it, 0)
 			}
 			entries2.first().flags = FLAG_LAST
 			adapter2.submitList(entries2.asReversed())
@@ -158,7 +158,7 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 
 			val entries = notes.map {
 				val noteHere = Cache.getNote(it.note)!!
-				Entry(noteHere.icon(), noteHere.title, noteHere, it, 0)
+				Entry(noteHere.icon(), noteHere.title(), noteHere, it, 0)
 			}.asReversed()
 			adapter.submitList(entries)
 		}
