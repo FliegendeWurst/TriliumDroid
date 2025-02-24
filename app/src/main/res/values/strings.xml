@@ -116,6 +116,7 @@
     <string name="button_enter_protected_session">Enter protected session</string>
     <string name="label_protected_note">You must enter a protected session to view encrypted notes.</string>
     <string name="title_protected_note">Protected note</string>
+    <string name="action_leave_protected_session">Leave protected session</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

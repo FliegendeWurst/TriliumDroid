@@ -756,6 +756,12 @@ class MainActivity : AppCompatActivity() {
 
 	private fun doMenuAction(actionId: Int): Boolean {
 		return when (actionId) {
+			R.id.action_leave_protected_session -> {
+				ProtectedSession.leave()
+				reloadNote()
+				true
+			}
+
 			R.id.action_show_note_tree -> {
 				binding.drawerLayout.openDrawer(GravityCompat.START)
 				true
