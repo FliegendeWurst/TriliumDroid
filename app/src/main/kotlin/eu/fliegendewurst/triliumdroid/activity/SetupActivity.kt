@@ -3,22 +3,15 @@ package eu.fliegendewurst.triliumdroid.activity
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.security.KeyChain
-import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
-import eu.fliegendewurst.triliumdroid.util.GetSSID
-import eu.fliegendewurst.triliumdroid.util.Preferences
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureSyncDialog
 import java.io.File
 
 
@@ -58,69 +51,10 @@ class SetupActivity : AppCompatActivity() {
 			binding.status.setText(status)
 		}
 
-		binding.server.setText(Preferences.hostname() ?: "")
-		binding.password.setText(Preferences.password() ?: "")
-
-		val mtlsCert = Preferences.mTLS()
-		binding.buttonConfigureMtls.setOnClickListener {
-			KeyChain.choosePrivateKeyAlias(
-				this@SetupActivity,
-				{ alias ->
-					Log.d(TAG, "received key alias $alias")
-					if (alias == null) {
-						return@choosePrivateKeyAlias
-					}
-					// test we can actually retrieve the key material
-					lifecycleScope.launch {
-						withContext(Dispatchers.IO) {
-							KeyChain.getPrivateKey(applicationContext, alias)
-							KeyChain.getCertificateChain(applicationContext, alias)
-						}
-						Preferences.setMTLS(alias)
-						ConnectionUtil.resetClient(this@SetupActivity) {}
-					}
-				},
-				null, // List of acceptable key types. null for any
-				null,  // issuer, null for any
-				null,  // TODO: host name of server requesting the cert, null if unavailable
-				-1,  // TODO: port of server requesting the cert, -1 if unavailable
-				null
-			)
-		}
-		binding.buttonConfigureMtls.isEnabled = mtlsCert == null
-		binding.buttonConfigureMtls2.setOnClickListener {
-			Preferences.clearMTLS()
-			binding.buttonConfigureMtls.isEnabled = true
-			binding.buttonConfigureMtls2.isEnabled = false
-		}
-		binding.buttonConfigureMtls2.isEnabled = mtlsCert != null
-
-		val ssidLimitActive = Preferences.syncSSID() != null
-		binding.buttonConfigureSsid.isEnabled = !ssidLimitActive
-		binding.buttonConfigureSsidClear.isEnabled = ssidLimitActive
-		binding.buttonConfigureSsid.setOnClickListener {
-			GetSSID(this@SetupActivity) {
-				lifecycleScope.launch {
-					if (it == null) {
-						return@launch
-					}
-					Preferences.setSyncSSID(it)
-					binding.buttonConfigureSsid.isEnabled = false
-					binding.buttonConfigureSsidClear.isEnabled = true
-					ConnectionUtil.resetClient(this@SetupActivity) {}
-				}
-			}.getSSID()
-		}
-		binding.buttonConfigureSsidClear.setOnClickListener {
-			Preferences.clearSyncSSID()
-			binding.buttonConfigureSsid.isEnabled = true
-			binding.buttonConfigureSsidClear.isEnabled = false
-			lifecycleScope.launch {
-				ConnectionUtil.resetClient(this@SetupActivity) {}
-			}
+		binding.buttonConfigureSync.setOnClickListener {
+			ConfigureSyncDialog.showDialog(this)
 		}
 
-		ConfigureFabsDialog.init()
 		setText()
 
 		val exportLauncher =
@@ -235,16 +169,5 @@ class SetupActivity : AppCompatActivity() {
 			}
 		}
 		binding.inputFab.text = x
-	}
-
-	override fun onPause() {
-		super.onPause()
-		var server = binding.server.text.toString().trimEnd('/')
-		val password = binding.password.text.toString()
-		if (!(server.startsWith("http://") || server.startsWith("https://"))) {
-			server = "http://${server}"
-		}
-		Preferences.setHostname(server)
-		Preferences.setPassword(password)
 	}
 }

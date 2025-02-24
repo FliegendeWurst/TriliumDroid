@@ -50,7 +50,8 @@ class InitialSyncTest {
 			.perform(typeText("1234"))
 		Espresso.closeSoftKeyboard()
 		Thread.sleep(2000)
-		Espresso.pressBack()
+		onView(withText(android.R.string.ok))
+			.perform(click())
 		Thread.sleep(70000) // wait for Sync to finish
 
 		// create lots of date notes in 2021-12

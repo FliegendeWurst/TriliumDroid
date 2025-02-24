@@ -234,6 +234,7 @@ class MainActivity : AppCompatActivity() {
 		firstNote = intent.extras?.getString("note")
 
 		Preferences.prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+		ConfigureFabsDialog.init()
 
 		if (intent?.action == Intent.ACTION_SEND) {
 			if (intent.type == "text/plain" || intent.type == "text/html") {
