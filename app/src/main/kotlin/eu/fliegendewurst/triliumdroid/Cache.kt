@@ -16,6 +16,7 @@ import android.icu.text.SimpleDateFormat
 import android.os.Build
 import android.util.Log
 import androidx.core.database.getBlobOrNull
+import androidx.core.database.getStringOrNull
 import androidx.core.database.sqlite.transaction
 import eu.fliegendewurst.triliumdroid.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.data.Attachment
@@ -1148,6 +1149,33 @@ object Cache {
 		} catch (t: Throwable) {
 			Log.e(TAG, "fatal ", t)
 		}
+		// perform migrations as needed
+		val migrationLevel = Preferences.databaseMigration()
+		val decoded = mutableListOf<Pair<String, ByteArray>>()
+		if (migrationLevel < 1) {
+			// base64-decode all blobs.content values
+			CursorFactory.selectionArgs = arrayOf()
+			db!!.rawQueryWithFactory(
+				CursorFactory,
+				"SELECT blobId, content FROM blobs",
+				arrayOf(),
+				"notes"
+			).use {
+				while (it.moveToNext()) {
+					val id = it.getString(0)
+					val content = it.getStringOrNull(1)
+					if (content != null) {
+						decoded.add(Pair(id, Base64.decode(content)))
+					}
+				}
+			}
+			for (p in decoded) {
+				val cv = ContentValues()
+				cv.put("content", p.second)
+				db!!.update("blobs", cv, "blobId = ?", arrayOf(p.first))
+			}
+		}
+		Preferences.setDatabaseMigration(1)
 	}
 
 	fun nukeDatabase(context: Context) {
@@ -1163,6 +1191,8 @@ object Cache {
 		branches.clear()
 		branchPosition.clear()
 		lastSync = null
+		// DB migrations are only for fixups
+		Preferences.setDatabaseMigration(1)
 	}
 
 	fun closeDatabase() {
@@ -1379,6 +1409,8 @@ object Cache {
 				).use {
 					Log.i(TAG, "successfully created ${it.count} tables")
 				}
+				// DB migrations are only for fixups
+				Preferences.setDatabaseMigration(1)
 			} catch (t: Throwable) {
 				Log.e(TAG, "fatal error creating database", t)
 			}
