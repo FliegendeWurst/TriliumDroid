@@ -709,10 +709,10 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	override fun onCreateOptionsMenu(m: Menu?): Boolean {
-		val menu = binding.toolbar.menu
+		val menu = binding.toolbar.menu ?: return true
 		menuInflater.inflate(R.menu.action_bar, menu)
 		for (action in ConfigureFabsDialog.actions) {
-			val menuItem = menu?.findItem(action.value) ?: continue
+			val menuItem = menu.findItem(action.value) ?: continue
 			val pref = ConfigureFabsDialog.getPref(action.key) ?: continue
 			menuItem.isVisible = pref.show
 		}
@@ -720,7 +720,12 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-		consoleLogMenuItem = menu?.findItem(R.id.action_console) ?: return true
+		if (menu == null) {
+			return true
+		}
+		val leaveProtectedSession = menu.findItem(R.id.action_leave_protected_session)
+		leaveProtectedSession?.isVisible = ProtectedSession.isActive()
+		consoleLogMenuItem = menu.findItem(R.id.action_console) ?: return true
 		executeScriptMenuItem = menu.findItem(R.id.action_execute) ?: return true
 		shareMenuItem = menu.findItem(R.id.action_share) ?: return true
 		deleteMenuItem = menu.findItem(R.id.action_delete) ?: return true
