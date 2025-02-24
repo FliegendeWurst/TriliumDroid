@@ -24,6 +24,7 @@ import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
+import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
@@ -152,12 +153,26 @@ object Cache {
 			)
 		)
 		db!!.execSQL(
-			"UPDATE notes SET dateModified = ?, utcDateModified = ? " +
+			"UPDATE notes SET dateModified = ?, utcDateModified = ?, isProtected = ? " +
 					"WHERE noteId = ?",
-			arrayOf(date, utc, id)
+			arrayOf(date, utc, notes[id]!!.isProtected.boolToIntValue(), id)
 		)
 		notes[id]!!.modified = date
 		db!!.registerEntityChangeNote(notes[id]!!)
+	}
+
+	suspend fun changeNoteProtection(id: String, protection: Boolean) {
+		if (!ProtectedSession.isActive()) {
+			return
+		}
+		if (!notes.containsKey(id)) {
+			getNoteInternal(id)
+		}
+		val note = notes[id]
+		if (note == null) {
+			return
+		}
+		note.changeProtection(protection)
 	}
 
 	suspend fun updateLabel(note: Note, name: String, value: String, inheritable: Boolean) =
@@ -1742,6 +1757,12 @@ private suspend fun SQLiteDatabase.registerEntityChange(
 			utc
 		)
 	)
+}
+
+private fun Boolean.boolToIntValue(): Int = if (this) {
+	1
+} else {
+	0
 }
 
 private fun Boolean.boolToInt(): String = if (this) {

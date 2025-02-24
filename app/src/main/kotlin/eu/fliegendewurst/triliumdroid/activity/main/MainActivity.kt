@@ -27,6 +27,7 @@ import android.webkit.WebView
 import android.widget.AdapterView.OnItemClickListener
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -723,7 +724,9 @@ class MainActivity : AppCompatActivity() {
 		if (menu == null) {
 			return true
 		}
+		val enterProtectedSession = menu.findItem(R.id.action_enter_protected_session)
 		val leaveProtectedSession = menu.findItem(R.id.action_leave_protected_session)
+		enterProtectedSession?.isVisible = !ProtectedSession.isActive()
 		leaveProtectedSession?.isVisible = ProtectedSession.isActive()
 		consoleLogMenuItem = menu.findItem(R.id.action_console) ?: return true
 		executeScriptMenuItem = menu.findItem(R.id.action_execute) ?: return true
@@ -761,6 +764,16 @@ class MainActivity : AppCompatActivity() {
 
 	private fun doMenuAction(actionId: Int): Boolean {
 		return when (actionId) {
+			R.id.action_enter_protected_session -> {
+				val error = ProtectedSession.enter()
+				if (error != null) {
+					Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+				} else {
+					reloadNote()
+				}
+				true
+			}
+
 			R.id.action_leave_protected_session -> {
 				ProtectedSession.leave()
 				reloadNote()
@@ -1259,6 +1272,14 @@ class MainActivity : AppCompatActivity() {
 		noteId.text = noteContent.id
 		val noteType = findViewById<TextView>(R.id.widget_note_info_type_content)
 		noteType.text = noteContent.type
+		val encrypted = findViewById<CheckBox>(R.id.widget_basic_properties_encrypt_content)
+		encrypted.isChecked = noteContent.isProtected
+		encrypted.isEnabled = ProtectedSession.isActive()
+		encrypted.setOnCheckedChangeListener { _, isChecked ->
+			lifecycleScope.launch {
+				Cache.changeNoteProtection(noteContent.id, isChecked)
+			}
+		}
 		val noteCreated = findViewById<TextView>(R.id.widget_note_info_created_content)
 		noteCreated.text = noteContent.created.substring(0, 19)
 		val noteModified = findViewById<TextView>(R.id.widget_note_info_modified_content)

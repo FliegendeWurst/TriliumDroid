@@ -21,6 +21,11 @@
         app:showAsAction="always" />
 
     <item
+        android:id="@+id/action_enter_protected_session"
+        android:title="@string/action_enter_protected_session"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_leave_protected_session"
         android:title="@string/action_leave_protected_session"
         app:showAsAction="never" />

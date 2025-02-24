@@ -308,6 +308,23 @@ class Note(
 		this.contentDecrypted = null
 	}
 
+	suspend fun changeProtection(protected: Boolean) {
+		if (!ProtectedSession.isActive() || this.content == null) {
+			return
+		}
+		if (isProtected && !protected) {
+			val content = content() ?: return
+			val title = title()
+			isProtected = false
+			Cache.renameNote(this, title)
+			Cache.setNoteContent(id, content.decodeToString())
+		} else if (!isProtected && protected) {
+			isProtected = true
+			Cache.renameNote(this, title)
+			Cache.setNoteContent(id, this.content!!.decodeToString())
+		}
+	}
+
 	override fun compareTo(other: Note): Int {
 		return id.compareTo(other.id)
 	}
