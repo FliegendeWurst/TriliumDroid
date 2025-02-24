@@ -1,3 +1,4 @@
+- Protected notes: reading and modification
 - New sync error screen with suggestions for common misconfigurations
 - New option to limit sync activity to specific network
 - Fix sync error after updating sync server

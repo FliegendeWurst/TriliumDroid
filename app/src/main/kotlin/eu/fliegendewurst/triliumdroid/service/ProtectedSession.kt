@@ -29,14 +29,21 @@ object ProtectedSession {
 
 	fun isActive() = key != null
 
+	/**
+	 * Try to enter a protected session. Returns non-null on error.
+	 */
 	fun enter(): String? {
 		val password = Preferences.password()?.encodeToByteArray() ?: return "no password"
 		val salt = Option.passwordDerivedKeySalt()?.encodeToByteArray() ?: return "no salt"
 		val encryptedDataKey = Option.encryptedDataKey() ?: return "no encrypted data key"
 
-		val passwordDerivedKey = SCrypt.generate(password, salt, 16384, 8, 1, 32)
+		try {
+			val passwordDerivedKey = SCrypt.generate(password, salt, 16384, 8, 1, 32)
 
-		key = decryptInternal(passwordDerivedKey, encryptedDataKey)
+			key = decryptInternal(passwordDerivedKey, encryptedDataKey)
+		} catch (e: Exception) {
+			return "${e.javaClass.simpleName}: ${e.message}"
+		}
 
 		return null
 	}

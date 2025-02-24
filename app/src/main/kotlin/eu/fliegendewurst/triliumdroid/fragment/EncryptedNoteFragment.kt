@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
@@ -20,9 +21,13 @@ class EncryptedNoteFragment : Fragment(R.layout.fragment_encrypted_note) {
 		val binding = FragmentEncryptedNoteBinding.inflate(inflater, container, false)
 
 		binding.buttonEnterProtectedSession.setOnClickListener {
-			ProtectedSession.enter()
-			val main = activity as MainActivity?
-			main?.reloadNote()
+			val error = ProtectedSession.enter()
+			if (error != null) {
+				Toast.makeText(activity, error, Toast.LENGTH_SHORT).show()
+			} else {
+				val main = activity as MainActivity?
+				main?.reloadNote()
+			}
 		}
 
 		return binding.root
