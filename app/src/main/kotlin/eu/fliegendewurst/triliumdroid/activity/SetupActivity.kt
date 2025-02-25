@@ -52,7 +52,7 @@ class SetupActivity : AppCompatActivity() {
 		}
 
 		binding.buttonConfigureSync.setOnClickListener {
-			ConfigureSyncDialog.showDialog(this)
+			ConfigureSyncDialog.showDialog(this) {}
 		}
 
 		setText()

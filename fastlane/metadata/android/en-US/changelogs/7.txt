@@ -2,6 +2,7 @@
 - New sync error screen with suggestions for common misconfigurations
 - New option to limit sync activity to specific network
 - German UI translation
+- Support for Android 13+ Themed Icons
 - Fix sync error after updating sync server
 - Fix crash when following a link to a deleted note
 - Fix rare crash on launch

@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.databinding.ActivityWelcomeBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureSyncDialog
 import eu.fliegendewurst.triliumdroid.util.Preferences
@@ -15,7 +16,13 @@ class WelcomeActivity : AppCompatActivity() {
 		val binding = ActivityWelcomeBinding.inflate(layoutInflater)
 		setContentView(binding.root)
 		binding.buttonSetupSync.setOnClickListener {
-			ConfigureSyncDialog.showDialog(this)
+			ConfigureSyncDialog.showDialog(this) {
+				lifecycleScope.launch {
+					ConnectionUtil.resetClient(this@WelcomeActivity) {
+						finish()
+					}
+				}
+			}
 		}
 	}
 

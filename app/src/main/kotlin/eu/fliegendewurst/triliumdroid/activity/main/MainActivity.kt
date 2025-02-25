@@ -485,7 +485,10 @@ class MainActivity : AppCompatActivity() {
 		binding.drawerLayout.openDrawer(GravityCompat.START)
 	}
 
-	private fun performAction(action: String) {
+	/**
+	 * @param action must be a key in [ConfigureFabsDialog.actions]
+	 */
+	fun performAction(action: String) {
 		when (action) {
 			SHOW_NOTE_TREE -> {
 				doMenuAction(R.id.action_show_note_tree)
@@ -548,16 +551,18 @@ class MainActivity : AppCompatActivity() {
 
 	override fun onResume() {
 		super.onResume()
-		if (loadedNoteId == null) {
-			return
-		}
-		if (!Cache.haveDatabase(this)) {
+		// if the user deleted the database, nuke the history too
+		if (!Preferences.hasSyncContext() || !Cache.haveDatabase(this)) {
+			noteHistory.reset()
 			loadedNoteId = null
 			tree?.submitList(emptyList())
 			refreshTitle(null)
 			supportFragmentManager.beginTransaction()
 				.replace(R.id.fragment_container, EmptyFragment())
 				.commit()
+			return
+		}
+		if (loadedNoteId == null) {
 			return
 		}
 		when (getFragment()) {
@@ -678,8 +683,11 @@ class MainActivity : AppCompatActivity() {
 			}, {
 				lifecycleScope.launch {
 					Cache.getTreeData("")
+					val showInitial = !showSyncError
 					handleError(it)
-					showInitialNote(true)
+					if (showInitial) {
+						showInitialNote(true)
+					}
 					snackbar.setText("Sync: error!")
 					snackbar.duration = Snackbar.LENGTH_SHORT
 					snackbar.show()
@@ -903,7 +911,7 @@ class MainActivity : AppCompatActivity() {
 
 			R.id.action_sync -> {
 				showSyncError = true
-				startSync(handler, false)
+				startSync(handler, true)
 				true
 			}
 

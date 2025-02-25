@@ -6,8 +6,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import eu.fliegendewurst.triliumdroid.IncorrectPasswordException
+import eu.fliegendewurst.triliumdroid.MismatchedDatabaseException
 import eu.fliegendewurst.triliumdroid.R
+import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.databinding.FragmentSyncErrorBinding
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SYNC
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureSyncDialog
 import java.net.ConnectException
 import java.net.UnknownHostException
 
@@ -22,6 +27,15 @@ class SyncErrorFragment : Fragment(R.layout.fragment_sync_error) {
 		savedInstanceState: Bundle?
 	): View {
 		binding = FragmentSyncErrorBinding.inflate(inflater, container, false)
+		binding!!.buttonConfigureSync.setOnClickListener {
+			val main = activity
+			if (main == null || main !is MainActivity) {
+				return@setOnClickListener
+			}
+			ConfigureSyncDialog.showDialog(main) {
+				main.performAction(SYNC)
+			}
+		}
 		showInternal()
 		return binding!!.root
 	}
@@ -47,7 +61,7 @@ class SyncErrorFragment : Fragment(R.layout.fragment_sync_error) {
 			val toString =
 				{ t: Throwable -> "${t.javaClass.simpleName}: ${t.localizedMessage ?: t.message}" }
 			binding!!.labelSyncErrorCauses.text =
-				toString(error!!) + causes.map { "\n ${toString(it)}" }.joinToString("")
+				toString(error!!) + causes.joinToString("") { "\n ${toString(it)}" }
 //				binding!!.labelSyncErrorStacktrace.text = error!!.stackTraceToString()
 			causes.add(error!!)
 			val s = { it: Int -> resources.getString(it) }
@@ -57,6 +71,12 @@ class SyncErrorFragment : Fragment(R.layout.fragment_sync_error) {
 			}
 			if (causes.any { it is UnknownHostException }) {
 				text += " ${s(R.string.error_unknown_host)}"
+			}
+			if (causes.any { it is MismatchedDatabaseException }) {
+				text += " ${s(R.string.error_mismatched_database)}"
+			}
+			if (causes.any { it is IncorrectPasswordException }) {
+				text += " ${s(R.string.error_incorrect_password)}"
 			}
 			binding!!.labelSyncErrorHint.text = text
 		}

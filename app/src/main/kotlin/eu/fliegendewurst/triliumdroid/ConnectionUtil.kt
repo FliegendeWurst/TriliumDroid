@@ -273,6 +273,10 @@ object ConnectionUtil {
 					response.use {
 						val resp = response.body!!.string()
 						try {
+							if (response.code == 401 && resp == "Incorrect password") {
+								callbackError(IncorrectPasswordException("$path returned 401"))
+								return
+							}
 							if (response.code != 200) {
 								callbackError(IllegalStateException("bad sync-seed response code ${response.code}, $resp"))
 								return

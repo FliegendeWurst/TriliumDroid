@@ -56,4 +56,7 @@ object Preferences {
 		.remove(SYNC_VERSION)
 		.remove(INSTANCE_ID)
 		.apply()
+
+	fun hasSyncContext() =
+		listOf(DOCUMENT_SECRET, SYNC_VERSION, INSTANCE_ID).all { prefs.contains(it) }
 }

@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 object ConfigureSyncDialog {
 	private const val TAG = "ConfigureSyncDialog"
 
-	fun showDialog(activity: AppCompatActivity) {
+	fun showDialog(activity: AppCompatActivity, callback: () -> Unit) {
 		var server: EditText? = null
 		var password: EditText? = null
 		val dialog = AlertDialog.Builder(activity)
@@ -28,6 +28,7 @@ object ConfigureSyncDialog {
 			.setPositiveButton(android.R.string.ok) { dialog, _ ->
 				done(activity, server!!.text.toString(), password!!.text.toString())
 				dialog.dismiss()
+				callback.invoke()
 			}
 			.create()
 		dialog.show()
@@ -115,12 +116,5 @@ object ConfigureSyncDialog {
 		}
 		Preferences.setHostname(server)
 		Preferences.setPassword(password)
-		activity.lifecycleScope.launch {
-			ConnectionUtil.resetClient(activity) {
-				if (activity is WelcomeActivity) {
-					activity.finish()
-				}
-			}
-		}
 	}
 }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="@dimen/activity_margin">
@@ -24,6 +25,22 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/label_sync_error_title" />
 
+    <Button
+        android:id="@+id/button_configure_sync"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/settings_label_start_margin"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:layout_marginEnd="@dimen/settings_label_start_margin"
+        android:layout_marginBottom="@dimen/normal_margin"
+        android:drawableStart="@drawable/bx_refresh"
+        android:paddingStart="6dp"
+        android:text="@string/button_configure_synchronization"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/label_sync_error_hint"
+        tools:ignore="RtlSymmetry" />
+
     <TextView
         android:id="@+id/label_sync_error_causes"
         android:layout_width="wrap_content"
@@ -31,7 +48,7 @@
         android:fontFamily="monospace"
         android:paddingTop="@dimen/normal_margin"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/label_sync_error_hint" />
+        app:layout_constraintTop_toBottomOf="@id/button_configure_sync" />
 
     <!--
     <ScrollView

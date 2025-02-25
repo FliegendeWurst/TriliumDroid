@@ -7,6 +7,10 @@ class HistoryList {
 		StartItem()
 	)
 
+	fun reset() {
+		items = mutableListOf(StartItem())
+	}
+
 	fun restore(activity: MainActivity) {
 		items.last().restore(activity)
 	}

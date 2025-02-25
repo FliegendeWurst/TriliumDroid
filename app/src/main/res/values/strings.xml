@@ -109,6 +109,8 @@
     <string name="error_generic">An error occurred whilst trying to synchronize the database.</string>
     <string name="error_connect">The app could not connect to the sync server.</string>
     <string name="error_unknown_host">The hostname of the sync server could not be resolved.</string>
+    <string name="error_mismatched_database">The local database does not match the sync server\'s database. You must delete the previous database in the settings, if you really want to switch to the new database.</string>
+    <string name="error_incorrect_password">The password is incorrect.</string>
     <string name="label_sync_error">Sync error</string>
     <string name="label_limit_sync_to_network">Limit synchronization to network (optional)</string>
     <string name="button_current_network">Current network</string>
