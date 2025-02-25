@@ -120,17 +120,8 @@ class InitialSyncTest {
 		onView(withText(android.R.string.ok))
 			.perform(click())
 		Espresso.pressBack()
-		// wait to load
-		Thread.sleep(2000)
-		onView(ViewMatchers.isRoot())
-			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
-	}
-
-	@Test
-	@Throws(IOException::class)
-	fun test_021_nukedDatabaseRestored() {
-		var index = 1
-		Thread.sleep(50000) // wait for sync
+		// wait to sync
+		Thread.sleep(50000)
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
 	}
