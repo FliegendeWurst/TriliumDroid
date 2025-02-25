@@ -31,6 +31,7 @@ import java.security.KeyStore
 import java.security.Principal
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import javax.net.ssl.KeyManagerFactory
@@ -73,7 +74,7 @@ object ConnectionUtil {
 		}
 	}
 
-	private suspend fun setupInternal(
+	private fun setupInternal(
 		callback: () -> Unit,
 		callbackError: (Exception) -> Unit
 	) {
@@ -143,6 +144,8 @@ object ConnectionUtil {
 	private suspend fun reset(appContext: Context, done: () -> Unit) = withContext(Dispatchers.IO) {
 		var clientBuilder = OkHttpClient.Builder()
 			.cookieJar(CookieJar())
+			// bump timeout from default 10s to 30s
+			.readTimeout(30, TimeUnit.SECONDS)
 
 		var pk: PrivateKey? = null
 		var chain: Array<X509Certificate>? = null
@@ -309,27 +312,27 @@ object ConnectionUtil {
 		return Base64.encode(data)
 	}
 
-	private suspend fun connect(
+	private fun connect(
 		server: String,
 		callback: () -> Unit,
 		callbackError: (Exception) -> Unit
-	): Unit = withContext(Dispatchers.IO) {
+	) {
 		if (client == null) {
 			Log.w(TAG, "client not active")
 			callbackError(IllegalStateException("client not active"))
-			return@withContext
+			return
 		}
 		if (server.isEmpty()) {
 			Log.e(TAG, "empty sync URL")
 			callbackError(IllegalStateException("empty sync URL"))
-			return@withContext
+			return
 		}
 		try {
 			Request.Builder().url(server)
 		} catch (e: Exception) {
 			// bad URL
 			callbackError.invoke(IllegalArgumentException("bad sync URL"))
-			return@withContext
+			return
 		}
 
 		val utc = Cache.utcDateModified()
@@ -393,11 +396,11 @@ object ConnectionUtil {
 		})
 	}
 
-	suspend fun doSyncRequest(
+	fun doSyncRequest(
 		uri: String,
 		callback: (JSONObject) -> Unit,
 		callbackError: (Exception) -> Unit
-	) = withContext(Dispatchers.IO) {
+	) {
 		val req = Request.Builder()
 			.get()
 			.url("$server$uri")
@@ -406,13 +409,19 @@ object ConnectionUtil {
 		client!!.newCall(req).enqueue(object : Callback {
 			override fun onResponse(call: Call, response: Response) {
 				response.use {
-					val body = response.body!!
-					if (body.contentLength() >= 30000000) {
-						Log.e(TAG, "sync data too big: ${body.contentLength()} bytes > 30 MB")
-						callbackError(SyncResponseTooBigException)
-						return
+					try {
+						val body = response.body!!
+						if (body.contentLength() >= 30000000) {
+							Log.e(TAG, "sync data too big: ${body.contentLength()} bytes > 30 MB")
+							callbackError(SyncResponseTooBigException)
+							return
+						}
+						val json = JSONObject(body.string())
+						callback(json)
+					} catch (e: Exception) {
+						Log.e(TAG, "failed to read sync response ", e)
+						callbackError(e)
 					}
-					callback(JSONObject(body.string()))
 				}
 			}
 
@@ -423,7 +432,7 @@ object ConnectionUtil {
 		})
 	}
 
-	suspend fun doSyncPushRequest(uri: String, data: JSONObject) = withContext(Dispatchers.IO) {
+	fun doSyncPushRequest(uri: String, data: JSONObject) {
 		val dataBody = data.toString(0)
 		Log.i(TAG, "syncing ${data.length()} bytes of data")
 		val req = Request.Builder()
@@ -449,7 +458,7 @@ object ConnectionUtil {
 	 * Get the "app info" of the connected sync server.
 	 * See <a href="https://github.com/zadam/trilium/blob/master/src/services/app_info.js">Trilium app_info service</a>.
 	 */
-	suspend fun getAppInfo(callback: (AppInfo?) -> Unit) = withContext(Dispatchers.IO) {
+	fun getAppInfo(callback: (AppInfo?) -> Unit) {
 		val req = Request.Builder()
 			.url("$server/api/app-info")
 			.build()
