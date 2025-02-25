@@ -33,6 +33,9 @@ android {
         viewBinding true
         buildConfig true
     }
+    androidResources {
+        generateLocaleConfig = true
+    }
 
     // see https://android.izzysoft.de/articles/named/iod-scan-apkchecks#blobs
     dependenciesInfo {

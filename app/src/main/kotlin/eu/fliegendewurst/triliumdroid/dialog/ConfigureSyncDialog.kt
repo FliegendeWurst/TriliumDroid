@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.R
-import eu.fliegendewurst.triliumdroid.activity.WelcomeActivity
 import eu.fliegendewurst.triliumdroid.util.GetSSID
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +25,7 @@ object ConfigureSyncDialog {
 			.setTitle(R.string.settings_sync_server_header)
 			.setView(R.layout.dialog_configure_sync)
 			.setPositiveButton(android.R.string.ok) { dialog, _ ->
-				done(activity, server!!.text.toString(), password!!.text.toString())
+				done(server!!.text.toString(), password!!.text.toString())
 				dialog.dismiss()
 				callback.invoke()
 			}
@@ -106,7 +105,6 @@ object ConfigureSyncDialog {
 	}
 
 	private fun done(
-		activity: AppCompatActivity,
 		serverInput: String,
 		password: String
 	) {

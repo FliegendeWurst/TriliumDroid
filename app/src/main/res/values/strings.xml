@@ -96,7 +96,6 @@
     <string name="label_widget_basic_properties">Basic Properties</string>
     <string name="label_note_type">Note Type</string>
     <string name="label_protect_the_note">Protect the note</string>
-    <string name="label_bookmark">Bookmark</string>
     <string name="label_status">Status</string>
     <string name="status_unknown">Unknown</string>
     <string name="status_db_mismatch">Database mismatch</string>
@@ -121,6 +120,7 @@
     <string name="action_leave_protected_session">Leave protected session</string>
     <string name="action_enter_protected_session">Enter protected session</string>
     <string name="button_configure_synchronization">Configure synchronization</string>
+    <string name="label_set_ui_language">Set UI language</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

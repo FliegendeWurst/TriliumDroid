@@ -6,12 +6,16 @@ import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
+import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureSyncDialog
+import kotlinx.coroutines.launch
 import java.io.File
 
 
@@ -53,6 +57,32 @@ class SetupActivity : AppCompatActivity() {
 
 		binding.buttonConfigureSync.setOnClickListener {
 			ConfigureSyncDialog.showDialog(this) {}
+		}
+
+		binding.buttonChangeLanguage.setOnClickListener {
+			val appLocale = LocaleListCompat.forLanguageTags("en-US,de")
+			val localeStrings = mutableListOf<CharSequence>()
+			val locales = AppCompatDelegate.getApplicationLocales()
+			var idx = 0
+			for (i in 0 until appLocale.size()) {
+				if (!locales.isEmpty && locales.get(0) == appLocale[i]) {
+					idx = i
+				}
+				localeStrings.add(appLocale[i]!!.displayLanguage)
+			}
+			AlertDialog.Builder(this)
+				.setSingleChoiceItems(localeStrings.toTypedArray(), idx) { dialog, n ->
+					val locale = appLocale[n]!!
+					lifecycleScope.launch {
+						AppCompatDelegate.setApplicationLocales(
+							LocaleListCompat.create(locale)
+						)
+					}
+					dialog.dismiss()
+				}
+				.setNegativeButton(android.R.string.cancel, null)
+				.setTitle(R.string.label_set_ui_language)
+				.show()
 		}
 
 		setText()
