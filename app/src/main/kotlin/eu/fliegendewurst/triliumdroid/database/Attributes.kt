@@ -1,6 +1,5 @@
 package eu.fliegendewurst.triliumdroid.database
 
-import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.database.Cache.db
@@ -86,7 +85,7 @@ object Attributes {
 					)
 				)
 			}
-			db!!.registerEntityChangeAttribute(
+			registerEntityChangeAttribute(
 				previousId!!,
 				note.id,
 				"label",
@@ -147,7 +146,7 @@ object Attributes {
 				)
 			)
 		}
-		db!!.registerEntityChangeAttribute(
+		registerEntityChangeAttribute(
 			previousId!!,
 			note.id,
 			"relation",
@@ -183,7 +182,7 @@ object Attributes {
 					"WHERE attributeId = ?",
 			arrayOf(1, utc, previousId)
 		)
-		db!!.registerEntityChangeAttribute(previousId!!, note.id, "label", name, "", inheritable)
+		registerEntityChangeAttribute(previousId!!, note.id, "label", name, "", inheritable)
 		note.clearAttributeCache()
 		note.makeInvalid()
 		Notes.getNoteWithContent(note.id)
@@ -213,7 +212,7 @@ object Attributes {
 						"WHERE attributeId = ?",
 				arrayOf(1, utc, previousId)
 			)
-			db!!.registerEntityChangeAttribute(
+			registerEntityChangeAttribute(
 				previousId!!,
 				note.id,
 				"relation",
@@ -227,7 +226,7 @@ object Attributes {
 		}
 }
 
-private suspend fun SQLiteDatabase.registerEntityChangeAttribute(
+private suspend fun registerEntityChangeAttribute(
 	attributeId: String,
 	noteId: String,
 	type: String,
@@ -237,7 +236,7 @@ private suspend fun SQLiteDatabase.registerEntityChangeAttribute(
 ) {
 	// hash ["attributeId", "noteId", "type", "name", "value", "isInheritable"]
 	// source: https://github.com/TriliumNext/Notes/blob/develop/src/becca/entities/battribute.ts
-	registerEntityChange(
+	Cache.registerEntityChange(
 		"attributes",
 		attributeId,
 		arrayOf(

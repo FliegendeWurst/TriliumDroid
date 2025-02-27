@@ -12,7 +12,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
-import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteEditBinding
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
@@ -114,7 +113,7 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 								builder.length
 							)
 							runBlocking {
-								Cache.addInternalLink(note, it.note)
+								Notes.addInternalLink(note, it.note)
 							}
 						}
 					}

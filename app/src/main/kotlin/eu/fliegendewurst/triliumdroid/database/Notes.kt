@@ -1,8 +1,6 @@
 package eu.fliegendewurst.triliumdroid.database
 
-import android.database.sqlite.SQLiteDatabase
 import android.util.Log
-import androidx.core.database.sqlite.transaction
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
@@ -34,90 +32,54 @@ object Notes {
 		withContext(Dispatchers.IO) {
 			// create entries in notes, blobs, branches
 			var newId = Util.newNoteId()
-			val newBlobId = Util.newNoteId()
-			db!!.transaction {
-				do {
-					var exists = true
-					rawQuery("SELECT noteId FROM notes WHERE noteId = ?", arrayOf(newId)).use {
-						if (!it.moveToNext()) {
-							exists = false
-						}
+			do {
+				var exists = true
+				db!!.rawQuery("SELECT noteId FROM notes WHERE noteId = ?", arrayOf(newId)).use {
+					if (!it.moveToNext()) {
+						exists = false
 					}
-					if (!exists) {
-						break
-					}
-					newId = Util.newNoteId()
-				} while (true)
-				val branchId = "${parentNote.id}_$newId"
-				val notePosition = 0 // TODO: sorting
-				val prefix = null
-				val isExpanded = 0
-				val isDeleted = 0
-				val deleteId = null
-				val dateModified = dateModified()
-				val utcDateModified = utcDateModified()
-				execSQL(
-					"INSERT INTO branches VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-					arrayOf(
-						branchId,
-						newId,
-						parentNote.id,
-						notePosition,
-						prefix,
-						isExpanded,
-						isDeleted,
-						deleteId,
-						utcDateModified
-					)
+				}
+				if (!exists) {
+					break
+				}
+				newId = Util.newNoteId()
+			} while (true)
+			val dateModified = dateModified()
+			val utcDateModified = utcDateModified()
+
+			val blob = Blobs.new(null)
+			db!!.execSQL(
+				"INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+				arrayOf(
+					newId,
+					newNoteTitle,
+					"0", // isProtected
+					"text", // type
+					"text/html", // mime
+					blob.blobId, // blobId
+					"0", // isDeleted
+					null, // deleteId
+					dateModified, // dateCreated
+					dateModified,
+					utcDateModified, // utcDateCreated
+					utcDateModified,
 				)
-				// hash "branchId", "noteId", "parentNoteId", "prefix"
-				registerEntityChange(
-					"branches",
-					branchId,
-					arrayOf(branchId, newId, parentNote.id, "null")
+			)
+			// hash ["noteId", "title", "isProtected", "type", "mime", "blobId"]
+			registerEntityChangeNote(
+				Note(
+					newId,
+					"text/html",
+					newNoteTitle ?: "",
+					"text",
+					dateModified,
+					dateModified,
+					false,
+					blob.blobId
 				)
-				execSQL(
-					"INSERT INTO blobs VALUES (?, ?, ?, ?)",
-					arrayOf(
-						newBlobId,
-						"",
-						dateModified,
-						utcDateModified
-					)
-				)
-				registerEntityChange("blobs", newBlobId, arrayOf(newBlobId, ""))
-				execSQL(
-					"INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-					arrayOf(
-						newId,
-						newNoteTitle,
-						"0", // isProtected
-						"text", // type
-						"text/html", // mime
-						newBlobId, // blobId
-						"0", // isDeleted
-						null, // deleteId
-						dateModified, // dateCreated
-						dateModified,
-						utcDateModified, // utcDateCreated
-						utcDateModified,
-					)
-				)
-				// hash ["noteId", "title", "isProtected", "type", "mime", "blobId"]
-				registerEntityChangeNote(
-					Note(
-						newId,
-						"text/html",
-						newNoteTitle ?: "",
-						"text",
-						dateModified,
-						dateModified,
-						false,
-						newBlobId
-					)
-				)
-			}
-			getTreeData("AND noteId = \"$newId\"")
+			)
+			Branches.cloneNote(parentNote.id, newId)
+			getTreeData("AND noteId = '$newId'")
 			return@withContext getNote(newId)!!
 		}
 
@@ -317,7 +279,7 @@ object Notes {
 			arrayOf(date, utc, notes[id]!!.isProtected.boolToIntValue(), id)
 		)
 		notes[id]!!.modified = date
-		db!!.registerEntityChangeNote(notes[id]!!)
+		registerEntityChangeNote(notes[id]!!)
 	}
 
 	suspend fun changeNoteProtection(id: String, protection: Boolean) {
@@ -337,7 +299,21 @@ object Notes {
 			"UPDATE notes SET title = ? WHERE noteId = ?",
 			arrayOf(note.rawTitle(), note.id)
 		)
-		db!!.registerEntityChangeNote(note)
+		registerEntityChangeNote(note)
+	}
+
+	suspend fun addInternalLink(note: Note, target: String) {
+		val relations = note.getRelations()
+		if (relations.any { x -> x.target?.id == target && x.name == "internalLink" }) {
+			return
+		}
+		Attributes.updateRelation(
+			note,
+			null,
+			"internalLink",
+			getNote(target) ?: return,
+			false
+		)
 	}
 
 	suspend fun deleteNote(branch: Branch): Boolean = withContext(Dispatchers.IO) {
@@ -360,7 +336,7 @@ object Notes {
 			notes.remove(branch.note)
 			note.id = "DELETED"
 			db!!.execSQL("UPDATE notes SET isDeleted=1 WHERE noteId = ?", arrayOf(branch.note))
-			db!!.registerEntityChangeNote(note)
+			registerEntityChangeNote(note)
 		}
 		// remove branches
 		Branches.delete(branch)
@@ -369,11 +345,9 @@ object Notes {
 	}
 }
 
-private suspend fun SQLiteDatabase.registerEntityChangeNote(
-	note: Note,
-) {
+private suspend fun registerEntityChangeNote(note: Note) {
 	// hash ["noteId", "title", "isProtected", "type", "mime", "blobId"]
-	registerEntityChange(
+	Cache.registerEntityChange(
 		"notes",
 		note.id,
 		arrayOf(

@@ -19,8 +19,7 @@ object Branches {
 	/**
 	 * Branches indexed by branch id.
 	 */
-	var branches: MutableMap<String, Branch> = ConcurrentHashMap()
-		private set
+	val branches: MutableMap<String, Branch> = ConcurrentHashMap()
 
 	/**
 	 * Get one possible note path for the provided note id.
@@ -91,15 +90,18 @@ object Branches {
 		return@withContext possibleBranches
 	}
 
-	suspend fun cloneNote(parentBranch: Branch, note: Note) = withContext(Dispatchers.IO) {
-		val parentNote = parentBranch.note
+	suspend fun cloneNote(parentBranch: Branch, note: Note) {
+		return cloneNote(parentBranch.note, note.id)
+	}
+
+	suspend fun cloneNote(parentNoteId: String, noteId: String) = withContext(Dispatchers.IO) {
 		// first, make sure we aren't creating a cycle
-		val paths = getNotePaths(parentNote) ?: return@withContext
-		if (paths.any { it.any { otherBranch -> otherBranch.note == note.id } }) {
+		val paths = getNotePaths(parentNoteId) ?: return@withContext
+		if (paths.any { it.any { otherBranch -> otherBranch.note == noteId } }) {
 			return@withContext
 		}
 		// create new branch
-		val branchId = "${parentNote}_${note.id}"
+		val branchId = "${parentNoteId}_${noteId}"
 		// check if it is used
 		db!!.rawQuery("SELECT 1 FROM branches WHERE branchId = ?", arrayOf(branchId))
 			.use {
@@ -112,9 +114,9 @@ object Branches {
 		db!!.execSQL(
 			"INSERT INTO branches (branchId, noteId, parentNoteId, notePosition, prefix, isExpanded, isDeleted, deleteId, utcDateModified) " +
 					"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-			arrayOf(branchId, note.id, parentNote, 0, null, 0, 0, null, utc)
+			arrayOf(branchId, noteId, parentNoteId, 0, null, 0, 0, null, utc)
 		)
-		db!!.registerEntityChangeBranch(Branch(branchId, note.id, parentNote, 0, null, false))
+		registerEntityChangeBranch(Branch(branchId, noteId, parentNoteId, 0, null, false))
 	}
 
 	suspend fun toggleBranch(branch: Branch) = withContext(Dispatchers.IO) {
@@ -170,7 +172,7 @@ object Branches {
 			}
 			val oldParent = branch.parentNote
 			branch.parentNote = newParent.note
-			db!!.registerEntityChangeBranch(branch)
+			registerEntityChangeBranch(branch)
 			notes[oldParent]?.children = null
 			notes[newParent.note]?.children = null
 			getTreeData("AND (branches.parentNoteId = \"${oldParent}\" OR branches.parentNoteId = \"${newParent.note}\")")
@@ -179,16 +181,14 @@ object Branches {
 	suspend fun delete(branch: Branch) = withContext(Dispatchers.IO) {
 		Log.i(TAG, "deleting ${branch.id}")
 		db!!.execSQL("UPDATE branches SET isDeleted=1 WHERE branchId = ?", arrayOf(branch.id))
-		db!!.registerEntityChangeBranch(branch)
+		registerEntityChangeBranch(branch)
 	}
 }
 
-private suspend fun SQLiteDatabase.registerEntityChangeBranch(
-	branch: Branch,
-) {
+private suspend fun registerEntityChangeBranch(branch: Branch) {
 	// hash ["branchId", "noteId", "parentNoteId", "prefix"]
 	// source: https://github.com/TriliumNext/Notes/blob/develop/src/becca/entities/bbranch.ts
-	registerEntityChange(
+	Cache.registerEntityChange(
 		"branches",
 		branch.id,
 		arrayOf(branch.id, branch.note, branch.parentNote, branch.prefix ?: "null")

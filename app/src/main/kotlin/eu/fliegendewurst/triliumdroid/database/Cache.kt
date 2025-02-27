@@ -23,7 +23,6 @@ import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Branches.branches
-import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.database.Notes.notes
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
@@ -52,6 +51,43 @@ object Cache {
 		private set
 
 	var lastSync: Long? = null
+
+	suspend fun registerEntityChange(
+		table: String,
+		id: String,
+		toHash: Array<String>,
+	) {
+		registerEntityChange(table, id, toHash.map { it.encodeToByteArray() })
+	}
+
+	suspend fun registerEntityChange(
+		table: String,
+		id: String,
+		toHash: List<ByteArray>,
+	) = withContext(Dispatchers.IO) {
+		val utc = utcDateModified()
+		val md = MessageDigest.getInstance("SHA-1")
+		for (h in toHash) {
+			md.update('|'.code.toByte())
+			md.update(h, 0, h.size)
+		}
+		val sha1hash = md.digest()
+		val hash = Base64.encode(sha1hash)
+		db!!.execSQL(
+			"INSERT OR REPLACE INTO entity_changes (entityName, entityId, hash, isErased, changeId, componentId, instanceId, isSynced, utcDateChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			arrayOf(
+				table,
+				id,
+				hash,
+				0,
+				Util.randomString(12),
+				"Android",
+				ConnectionUtil.instanceId,
+				1,
+				utc
+			)
+		)
+	}
 
 	suspend fun getNotesWithAttribute(attributeName: String, attributeValue: String?): List<Note> =
 		withContext(Dispatchers.IO) {
@@ -323,20 +359,6 @@ object Cache {
 	fun closeDatabase() {
 		db?.close()
 		dbHelper?.close()
-	}
-
-	suspend fun addInternalLink(note: Note, target: String) {
-		val relations = note.getRelations()
-		if (relations.any { x -> x.target?.id == target && x.name == "internalLink" }) {
-			return
-		}
-		Attributes.updateRelation(
-			note,
-			null,
-			"internalLink",
-			Notes.getNote(target) ?: return,
-			false
-		)
 	}
 
 	/**
@@ -700,36 +722,6 @@ object Cache {
 	}
 }
 
-@OptIn(ExperimentalEncodingApi::class)
-suspend fun SQLiteDatabase.registerEntityChange(
-	table: String,
-	id: String,
-	toHash: Array<String>,
-) = withContext(Dispatchers.IO) {
-	val utc = utcDateModified()
-	val md = MessageDigest.getInstance("SHA-1")
-	for (h in toHash) {
-		val x = "|${h}".encodeToByteArray()
-		md.update(x, 0, x.size)
-	}
-	val sha1hash = md.digest()
-	val hash = Base64.encode(sha1hash)
-	execSQL(
-		"INSERT OR REPLACE INTO entity_changes (entityName, entityId, hash, isErased, changeId, componentId, instanceId, isSynced, utcDateChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		arrayOf(
-			table,
-			id,
-			hash,
-			0,
-			Util.randomString(12),
-			"NA",
-			ConnectionUtil.instanceId,
-			1,
-			utc
-		)
-	)
-}
-
 fun Boolean.boolToIntValue(): Int = if (this) {
 	1
 } else {
@@ -741,4 +733,3 @@ fun Boolean.boolToIntString(): String = if (this) {
 } else {
 	"0"
 }
-
