@@ -1,6 +1,6 @@
 # Trilium Notes for Android ![test workflow](https://github.com/FliegendeWurst/TriliumDroid/actions/workflows/test.yaml/badge.svg) <a href="https://hosted.weblate.org/engage/triliumdroid/"><img src="https://hosted.weblate.org/widget/triliumdroid/app/svg-badge.svg" alt="translation status" /></a>
 
-<img align="right" src="./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" />
+<img align="right" width="200" src="./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" />
 
 Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Android. Related: https://github.com/TriliumNext/Notes/issues/72
 
@@ -17,6 +17,7 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 - Displaying/modifying note paths
 - Displaying/collapsing/expanding note tree
 - Navigating using internal links
+- Encrypted notes
 - Browsing external links
 - Jump to note dialog
 - Local/global note map view
@@ -51,7 +52,6 @@ There is also some preliminary support for scripting, but it doesn't work exactl
 - Modifying note icon
 - Advanced Scripting
 - Included notes
-- Encrypted notes
 - Undeleting content
 - Erasing notes
 - Support for Android <= 6.0 (very low priority)
@@ -67,8 +67,9 @@ Translations are done via [Weblate](https://hosted.weblate.org/projects/triliumd
 
 ### Testing
 
+- `app/test/setup-test-server.sh`
 - Gradle action `pixel9api35DebugAndroidTest`
-- Scripts `copy-test-images.sh`, `compare-test-images.sh` in `app/test`
+- `app/test/compare-test-images.sh`
 
 ## License
 
