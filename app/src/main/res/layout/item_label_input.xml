@@ -27,11 +27,20 @@
         android:minWidth="90dp"
         tools:ignore="RelativeOverlap" />
 
+    <CheckBox
+        android:id="@+id/checkbox_promoted"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@id/button_delete_label"
+        android:text="Promoted" />
+
     <Button
         android:id="@+id/button_delete_label"
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
         android:contentDescription="@string/description_delete_label"
         android:drawableStart="@drawable/bx_trash"
         android:paddingStart="4dp"

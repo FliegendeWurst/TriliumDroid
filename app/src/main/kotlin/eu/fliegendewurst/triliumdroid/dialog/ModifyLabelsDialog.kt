@@ -9,6 +9,7 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.BaseAdapter
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ListView
 import android.widget.TextView
@@ -19,6 +20,8 @@ import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.database.Attributes
+import eu.fliegendewurst.triliumdroid.database.Notes
+import eu.fliegendewurst.triliumdroid.service.Util
 import kotlinx.coroutines.launch
 
 
@@ -34,6 +37,7 @@ object ModifyLabelsDialog {
 		var requestedFocus = false
 
 		val changes = mutableMapOf<String, String?>()
+		val changePromoted = mutableMapOf<String, Boolean>()
 
 		val ownedAttributesList = dialog.findViewById<ListView>(R.id.list_labels)!!
 		val ownedAttributes =
@@ -42,9 +46,11 @@ object ModifyLabelsDialog {
 
 		dialog.findViewById<Button>(R.id.button_add_label)!!.setOnClickListener {
 			AskForNameDialog.showDialog(activity, R.string.dialog_add_label, "") {
+				val name = it.trim()
 				ownedAttributes.add(
 					Label(
-						it.trim(),
+						Util.randomString(12),
+						name,
 						"",
 						inheritable = false,
 						promoted = true,
@@ -53,6 +59,7 @@ object ModifyLabelsDialog {
 				)
 				watchers.add(null)
 				(ownedAttributesList.adapter as BaseAdapter).notifyDataSetChanged()
+				changePromoted[name] = true
 			}
 		}
 
@@ -66,6 +73,7 @@ object ModifyLabelsDialog {
 			val settings = template.value.split(',')
 			ownedAttributes.add(
 				Label(
+					Util.randomString(12),
 					labelName,
 					"",
 					inheritable,
@@ -73,6 +81,9 @@ object ModifyLabelsDialog {
 					!settings.contains("single")
 				)
 			)
+		}
+		while (watchers.size < ownedAttributes.size) {
+			watchers.add(null)
 		}
 		ownedAttributesList.itemsCanFocus = true
 		ownedAttributesList.adapter = object : BaseAdapter() {
@@ -100,11 +111,17 @@ object ModifyLabelsDialog {
 				}
 				vi!!.findViewById<TextView>(R.id.label_label_title).text = attribute.name
 				val content = vi.findViewById<EditText>(R.id.edit_label_content)
+				val promotedCheckbox = vi.findViewById<CheckBox>(R.id.checkbox_promoted)
 				val deleteButton = vi.findViewById<Button>(R.id.button_delete_label)
 				if (watchers[position] != null) {
 					content.removeTextChangedListener(watchers[position])
 				}
 				content.setText(attribute.value())
+				promotedCheckbox.setOnCheckedChangeListener(null)
+				promotedCheckbox.isChecked = attribute.promoted
+				promotedCheckbox.setOnCheckedChangeListener { _, isChecked ->
+					changePromoted[attribute.name] = isChecked
+				}
 				deleteButton.setOnClickListener {
 					changes[attribute.name] = null
 					ownedAttributes.removeAt(position)
@@ -151,7 +168,7 @@ object ModifyLabelsDialog {
 		}
 
 		dialog.findViewById<Button>(R.id.button_modify_labels)!!.setOnClickListener {
-			done(activity, dialog, changes, currentNote, ownedAttributes)
+			done(activity, dialog, changes, changePromoted, currentNote, ownedAttributes)
 		}
 	}
 
@@ -159,12 +176,19 @@ object ModifyLabelsDialog {
 		activity: MainActivity,
 		dialog: AlertDialog,
 		changes: Map<String, String?>,
+		changePromoted: Map<String, Boolean>,
 		currentNote: Note,
 		labels: List<Label>
 	) = activity.lifecycleScope.launch {
+		android.util.Log.d("lbl", "changes $changes $changePromoted")
 		val previousLabels = currentNote.getLabels().map {
 			return@map Pair(it.name, it.value)
 		}.toMap()
+		for (change in changePromoted) {
+			val attrName = change.key
+			val promoted = change.value
+			Attributes.setPromoted(currentNote, attrName, promoted)
+		}
 		for (change in changes) {
 			val attrName = change.key
 			val attrValue = change.value
@@ -182,6 +206,8 @@ object ModifyLabelsDialog {
 			Attributes.updateLabel(currentNote, attrName, attrValue, inheritable)
 		}
 		dialog.dismiss()
+		currentNote.clearAttributeCache()
+		Notes.notes[currentNote.id]?.clearAttributeCache()
 		activity.refreshWidgets(currentNote)
 	}
 }

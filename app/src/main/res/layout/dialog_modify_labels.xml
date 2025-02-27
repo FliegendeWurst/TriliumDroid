@@ -10,7 +10,8 @@
         android:layout_width="wrap_content"
         android:layout_height="130dp"
         android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp" />
+        android:layout_marginEnd="16dp"
+        tools:listitem="@layout/item_label_input" />
 
     <!-- mysterious EditText to make text input work... -->
     <EditText

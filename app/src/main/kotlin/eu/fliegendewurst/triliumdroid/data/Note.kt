@@ -178,14 +178,14 @@ class Note(
 				targetLabel.promoted = targetLabel.promoted || data.contains("promoted")
 			}
 		}
+		Log.d(
+			TAG,
+			"inheritable cache: labels ${inheritedLabels?.size}, relations ${inheritedRelations?.size}"
+		)
 	}
 
 	fun clearAttributeCache() {
-		inheritableCached = false
-		labels = emptyList()
-		inheritedLabels = emptyList()
-		relations = emptyList()
-		inheritedRelations = emptyList()
+		makeInvalid()
 	}
 
 	suspend fun getAttributes(): List<Attribute> {
@@ -226,6 +226,11 @@ class Note(
 		updateTitle("INVALID")
 		this.content = null
 		this.contentDecrypted = null
+		inheritableCached = false
+		labels = emptyList()
+		inheritedLabels = emptyList()
+		relations = emptyList()
+		inheritedRelations = emptyList()
 	}
 
 	fun invalid(): Boolean = title == "INVALID" || mime == "INVALID"

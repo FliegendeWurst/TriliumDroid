@@ -41,11 +41,12 @@
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_owned_relations_title" />
 
-        <ListView
+        <eu.fliegendewurst.triliumdroid.view.ListViewAutoExpand
             android:id="@+id/widget_owned_relations_type_content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/widget_owned_relations_divider" />
+            app:layout_constraintTop_toBottomOf="@id/widget_owned_relations_divider"
+            tools:listitem="@layout/item_relation" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>

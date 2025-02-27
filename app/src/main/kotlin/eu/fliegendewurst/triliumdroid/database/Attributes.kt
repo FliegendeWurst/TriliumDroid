@@ -12,6 +12,29 @@ import kotlinx.coroutines.withContext
 object Attributes {
 	private const val TAG = "Attributes"
 
+	suspend fun setPromoted(note: Note, name: String, promoted: Boolean) {
+		val previousValue = note.getLabel("label:${name}")
+		val newValue: String
+		if (promoted) {
+			newValue = if (previousValue.isNullOrBlank()) {
+				"promoted"
+			} else if (previousValue.contains("promoted")) {
+				previousValue
+			} else {
+				"$previousValue,promoted"
+			}
+		} else {
+			newValue = if (previousValue.isNullOrBlank()) {
+				""
+			} else if (previousValue.contains("promoted")) {
+				previousValue.replace("promoted", "").replace(",,", ",")
+			} else {
+				previousValue
+			}
+		}
+		updateLabel(note, "label:$name", newValue, false)
+	}
+
 	suspend fun updateLabel(note: Note, name: String, value: String, inheritable: Boolean) =
 		withContext(Dispatchers.IO) {
 			var previousId: String? = null
@@ -213,6 +236,7 @@ private suspend fun SQLiteDatabase.registerEntityChangeAttribute(
 	isInheritable: Boolean
 ) {
 	// hash ["attributeId", "noteId", "type", "name", "value", "isInheritable"]
+	// source: https://github.com/TriliumNext/Notes/blob/develop/src/becca/entities/battribute.ts
 	registerEntityChange(
 		"attributes",
 		attributeId,

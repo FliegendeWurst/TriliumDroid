@@ -14,6 +14,7 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Attributes
 import eu.fliegendewurst.triliumdroid.database.Notes
+import eu.fliegendewurst.triliumdroid.service.Util
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -43,7 +44,7 @@ object ModifyRelationsDialog {
 					changes.add(Triple(it.trim(), null, note))
 					ownedAttributes.add(
 						Relation(
-							null,
+							Util.randomString(12),
 							note,
 							it.trim(),
 							inheritable = false,
@@ -68,7 +69,7 @@ object ModifyRelationsDialog {
 			val settings = template.value.split(',')
 			ownedAttributes.add(
 				Relation(
-					null,
+					Util.randomString(12),
 					null,
 					labelName,
 					inheritable,

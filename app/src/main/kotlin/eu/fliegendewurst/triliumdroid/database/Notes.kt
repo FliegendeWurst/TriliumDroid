@@ -216,6 +216,7 @@ object Notes {
 							val value = it.getString(5)
 							labels.add(
 								Label(
+									attributeId,
 									name, value, inheritable,
 									promoted = false,
 									multi = false

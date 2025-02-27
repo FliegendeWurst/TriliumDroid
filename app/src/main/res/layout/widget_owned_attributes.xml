@@ -22,10 +22,10 @@
 
         <Button
             android:id="@+id/button_labels_modify"
-            android:contentDescription="@string/description_add_label"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:background="#fff"
+            android:contentDescription="@string/description_add_label"
             android:drawableStart="@drawable/bx_edit_alt"
             android:paddingStart="0dp"
             android:translationZ="@dimen/medium_margin_plus"
@@ -41,11 +41,12 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_owned_attributes_title" />
 
-        <ListView
+        <eu.fliegendewurst.triliumdroid.view.ListViewAutoExpand
             android:id="@+id/widget_owned_attributes_type_content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/widget_owned_attributes_divider" />
+            app:layout_constraintTop_toBottomOf="@id/widget_owned_attributes_divider"
+            tools:listitem="@layout/item_attribute" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>

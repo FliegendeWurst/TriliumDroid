@@ -189,8 +189,13 @@ class InitialSyncTest {
 			)
 		)
 			.perform(typeText("comingToday"))
+		Espresso.closeSoftKeyboard()
+		saveScreenshot()
 		onView(withText(android.R.string.ok))
 			.perform(click())
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.close(Gravity.END))
+		saveScreenshot()
 	}
 
 	private val screenshotCounts = mutableMapOf<String, Int>()

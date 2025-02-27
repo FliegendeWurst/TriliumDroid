@@ -1044,7 +1044,11 @@ class MainActivity : AppCompatActivity() {
 		noteHistory.restore(this)
 	}
 
-	suspend fun refreshWidgets(noteContent: Note) {
+	suspend fun refreshWidgets(noteToShow: Note) {
+		var noteContent = noteToShow
+		if (noteContent.invalid()) {
+			noteContent = Notes.getNote(noteToShow.id) ?: return
+		}
 		// attributes
 		val attributes = noteContent.getLabels()
 		val ownedAttributes = attributes.filter { x -> !x.inherited && !x.templated }
