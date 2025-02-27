@@ -21,3 +21,8 @@ allprojects {
         maven { url "https://a8c-libs.s3.amazonaws.com/android" }
     }
 }
+
+tasks.wrapper {
+    gradleVersion = "8.9"
+    distributionType = Wrapper.DistributionType.BIN
+}
