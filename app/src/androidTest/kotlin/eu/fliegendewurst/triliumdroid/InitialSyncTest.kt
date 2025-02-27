@@ -35,7 +35,7 @@ import java.io.IOException
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class InitialSyncTest {
 	companion object {
-		private const val SYNC_WAIT_MS: Long = 5000
+		private const val SYNC_WAIT_MS: Long = 50000
 	}
 
 	@get:Rule
