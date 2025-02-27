@@ -1,7 +1,8 @@
 package eu.fliegendewurst.triliumdroid.service
 
-import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.Notes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -59,7 +60,7 @@ object DateNotes {
 		return@withContext if (inboxNotes.isNotEmpty()) {
 			inboxNotes[0]
 		} else {
-			getTodayNote() ?: Cache.getNote("root")!!
+			getTodayNote() ?: Notes.getNote("root")!!
 		}
 	}
 
@@ -81,7 +82,7 @@ object DateNotes {
 			val monthNote = getMonthNote(month) ?: return null
 			val dayLabel = DAY.format(dateFromIso(isoDate))
 
-			val dayNote = Cache.createChildNote(monthNote, dayLabel)
+			val dayNote = Notes.createChildNote(monthNote, dayLabel)
 
 			// TODO: set dateNote attribute
 
@@ -109,7 +110,7 @@ object DateNotes {
 			val yearNote = getYearNote(year) ?: return@withContext null
 			val monthLabel = MONTH.format(dateFromIso("$yearMonth-01"))
 
-			val monthNote = Cache.createChildNote(yearNote, monthLabel)
+			val monthNote = Notes.createChildNote(yearNote, monthLabel)
 
 			// TODO: set monthNote attribute
 
@@ -125,7 +126,7 @@ object DateNotes {
 			// create the new year note
 			val root = getCalendarRoot() ?: return null
 
-			val yearNote = Cache.createChildNote(root, year)
+			val yearNote = Notes.createChildNote(root, year)
 
 			// TODO: set yearNote attribute
 

@@ -10,11 +10,17 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
+import eu.fliegendewurst.triliumdroid.activity.main.MainActivity.Companion.tree
 import eu.fliegendewurst.triliumdroid.data.Branch
+import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.ItemTreeNoteBinding
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.ConcurrentHashMap
 
 
+/**
+ * Adapter for the note tree view.
+ */
 class TreeItemAdapter(
 	private val onClick: (Branch) -> Unit,
 	private val onLongClick: (Branch) -> Unit,
@@ -22,16 +28,28 @@ class TreeItemAdapter(
 	ListAdapter<Pair<Branch, Int>, TreeItemAdapter.TreeItemViewHolder>(TreeItemDiffCallback) {
 	private var selectedNote: String? = null
 
+	private val branchPosition: MutableMap<String, Int> = ConcurrentHashMap()
+
+	fun getBranchPosition(branchId: String): Int? = branchPosition[branchId]
+
+	override fun submitList(list: List<Pair<Branch, Int>>?) {
+		for ((i, pair) in list.orEmpty().withIndex()) {
+			tree!!.branchPosition[pair.first.note] = i
+			pair.first.cachedTreeIndex = i
+		}
+		super.submitList(list)
+	}
+
 	fun select(noteId: String) {
 		val prev = selectedNote
 		selectedNote = noteId
 		if (prev != null) {
-			val idx = Cache.getBranchPosition(prev)
+			val idx = branchPosition[prev]
 			if (idx != null) {
 				notifyItemChanged(idx)
 			}
 		}
-		notifyItemChanged(Cache.getBranchPosition(noteId) ?: return)
+		notifyItemChanged(branchPosition[noteId] ?: return)
 	}
 
 	class TreeItemViewHolder(
@@ -43,7 +61,7 @@ class TreeItemAdapter(
 		RecyclerView.ViewHolder(itemView) {
 		fun bind(item: Pair<Branch, Int>) {
 			binding.label.text =
-				runBlocking { Cache.getNote(item.first.note) }?.title() ?: item.first.note
+				runBlocking { Notes.getNote(item.first.note) }?.title() ?: item.first.note
 			val params = binding.label.layoutParams
 			if (params is ViewGroup.MarginLayoutParams) {
 				params.leftMargin = item.second * 20

@@ -1,7 +1,7 @@
 package eu.fliegendewurst.triliumdroid.util
 
 import android.content.Context
-import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.database.Cache
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream

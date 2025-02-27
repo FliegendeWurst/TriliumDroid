@@ -5,10 +5,10 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
-import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.database.Notes
 import kotlinx.coroutines.runBlocking
 
 object CreateNewNoteDialog {
@@ -45,9 +45,9 @@ object CreateNewNoteDialog {
 	) {
 		val note = runBlocking {
 			if (createAsChild) {
-				Cache.createChildNote(currentNote, title)
+				Notes.createChildNote(currentNote, title)
 			} else {
-				Cache.createSiblingNote(currentNote, title)
+				Notes.createSiblingNote(currentNote, title)
 			}
 		}
 		dialog.dismiss()

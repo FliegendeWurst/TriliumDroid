@@ -52,8 +52,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayoutMediator
 import eu.fliegendewurst.triliumdroid.AlarmReceiver
 import eu.fliegendewurst.triliumdroid.BuildConfig
-import eu.fliegendewurst.triliumdroid.Cache
-import eu.fliegendewurst.triliumdroid.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.FrontendBackendApi
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.TreeItemAdapter
@@ -64,6 +62,9 @@ import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
+import eu.fliegendewurst.triliumdroid.database.Branches
+import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
@@ -92,6 +93,8 @@ import eu.fliegendewurst.triliumdroid.fragment.SyncErrorFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
+import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
+import eu.fliegendewurst.triliumdroid.sync.Sync
 import eu.fliegendewurst.triliumdroid.util.CrashReport
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import eu.fliegendewurst.triliumdroid.util.Preferences
@@ -244,11 +247,11 @@ class MainActivity : AppCompatActivity() {
 						runBlocking {
 							Cache.initializeDatabase(applicationContext)
 							val inbox = DateNotes.getInboxNote()
-							val note = Cache.createChildNote(
+							val note = Notes.createChildNote(
 								inbox,
 								text.lineSequence().first()
 							)
-							Cache.setNoteContent(note.id, text)
+							Notes.setNoteContent(note.id, text)
 						}
 					}
 				}
@@ -272,7 +275,7 @@ class MainActivity : AppCompatActivity() {
 			}
 			AskForNameDialog.showDialog(this, R.string.dialog_rename_note, note.title()) {
 				lifecycleScope.launch {
-					Cache.renameNote(note, it)
+					Notes.renameNote(note, it)
 					refreshTree()
 					refreshTitle(note)
 				}
@@ -281,11 +284,11 @@ class MainActivity : AppCompatActivity() {
 
 		tree = TreeItemAdapter({
 			lifecycleScope.launch {
-				navigateTo(Cache.getNoteWithContent(it.note)!!, it)
+				navigateTo(Notes.getNoteWithContent(it.note)!!, it)
 			}
 		}, {
 			runBlocking {
-				Cache.toggleBranch(it)
+				Branches.toggleBranch(it)
 			}
 			refreshTree()
 		})
@@ -408,7 +411,7 @@ class MainActivity : AppCompatActivity() {
 			val loaded = getNoteLoaded() ?: return@setOnClickListener
 			JumpToNoteDialog.showDialogReturningNote(this, R.string.dialog_select_note) {
 				runBlocking {
-					Cache.cloneNote(it, loaded)
+					Branches.cloneNote(it, loaded)
 				}
 			}
 		}
@@ -525,10 +528,10 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun showNoteNavigation() = lifecycleScope.launch {
-		var note = Cache.getNote(noteHistory.noteId()) ?: return@launch
+		var note = Notes.getNote(noteHistory.noteId()) ?: return@launch
 		var branch = noteHistory.branch() ?: note.branches[0]
 		if (note.computeChildren().isEmpty()) {
-			note = Cache.getNote(branch.parentNote)!!
+			note = Notes.getNote(branch.parentNote)!!
 			branch = note.branches[0] // TODO
 		}
 		noteHistory.addAndRestore(NavigationItem(note, branch), this@MainActivity)
@@ -569,7 +572,7 @@ class MainActivity : AppCompatActivity() {
 			is EmptyFragment -> {
 				lifecycleScope.launch {
 					val frag = NoteFragment()
-					frag.loadLater(Cache.getNoteWithContent(loadedNoteId!!))
+					frag.loadLater(Notes.getNoteWithContent(loadedNoteId!!))
 					supportFragmentManager.beginTransaction()
 						.replace(R.id.fragment_container, frag)
 						.commit()
@@ -579,6 +582,10 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun refreshTree() {
+		if (tree == null) {
+			Log.w(TAG, "tried to refresh tree without tree")
+			return
+		}
 		val items = Cache.getTreeList("none_root", 0)
 		Log.i(TAG, "about to show ${items.size} tree items")
 		tree!!.submitList(items)
@@ -655,7 +662,7 @@ class MainActivity : AppCompatActivity() {
 			Cache.initializeDatabase(applicationContext)
 			ConnectionUtil.setup(this@MainActivity, {
 				lifecycleScope.launch {
-					Cache.syncStart({
+					Sync.syncStart({
 						handler.post {
 							snackbar.setText("Sync: $it outstanding...")
 						}
@@ -706,14 +713,14 @@ class MainActivity : AppCompatActivity() {
 				return@launch
 			}
 			var n = firstNote ?: lastNote
-			if (n == null || Cache.getNote(n) == null) {
+			if (n == null || Notes.getNote(n) == null) {
 				n = "root" // may happen in case of new database or note deleted
 			}
-			val note = Cache.getNote(n) ?: return@launch
+			val note = Notes.getNote(n) ?: return@launch
 			navigateTo(note, note.branches.firstOrNull())
 		} else {
 			val noteId = getNoteFragment().getNoteId() ?: return@launch
-			val note = Cache.getNote(noteId) ?: return@launch
+			val note = Notes.getNote(noteId) ?: return@launch
 			navigateTo(note)
 		}
 	}
@@ -809,7 +816,7 @@ class MainActivity : AppCompatActivity() {
 					is NoteFragment -> {
 						val id = fragment.getNoteId() ?: return true
 						noteHistory.addAndRestore(
-							NoteEditItem(runBlocking { Cache.getNote(id)!! }),
+							NoteEditItem(runBlocking { Notes.getNote(id)!! }),
 							this
 						)
 					}
@@ -827,7 +834,7 @@ class MainActivity : AppCompatActivity() {
 
 			R.id.action_share -> {
 				val id = getNoteFragment().getNoteId() ?: return true
-				val note = runBlocking { Cache.getNoteWithContent(id)!! }
+				val note = runBlocking { Notes.getNoteWithContent(id)!! }
 				val content = note.content() ?: return true
 				val sendIntent: Intent = Intent().apply {
 					action = Intent.ACTION_SEND
@@ -873,7 +880,7 @@ class MainActivity : AppCompatActivity() {
 				val noteFrag = getNoteFragment()
 				val noteId = noteFrag.getNoteId()
 				if (noteId != null) {
-					val note = runBlocking { Cache.getNoteWithContent(noteId)!! }
+					val note = runBlocking { Notes.getNoteWithContent(noteId)!! }
 					val script = String(note.content() ?: return true)
 					runScript(noteFrag, script)
 				}
@@ -888,20 +895,20 @@ class MainActivity : AppCompatActivity() {
 						Toast.LENGTH_SHORT
 					).show()
 				} else {
-					val path = getNotePathLoaded() ?: Cache.getNotePath(note.id)[0]
+					val path = getNotePathLoaded() ?: Branches.getNotePath(note.id)[0]
 					AlertDialog.Builder(this)
 						.setTitle("Delete note")
 						.setMessage("Do you really want to delete this note?")
 						.setPositiveButton(
 							android.R.string.ok
 						) { _, _ ->
-							if (runBlocking { !Cache.deleteNote(path) }) {
+							if (runBlocking { !Notes.deleteNote(path) }) {
 								Toast.makeText(
 									this, getString(R.string.toast_could_not_delete),
 									Toast.LENGTH_SHORT
 								).show()
 							}
-							navigateTo(runBlocking { Cache.getNote(path.parentNote)!! })
+							navigateTo(runBlocking { Notes.getNote(path.parentNote)!! })
 							refreshTree()
 						}
 						.setNegativeButton(android.R.string.cancel, null).show()
@@ -923,7 +930,7 @@ class MainActivity : AppCompatActivity() {
 					val id = frag.getNoteId()
 					if (id != null) {
 						noteHistory.addAndRestore(
-							NoteMapItem(runBlocking { Cache.getNote(id)!! }),
+							NoteMapItem(runBlocking { Notes.getNote(id)!! }),
 							this
 						)
 					}
@@ -1006,8 +1013,8 @@ class MainActivity : AppCompatActivity() {
 
 	private fun scrollTreeTo(noteId: String) {
 		tree!!.select(noteId)
-		val pos = Cache.getBranchPosition(noteId) ?: return
 		val frag = supportFragmentManager.findFragmentByTag("f0") ?: return
+		val pos = tree!!.getBranchPosition(noteId) ?: return
 		((frag as NoteTreeFragment).binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
 			pos,
 			5
@@ -1025,7 +1032,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun navigateToPath(notePath: String) = lifecycleScope.launch {
-		navigateTo(Cache.getNote(notePath.split("/").last())!!)
+		navigateTo(Notes.getNote(notePath.split("/").last())!!)
 	}
 
 	private fun refreshTitle(note: Note?) {
@@ -1138,7 +1145,7 @@ class MainActivity : AppCompatActivity() {
 
 		// note paths
 		val notePaths = findViewById<ListView>(R.id.widget_note_paths_type_content)
-		val paths = Cache.getNotePaths(noteContent.id)!!
+		val paths = Branches.getNotePaths(noteContent.id)!!
 		val currentPath = noteHistory.branch()
 		val pathsR = mutableListOf<Pair<String, Branch>>()
 		for (x in paths) {
@@ -1146,7 +1153,7 @@ class MainActivity : AppCompatActivity() {
 				Pair(
 					x.asReversed()
 						.subList(1, x.size)
-						.map { Cache.getNote(it.note)!!.title() }
+						.map { Notes.getNote(it.note)!!.title() }
 						.joinToString(" > "),
 					x.first()
 				)
@@ -1177,13 +1184,13 @@ class MainActivity : AppCompatActivity() {
 						) { newParent ->
 							lifecycleScope.launch {
 								val newParentNote =
-									Cache.getNote(newParent.note)
+									Notes.getNote(newParent.note)
 										?: return@launch
 								val children = (listOf(newParent) + newParentNote.computeChildren()
 									.toList()).toMutableList()
 								children.remove(pathBranch)
 								if (children.size == 1) {
-									Cache.moveBranch(pathBranch, newParent, 0)
+									Branches.moveBranch(pathBranch, newParent, 0)
 								} else {
 									SelectNoteDialog.showDialogReturningNote(
 										this@MainActivity,
@@ -1193,7 +1200,7 @@ class MainActivity : AppCompatActivity() {
 											val siblingIndex = children.indexOf(siblingNote)
 											if (siblingIndex == 0) {
 												// insert as first element
-												Cache.moveBranch(
+												Branches.moveBranch(
 													pathBranch,
 													newParent,
 													children[1].position - 10
@@ -1207,13 +1214,13 @@ class MainActivity : AppCompatActivity() {
 													val ourIndex = siblingIndex + 1
 													for (i in 1 until children.size) {
 														if (i < ourIndex) {
-															Cache.moveBranch(
+															Branches.moveBranch(
 																children[i],
 																newParent,
 																(i - 1) * 10
 															)
 														} else {
-															Cache.moveBranch(
+															Branches.moveBranch(
 																children[i],
 																newParent,
 																i * 10
@@ -1221,7 +1228,7 @@ class MainActivity : AppCompatActivity() {
 
 														}
 													}
-													Cache.moveBranch(
+													Branches.moveBranch(
 														pathBranch,
 														newParent,
 														ourIndex * 10
@@ -1229,7 +1236,7 @@ class MainActivity : AppCompatActivity() {
 												} else {
 													val ourPosition =
 														siblingNote.position + positionDelta / 2
-													Cache.moveBranch(
+													Branches.moveBranch(
 														pathBranch,
 														newParent,
 														ourPosition
@@ -1237,7 +1244,7 @@ class MainActivity : AppCompatActivity() {
 
 												}
 											} else {
-												Cache.moveBranch(
+												Branches.moveBranch(
 													pathBranch,
 													newParent,
 													siblingNote.position + 10
@@ -1286,7 +1293,7 @@ class MainActivity : AppCompatActivity() {
 		encrypted.isEnabled = ProtectedSession.isActive()
 		encrypted.setOnCheckedChangeListener { _, isChecked ->
 			lifecycleScope.launch {
-				Cache.changeNoteProtection(noteContent.id, isChecked)
+				Notes.changeNoteProtection(noteContent.id, isChecked)
 			}
 		}
 		val noteCreated = findViewById<TextView>(R.id.widget_note_info_created_content)
@@ -1308,14 +1315,14 @@ class MainActivity : AppCompatActivity() {
 		Log.i(TAG, "loading note ${note.id} @ branch ${branch?.id}")
 		Preferences.setLastNote(note.id)
 		// make sure note is visible
-		val path = Cache.getNotePath(note.id)
+		val path = Branches.getNotePath(note.id)
 		val expandedAny = ensurePathIsExpanded(path)
 		if (expandedAny) {
 			refreshTree()
 		}
 		tree!!.select(note.id)
 		lifecycleScope.launch {
-			val noteContent = Cache.getNoteWithContent(note.id)!!
+			val noteContent = Notes.getNoteWithContent(note.id)!!
 			if (noteContent.isProtected && !ProtectedSession.isActive()) {
 				showFragment(EncryptedNoteFragment(), true)
 			} else {
@@ -1340,7 +1347,7 @@ class MainActivity : AppCompatActivity() {
 			// expanded = the children of this note are visible
 			if (!n.expanded) {
 				runBlocking {
-					Cache.toggleBranch(n)
+					Branches.toggleBranch(n)
 				}
 				expandedAny = true
 			}
@@ -1387,7 +1394,7 @@ class MainActivity : AppCompatActivity() {
 		val frag = getFragment()
 		if (frag is NoteRelatedFragment) {
 			val id = frag.getNoteId() ?: return null
-			return runBlocking { Cache.getNoteWithContent(id) }
+			return runBlocking { Notes.getNoteWithContent(id) }
 		}
 		return null
 	}

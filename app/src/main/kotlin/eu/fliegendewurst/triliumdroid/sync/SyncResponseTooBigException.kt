@@ -1,4 +1,4 @@
-package eu.fliegendewurst.triliumdroid
+package eu.fliegendewurst.triliumdroid.sync
 
 object SyncResponseTooBigException : Exception() {
 	private fun readResolve(): Any = SyncResponseTooBigException

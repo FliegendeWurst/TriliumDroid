@@ -8,11 +8,12 @@ import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
-import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
+import eu.fliegendewurst.triliumdroid.database.Attributes
+import eu.fliegendewurst.triliumdroid.database.Notes
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -38,7 +39,7 @@ object ModifyRelationsDialog {
 					activity,
 					R.string.dialog_select_note
 				) { targetNote ->
-					val note = runBlocking { Cache.getNote(targetNote.note)!! }
+					val note = runBlocking { Notes.getNote(targetNote.note)!! }
 					changes.add(Triple(it.trim(), null, note))
 					ownedAttributes.add(
 						Relation(
@@ -120,7 +121,7 @@ object ModifyRelationsDialog {
 							Triple(
 								attribute.name,
 								attribute.id,
-								runBlocking { Cache.getNote(targetNote.note)!! }
+								runBlocking { Notes.getNote(targetNote.note)!! }
 							)
 						)
 						(ownedAttributesList.adapter as BaseAdapter).notifyDataSetChanged()
@@ -158,7 +159,7 @@ object ModifyRelationsDialog {
 				val attrId = change.second
 				val attrValue = change.third
 				if (attrValue == null) {
-					Cache.deleteRelation(currentNote, attrName, attrId!!)
+					Attributes.deleteRelation(currentNote, attrName, attrId!!)
 					continue
 				}
 				if (previousLabels[attrId] == attrValue) {
@@ -168,7 +169,7 @@ object ModifyRelationsDialog {
 					currentNote.getRelations().filter { x -> x.name == attrName }
 						.map { x -> x.inheritable }.firstOrNull()
 						?: false
-				Cache.updateRelation(currentNote, attrId, attrName, attrValue, inheritable)
+				Attributes.updateRelation(currentNote, attrId, attrName, attrValue, inheritable)
 			}
 			dialog.dismiss()
 			activity.refreshWidgets(currentNote)

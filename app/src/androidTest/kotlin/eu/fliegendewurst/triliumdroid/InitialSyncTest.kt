@@ -1,6 +1,7 @@
 package eu.fliegendewurst.triliumdroid
 
 import android.graphics.Bitmap
+import android.view.Gravity
 import androidx.test.core.graphics.writeToTestStorage
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
@@ -10,15 +11,17 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.longClick
 import androidx.test.espresso.action.ViewActions.swipeDown
 import androidx.test.espresso.action.ViewActions.typeText
+import androidx.test.espresso.contrib.DrawerActions
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
+import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.rules.activityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
-import kotlinx.coroutines.runBlocking
+import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import org.hamcrest.Matchers.allOf
 import org.junit.FixMethodOrder
 import org.junit.Rule
@@ -31,6 +34,9 @@ import java.io.IOException
 @RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class InitialSyncTest {
+	companion object {
+		private const val SYNC_WAIT_MS: Long = 5000
+	}
 
 	@get:Rule
 	var nameRule = TestName()
@@ -52,16 +58,14 @@ class InitialSyncTest {
 		Thread.sleep(2000)
 		onView(withText(android.R.string.ok))
 			.perform(click())
-		Thread.sleep(70000) // wait for Sync to finish
+		Thread.sleep(SYNC_WAIT_MS * 7 / 5) // wait for Sync to finish
 
 		// create lots of date notes in 2021-12
-		runBlocking {
-			for (day in 1..31) {
-				ConnectionUtil.fetch(
-					"/api/special-notes/days/2021-12-${
-						day.toString().padStart(2, '0')
-					}", null, false, {}, {})
-			}
+		for (day in 1..31) {
+			ConnectionUtil.fetch(
+				"/api/special-notes/days/2021-12-${
+					day.toString().padStart(2, '0')
+				}", null, false, {}, {})
 		}
 		// (these will only be synced after the DB nuke in 020)
 
@@ -121,7 +125,7 @@ class InitialSyncTest {
 			.perform(click())
 		Espresso.pressBack()
 		// wait to sync
-		Thread.sleep(50000)
+		Thread.sleep(SYNC_WAIT_MS)
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
 	}
@@ -149,7 +153,8 @@ class InitialSyncTest {
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
 		onView(withId(R.id.navigation_list))
 			.perform(swipeDown())
-		for (i in 0..1) {
+		Thread.sleep(500)
+		for (i in 0..0) {
 			onView(
 				allOf(
 					withText("24 - Sunday - Christmas Eve!"),
@@ -160,5 +165,43 @@ class InitialSyncTest {
 		}
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
+	}
+
+	@Test
+	fun test_035_noteLabels() {
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.END))
+		onView(withId(R.id.button_labels_modify))
+			.perform(click())
+		saveScreenshot()
+		onView(withId(R.id.button_add_label))
+			.perform(click())
+		saveScreenshot()
+		onView(withId(R.id.note_title))
+			.perform(typeText("santaClaus"))
+		Espresso.closeSoftKeyboard()
+		onView(withText(android.R.string.ok))
+			.perform(click())
+		onView(
+			allOf(
+				withText(""),
+				withId(R.id.edit_label_content)
+			)
+		)
+			.perform(typeText("comingToday"))
+		onView(withText(android.R.string.ok))
+			.perform(click())
+	}
+
+	private val screenshotCounts = mutableMapOf<String, Int>()
+
+	private fun saveScreenshot() {
+		val id = "${javaClass.simpleName}_${nameRule.methodName}"
+		if (screenshotCounts[id] == null) {
+			screenshotCounts[id] = 1
+		}
+		onView(isRoot())
+			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${id}_${screenshotCounts[id]}") })
+		screenshotCounts[id] = screenshotCounts[id]!! + 1
 	}
 }

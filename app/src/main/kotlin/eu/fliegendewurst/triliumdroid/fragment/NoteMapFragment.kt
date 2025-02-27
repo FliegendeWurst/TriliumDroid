@@ -6,10 +6,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
+import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteMapBinding
 import eu.fliegendewurst.triliumdroid.util.Graph
 import eu.fliegendewurst.triliumdroid.util.Position
@@ -31,7 +32,7 @@ class NoteMapFragment : Fragment(R.layout.fragment_note_map), NoteRelatedFragmen
 			if (noteId == "GLOBAL") {
 				binding.viewNoteMap.g = createGraphGlobal()
 			} else {
-				binding.viewNoteMap.g = runBlocking { createGraph(Cache.getNote(noteId!!)!!) }
+				binding.viewNoteMap.g = runBlocking { createGraph(Notes.getNote(noteId!!)!!) }
 			}
 		}
 		return binding.root

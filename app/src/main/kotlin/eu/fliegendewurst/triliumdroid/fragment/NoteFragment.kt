@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
-
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,11 +19,13 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.iterator
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.FrontendBackendApi
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.database.Attributes
+import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteBinding
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -83,9 +84,9 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 						id = id.split('#').last()
 					}
 					Log.i(TAG, "navigating to note $id")
-					val main = activity as MainActivity
+					val main = activity as MainActivity? ?: return
 					main.lifecycleScope.launch {
-						main.navigateTo(Cache.getNote(id) ?: return@launch)
+						main.navigateTo(Notes.getNote(id) ?: return@launch)
 					}
 				}
 			}
@@ -133,7 +134,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 					if (id == "favicon.ico") {
 						return null // TODO: catch all invalid IDs
 					}
-					val note = runBlocking { Cache.getNoteWithContent(id) }
+					val note = runBlocking { Notes.getNoteWithContent(id) }
 					var content = note?.content()
 					var mime = note?.mime
 					if (note == null) {
@@ -199,7 +200,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		binding.textId.text = note.id
 		if (note.content() == null) {
 			Cache.initializeDatabase(requireContext())
-			note = Cache.getNoteWithContent(note.id)
+			note = Notes.getNoteWithContent(note.id)
 		}
 		if (note == null) {
 			(this@NoteFragment.activity as MainActivity).handleEmptyNote()
@@ -230,7 +231,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 				// code notes automatically load all the scripts in child nodes
 				// -> modify content returned by webview interceptor
 				subCodeNotes =
-					note.children.orEmpty().map { Cache.getNote(it.note)!! }
+					note.children.orEmpty().map { Notes.getNote(it.note)!! }
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
 			} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
@@ -295,7 +296,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 				val newValue = textInput.text
 				if (newValue != attribute.value) {
 					runBlocking {
-						Cache.updateLabel(
+						Attributes.updateLabel(
 							note,
 							attribute.name,
 							newValue.toString(),

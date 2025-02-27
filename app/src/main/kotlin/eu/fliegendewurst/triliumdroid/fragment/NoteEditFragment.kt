@@ -10,9 +10,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
+import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteEditBinding
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
 import kotlinx.coroutines.launch
@@ -59,7 +60,7 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 		super.onResume()
 
 		if (id != null) {
-			val note = runBlocking { Cache.getNoteWithContent(id!!) } ?: return
+			val note = runBlocking { Notes.getNoteWithContent(id!!) } ?: return
 			val content = note.content()?.decodeToString() ?: return
 			Aztec.with(binding.visual, binding.source, binding.formattingToolbar, this)
 				.addPlugin(object : IToolbarButton {
@@ -91,7 +92,7 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 							R.string.dialog_select_note
 						) {
 							if (prev.isBlank()) {
-								val noteLinked = runBlocking { Cache.getNote(it.note)!! }
+								val noteLinked = runBlocking { Notes.getNote(it.note)!! }
 								prev = noteLinked.title()
 							}
 							// TODO: make this the full path #root/note1/note2/it.note
@@ -135,7 +136,7 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 		val content = binding.visual.toFormattedHtml()
 		if (id != null) {
 			viewLifecycleOwner.lifecycleScope.launch {
-				Cache.setNoteContent(id!!, content)
+				Notes.setNoteContent(id!!, content)
 			}
 		}
 	}

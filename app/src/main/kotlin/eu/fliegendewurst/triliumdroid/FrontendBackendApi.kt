@@ -19,9 +19,12 @@ import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Attribute
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Util
+import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
@@ -268,7 +271,7 @@ class FrontendBackendApi(
 	 * Get a note by its ID.
 	 */
 	fun getNote(noteId: String): Note? {
-		return runBlocking { Cache.getNoteWithContent(noteId) }
+		return runBlocking { Notes.getNoteWithContent(noteId) }
 	}
 
 	/**
@@ -284,7 +287,7 @@ class FrontendBackendApi(
 	fun getNotes(noteIds: List<String>, silentNotFoundError: Boolean = false): List<FrontendNote> {
 		// TODO: honor silentNotFoundError
 		return noteIds.map {
-			FrontendNote(runBlocking { Cache.getNoteWithContent(it) } ?: return@map null)
+			FrontendNote(runBlocking { Notes.getNoteWithContent(it) } ?: return@map null)
 		}
 			.filterNotNull().toList()
 	}

@@ -1,7 +1,9 @@
 package eu.fliegendewurst.triliumdroid.data
 
 import android.util.Log
-import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.database.Branches
+import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -95,7 +97,7 @@ class Note(
 		if (id == "none" || inheritableCached) {
 			return@withContext
 		}
-		val paths = Cache.getNotePaths(id) ?: return@withContext
+		val paths = Branches.getNotePaths(id) ?: return@withContext
 		val allLabels = mutableListOf<Label>()
 		val allRelations = mutableListOf<Relation>()
 		for (path in paths) {
@@ -104,7 +106,7 @@ class Note(
 			if (parent == "none" || id == "root" || id == "_hidden") {
 				continue
 			}
-			val parentNote = Cache.getNoteWithContent(parent) ?: continue
+			val parentNote = Notes.getNoteWithContent(parent) ?: continue
 			parentNote.cacheInheritableAttributes()
 			for (label in parentNote.labels.orEmpty() + parentNote.inheritedLabels.orEmpty()) {
 				if (label.inheritable) {
@@ -140,7 +142,7 @@ class Note(
 		// handle templates
 		var template = getRelation("template")
 		if (template != null) {
-			template = Cache.getNoteWithContent(template.id)!!
+			template = Notes.getNoteWithContent(template.id)!!
 			// add attributes
 			template.cacheInheritableAttributes()
 			for (label in template.labels.orEmpty()) {
@@ -225,6 +227,8 @@ class Note(
 		this.content = null
 		this.contentDecrypted = null
 	}
+
+	fun invalid(): Boolean = title == "INVALID" || mime == "INVALID"
 
 	@OptIn(ExperimentalEncodingApi::class)
 	fun updateTitle(newTitle: String) {
@@ -316,12 +320,12 @@ class Note(
 			val content = content() ?: return
 			val title = title()
 			isProtected = false
-			Cache.renameNote(this, title)
-			Cache.setNoteContent(id, content.decodeToString())
+			Notes.renameNote(this, title)
+			Notes.setNoteContent(id, content.decodeToString())
 		} else if (!isProtected && protected) {
 			isProtected = true
-			Cache.renameNote(this, title)
-			Cache.setNoteContent(id, this.content!!.decodeToString())
+			Notes.renameNote(this, title)
+			Notes.setNoteContent(id, this.content!!.decodeToString())
 		}
 	}
 

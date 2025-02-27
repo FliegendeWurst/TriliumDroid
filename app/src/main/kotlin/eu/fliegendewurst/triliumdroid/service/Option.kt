@@ -1,6 +1,6 @@
 package eu.fliegendewurst.triliumdroid.service
 
-import eu.fliegendewurst.triliumdroid.Cache
+import eu.fliegendewurst.triliumdroid.database.Cache
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 

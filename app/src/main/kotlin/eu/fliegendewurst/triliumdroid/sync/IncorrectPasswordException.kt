@@ -1,3 +1,3 @@
-package eu.fliegendewurst.triliumdroid
+package eu.fliegendewurst.triliumdroid.sync
 
 class IncorrectPasswordException(msg: String) : Exception(msg)

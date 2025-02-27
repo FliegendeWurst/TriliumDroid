@@ -6,13 +6,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import eu.fliegendewurst.triliumdroid.IncorrectPasswordException
-import eu.fliegendewurst.triliumdroid.MismatchedDatabaseException
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.databinding.FragmentSyncErrorBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SYNC
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureSyncDialog
+import eu.fliegendewurst.triliumdroid.sync.IncorrectPasswordException
+import eu.fliegendewurst.triliumdroid.sync.MismatchedDatabaseException
 import java.net.ConnectException
 import java.net.UnknownHostException
 

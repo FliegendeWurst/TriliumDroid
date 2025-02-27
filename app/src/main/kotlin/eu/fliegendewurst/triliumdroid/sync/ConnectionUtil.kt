@@ -1,10 +1,11 @@
-package eu.fliegendewurst.triliumdroid
+package eu.fliegendewurst.triliumdroid.sync
 
 import android.content.Context
 import android.security.KeyChain
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.util.CookieJar
 import eu.fliegendewurst.triliumdroid.util.GetSSID
@@ -30,6 +31,7 @@ import java.net.Socket
 import java.security.KeyStore
 import java.security.Principal
 import java.security.PrivateKey
+import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.crypto.Mac
@@ -168,8 +170,13 @@ object ConnectionUtil {
 		val ks: KeyStore = KeyStore.getInstance("AndroidKeyStore").apply {
 			load(null)
 		}
-		val serverCert = ks.getCertificate("syncServer")
-		trustManagerFactory.init(ks)
+		var serverCert: Certificate? = null
+		try {
+			serverCert = ks.getCertificate("syncServer")
+			trustManagerFactory.init(ks)
+		} catch (e: Exception) {
+			Log.w(TAG, "KeyStore error: ", e)
+		}
 		val trustManagers = trustManagerFactory.trustManagers
 
 
@@ -182,7 +189,7 @@ object ConnectionUtil {
 				keyType: String?,
 				issuers: Array<Principal>
 			): Array<String> {
-				return if (mTLS != null) {
+				return if (mTLS != null && serverCert != null) {
 					arrayOf(mTLS)
 				} else {
 					arrayOf()

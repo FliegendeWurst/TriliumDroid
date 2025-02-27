@@ -11,11 +11,12 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.VERTICAL
-import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.database.Branches
+import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNavigationBinding
 import eu.fliegendewurst.triliumdroid.databinding.ItemNavigationButtonBinding
 import eu.fliegendewurst.triliumdroid.service.Icon
@@ -147,8 +148,8 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 				return@runBlocking
 			}
 
-			val entries2 = Cache.getNotePath(note.id).map {
-				val note2 = Cache.getNote(it.note)!!
+			val entries2 = Branches.getNotePath(note.id).map {
+				val note2 = Notes.getNote(it.note)!!
 				Entry(note2.icon(), note2.title(), note2, it, 0)
 			}
 			entries2.first().flags = FLAG_LAST
@@ -157,7 +158,7 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 			binding.navigationListBottom.smoothScrollBy(5000, 0)
 
 			val entries = notes.map {
-				val noteHere = Cache.getNote(it.note)!!
+				val noteHere = Notes.getNote(it.note)!!
 				Entry(noteHere.icon(), noteHere.title(), noteHere, it, 0)
 			}.asReversed()
 			adapter.submitList(entries)

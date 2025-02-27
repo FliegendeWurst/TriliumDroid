@@ -6,18 +6,19 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.TreeItemAdapter
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Branch
+import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.Notes
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 object JumpToNoteDialog {
 	fun showDialog(activity: MainActivity) {
 		showDialogReturningNote(activity, R.string.jump_to_dialog) {
-			activity.navigateTo(runBlocking { Cache.getNote(it.note)!! })
+			activity.navigateTo(runBlocking { Notes.getNote(it.note)!! })
 		}
 	}
 

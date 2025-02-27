@@ -14,11 +14,11 @@ import android.widget.ListView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
-import eu.fliegendewurst.triliumdroid.Cache
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.database.Attributes
 import kotlinx.coroutines.launch
 
 
@@ -169,7 +169,7 @@ object ModifyLabelsDialog {
 			val attrName = change.key
 			val attrValue = change.value
 			if (attrValue == null) {
-				Cache.deleteLabel(currentNote, attrName)
+				Attributes.deleteLabel(currentNote, attrName)
 				continue
 			}
 			if (previousLabels[attrName] == attrValue) {
@@ -179,7 +179,7 @@ object ModifyLabelsDialog {
 				labels.filter { x -> x.name == attrName }.map { x -> x.inheritable }
 					.firstOrNull()
 					?: false
-			Cache.updateLabel(currentNote, attrName, attrValue, inheritable)
+			Attributes.updateLabel(currentNote, attrName, attrValue, inheritable)
 		}
 		dialog.dismiss()
 		activity.refreshWidgets(currentNote)
