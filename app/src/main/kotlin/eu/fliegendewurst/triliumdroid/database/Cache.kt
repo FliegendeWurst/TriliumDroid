@@ -56,14 +56,16 @@ object Cache {
 		table: String,
 		id: String,
 		toHash: Array<String>,
+		isErased: Boolean = false
 	) {
-		registerEntityChange(table, id, toHash.map { it.encodeToByteArray() })
+		registerEntityChange(table, id, toHash.map { it.encodeToByteArray() }, isErased)
 	}
 
 	suspend fun registerEntityChange(
 		table: String,
 		id: String,
 		toHash: List<ByteArray>,
+		isErased: Boolean = false
 	) = withContext(Dispatchers.IO) {
 		val utc = utcDateModified()
 		val md = MessageDigest.getInstance("SHA-1")
@@ -79,7 +81,7 @@ object Cache {
 				table,
 				id,
 				hash,
-				0,
+				isErased.boolToIntValue(),
 				Util.randomString(12),
 				"Android",
 				ConnectionUtil.instanceId,

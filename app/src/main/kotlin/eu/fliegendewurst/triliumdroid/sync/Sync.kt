@@ -79,8 +79,10 @@ object Sync {
 				entityChange.put("utcDateChanged", utc)
 				row.put("entityChange", entityChange)
 
-				val entity = fetchEntity(entityName, entityId)
-				row.put("entity", entity)
+				if (isErased == 0) {
+					val entity = fetchEntity(entityName, entityId)
+					row.put("entity", entity)
+				}
 
 				entities.put(row)
 			}
@@ -106,14 +108,9 @@ object Sync {
 	 */
 	private suspend fun fetchEntity(entityName: String, entityId: String): JSONObject =
 		withContext(Dispatchers.IO) {
-			var keyName = entityName.substring(0, entityName.length - 1)
-			if (keyName == "note_content") {
-				keyName = "note"
-			} else if (keyName == "branche") {
-				keyName = "branch"
-			}
+			val primaryKey = primaryKeyForTable(entityName)
 			val obj = JSONObject()
-			db!!.rawQuery("SELECT * FROM $entityName WHERE ${keyName}Id = ?", arrayOf(entityId))
+			db!!.rawQuery("SELECT * FROM $entityName WHERE $primaryKey = ?", arrayOf(entityId))
 				.use {
 					if (it.moveToNext()) {
 						for (i in (0 until it.columnCount)) {
@@ -224,7 +221,14 @@ object Sync {
 					val entityChange = change.optJSONObject("entityChange")!!
 					val entityName = entityChange.getString("entityName")
 					val changeId = entityChange.getString("changeId")
-					val entity = change.optJSONObject("entity") ?: continue
+					val entity = change.optJSONObject("entity")
+					if (entity == null) {
+						val primaryKey = primaryKeyForTable(entityName)
+						val entityId = entityChange.getString("entityId")
+						// deleted entity
+						db!!.delete(entityName, "$primaryKey = ?", arrayOf(entityId))
+						continue
+					}
 					db!!.rawQuery(
 						"SELECT 1 FROM entity_changes WHERE changeId = ?",
 						arrayOf(changeId)
@@ -318,5 +322,20 @@ object Sync {
 			Log.e(TAG, "sync error", e)
 			callbackError(e)
 		}
+	}
+
+	private fun primaryKeyForTable(table: String) = when (table) {
+		"attachments" -> "attachmentId"
+		"attributes" -> "attributeId"
+		"blobs" -> "blobId"
+		"branches" -> "branchId"
+		"entity_changes" -> "changeId"
+		"etapi_tokens" -> "" // TODO
+		"notes" -> "noteId"
+		"note_contents" -> "noteId" // is this still relevant?
+		"options" -> "name"
+		"recent_notes" -> "" // TODO
+		"revisions" -> "revisionId"
+		else -> ""
 	}
 }

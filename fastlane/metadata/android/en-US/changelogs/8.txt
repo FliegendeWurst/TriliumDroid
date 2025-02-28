@@ -1,0 +1,4 @@
+- Note revisions: viewing, deleting
+- Label editor improved to configure metadata (promoted, multi)
+- Turkish UI translation
+- Sync deleted objects correctly

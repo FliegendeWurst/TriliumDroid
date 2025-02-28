@@ -65,6 +65,7 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.NoteRevisions
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
@@ -1292,7 +1293,7 @@ class MainActivity : AppCompatActivity() {
 
 		// revisions
 		val revisionListView = findViewById<ListViewAutoExpand>(R.id.widget_note_revisions_list)
-		val revs = noteContent.revisions()
+		val revs = noteContent.revisions().toMutableList()
 		val revAdapter = ListAdapter(revs) { revision, convertView ->
 			var vi = convertView
 			if (vi == null) {
@@ -1317,7 +1318,12 @@ class MainActivity : AppCompatActivity() {
 
 			}
 			delete.setOnClickListener {
-
+				// TODO: ask for confirmation
+				lifecycleScope.launch {
+					NoteRevisions.delete(revision)
+					revs.remove(revision)
+					(revisionListView.adapter as ListAdapter<*>).notifyDataSetChanged()
+				}
 			}
 			return@ListAdapter vi!!
 		}

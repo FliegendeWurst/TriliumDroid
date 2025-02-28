@@ -30,12 +30,9 @@ object Blobs {
 			Log.w(TAG, "failed to insert new blobId = $blobId")
 			return@withContext new(content)
 		}
-		Cache.registerEntityChange(
-			"blobs",
-			blobId,
-			listOf(blobId.encodeToByteArray(), content ?: ByteArray(0))
-		)
-		return@withContext Blob(blobId, content ?: ByteArray(0), dateModified, utcDateModified)
+		val blob = Blob(blobId, content ?: ByteArray(0), dateModified, utcDateModified)
+		registerEntityChangeBlob(blob)
+		return@withContext blob
 	}
 
 	suspend fun load(blobId: String): Blob? = withContext(Dispatchers.IO) {
@@ -64,4 +61,35 @@ object Blobs {
 		Log.w(TAG, "cannot find blobId = $blobId")
 		return@withContext null
 	}
+
+	suspend fun delete(blobId: String) = withContext(Dispatchers.IO) {
+		// TODO: don't bother loading blob content again
+		val blob = load(blobId) ?: return@withContext
+		db!!.delete("blobs", "blobId = ?", arrayOf(blobId))
+		registerEntityChangeBlob(
+			Blob(
+				blob.blobId,
+				ByteArray(0),
+				blob.dateModified,
+				blob.utcDateModified
+			),
+			true
+		)
+		blobCache.remove(blobId)
+		// TODO: mark note as invalid, if belonging to note
+	}
+}
+
+private suspend fun registerEntityChangeBlob(b: Blob, deleted: Boolean = false) {
+	// hash ["blobId", "content"]
+	// source: https://github.com/TriliumNext/Notes/blob/develop/src/becca/entities/bblob.ts
+	Cache.registerEntityChange(
+		"blobs",
+		b.blobId,
+		listOf(
+			b.blobId.encodeToByteArray(),
+			b.content
+		),
+		deleted
+	)
 }

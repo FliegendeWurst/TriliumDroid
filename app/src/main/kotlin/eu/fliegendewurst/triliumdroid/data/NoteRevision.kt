@@ -9,7 +9,7 @@ class NoteRevision(
 	val mime: String,
 	val title: String,
 	val isProtected: Boolean,
-	private val blobId: String,
+	val blobId: String,
 	val utcDateLastEdited: String,
 	/**
 	 * When this revision was created.

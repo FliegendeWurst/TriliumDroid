@@ -76,4 +76,34 @@ object NoteRevisions {
 		}
 		return@withContext revs
 	}
+
+	suspend fun delete(noteRevision: NoteRevision) = withContext(Dispatchers.IO) {
+		Blobs.delete(noteRevision.blobId)
+		db!!.delete("revisions", "revisionId = ?", arrayOf(noteRevision.revisionId))
+		registerEntityChangeNoteRevision(noteRevision, true)
+		noteRevision.note.makeInvalid()
+	}
+}
+
+private suspend fun registerEntityChangeNoteRevision(r: NoteRevision, deleted: Boolean = false) {
+	// hash ["revisionId", "noteId", "title", "isProtected", "dateLastEdited", "dateCreated",
+	// "utcDateLastEdited", "utcDateCreated", "utcDateModified", "blobId"]
+	// source: https://github.com/TriliumNext/Notes/blob/develop/src/becca/entities/brevision.ts
+	Cache.registerEntityChange(
+		"revisions",
+		r.revisionId,
+		arrayOf(
+			r.revisionId,
+			r.note.id,
+			r.title,
+			r.isProtected.boolToIntString(),
+			r.dateLastEdited,
+			r.dateCreated,
+			r.utcDateLastEdited,
+			r.utcDateCreated,
+			r.utcDateModified,
+			r.blobId
+		),
+		deleted
+	)
 }
