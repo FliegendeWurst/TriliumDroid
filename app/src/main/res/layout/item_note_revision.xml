@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/revision_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2025-02-27 22:04:45"
+        android:textSize="@dimen/bigger_text_size"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="HardcodedText" />
+
+    <Button
+        android:id="@+id/revision_view"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:contentDescription="@string/description_view_revision"
+        android:drawableStart="@drawable/bx_book_open"
+        android:drawableTint="@color/foreground"
+        android:padding="12dp"
+        app:layout_constraintRight_toLeftOf="@id/revision_restore"
+        app:layout_constraintTop_toBottomOf="@id/revision_time" />
+
+    <Button
+        android:id="@+id/revision_restore"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:contentDescription="@string/description_revert_to_this_revision"
+        android:drawableStart="@drawable/bx_rewind_circle"
+        android:drawableTint="@color/foreground"
+        android:padding="12dp"
+        app:layout_constraintRight_toLeftOf="@id/revision_delete"
+        app:layout_constraintTop_toBottomOf="@id/revision_time" />
+
+    <Button
+        android:id="@+id/revision_delete"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:contentDescription="@string/description_delete_revision"
+        android:drawableStart="@drawable/bx_trash"
+        android:drawableTint="@color/foreground"
+        android:padding="12dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/revision_time" />
+</androidx.constraintlayout.widget.ConstraintLayout>

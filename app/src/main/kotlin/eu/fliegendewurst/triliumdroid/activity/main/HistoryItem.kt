@@ -1,9 +1,10 @@
 package eu.fliegendewurst.triliumdroid.activity.main
 
-import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
+import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.fragment.NavigationFragment
+import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 
 /**
@@ -125,4 +126,17 @@ class NavigationItem(private val note: Note, private var branchStart: Branch) : 
 		// not exactly applicable
 		branchStart = branch
 	}
+}
+
+class BlobItem(private val note: Note, val blob: Blob) : HistoryItem() {
+	override fun restore(activity: MainActivity): Boolean {
+		activity.load(note, null, blob)
+		return true
+	}
+
+	override fun noteId(): String = note.id
+
+	override fun branch(): Branch? = null
+
+	override fun setBranch(branch: Branch) {}
 }

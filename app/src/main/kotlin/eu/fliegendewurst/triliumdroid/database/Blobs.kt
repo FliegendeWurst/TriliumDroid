@@ -8,9 +8,12 @@ import eu.fliegendewurst.triliumdroid.database.Cache.db
 import eu.fliegendewurst.triliumdroid.service.Util
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.WeakHashMap
 
 object Blobs {
 	private const val TAG = "Blobs"
+
+	private val blobCache: MutableMap<String, Blob> = WeakHashMap()
 
 	suspend fun new(content: ByteArray?): Blob = withContext(Dispatchers.IO) {
 		val blobId = Util.newNoteId()
@@ -35,7 +38,11 @@ object Blobs {
 		return@withContext Blob(blobId, content ?: ByteArray(0), dateModified, utcDateModified)
 	}
 
-	fun load(blobId: String): Blob? {
+	suspend fun load(blobId: String): Blob? = withContext(Dispatchers.IO) {
+		val it = blobCache[blobId]
+		if (it != null) {
+			return@withContext it
+		}
 		db!!.query(
 			"blobs",
 			arrayOf(
@@ -46,13 +53,15 @@ object Blobs {
 			null, null, null
 		).use {
 			if (it.moveToNext()) {
-				val content = it.getBlob(1)
-				val dateModified = it.getString(2)
-				val utcDateModified = it.getString(3)
-				return Blob(blobId, content, dateModified, utcDateModified)
+				val content = it.getBlob(0)
+				val dateModified = it.getString(1)
+				val utcDateModified = it.getString(2)
+				val blob = Blob(blobId, content, dateModified, utcDateModified)
+				blobCache[blobId] = blob
+				return@withContext blob
 			}
 		}
 		Log.w(TAG, "cannot find blobId = $blobId")
-		return null
+		return@withContext null
 	}
 }

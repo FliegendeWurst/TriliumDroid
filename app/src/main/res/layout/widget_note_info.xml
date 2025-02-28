@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     style="@style/Widget"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
@@ -15,7 +16,7 @@
             style="@style/WidgetTableHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Note Info"
+            android:text="@string/label_metadata"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -41,7 +42,7 @@
             style="@style/WidgetTableRowLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Note ID"
+            android:text="@string/label_note_id"
             app:layout_constraintBaseline_toBaselineOf="@id/widget_note_info_id_content"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -49,7 +50,6 @@
             android:id="@+id/widget_note_info_id_content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="root"
             app:layout_constraintBaseline_toBaselineOf="@id/widget_note_info_id_label"
             app:layout_constraintStart_toEndOf="@id/barrierVertical"
             app:layout_constraintTop_toBottomOf="@id/widget_note_info_divider" />
@@ -59,7 +59,7 @@
             style="@style/WidgetTableRowLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Type"
+            android:text="@string/label_note_type"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_note_info_id_label" />
 
@@ -67,7 +67,6 @@
             android:id="@+id/widget_note_info_type_content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="text (text/html)"
             app:layout_constraintStart_toEndOf="@id/barrierVertical"
             app:layout_constraintTop_toBottomOf="@id/widget_note_info_id_content" />
 
@@ -76,7 +75,7 @@
             style="@style/WidgetTableRowLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Created"
+            android:text="@string/label_created"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_note_info_type_label" />
 
@@ -86,14 +85,15 @@
             android:layout_height="wrap_content"
             android:text="2023-08-29 15:35"
             app:layout_constraintStart_toEndOf="@id/barrierVertical"
-            app:layout_constraintTop_toBottomOf="@id/widget_note_info_type_content" />
+            app:layout_constraintTop_toBottomOf="@id/widget_note_info_type_content"
+            tools:ignore="HardcodedText" />
 
         <TextView
             android:id="@+id/widget_note_info_modified_label"
             style="@style/WidgetTableRowLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Modified"
+            android:text="@string/label_modified"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/widget_note_info_created_label" />
 
@@ -103,6 +103,7 @@
             android:layout_height="wrap_content"
             android:text="2023-08-29 17:00"
             app:layout_constraintStart_toEndOf="@id/barrierVertical"
-            app:layout_constraintTop_toBottomOf="@id/widget_note_info_created_content" />
+            app:layout_constraintTop_toBottomOf="@id/widget_note_info_created_content"
+            tools:ignore="HardcodedText" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </LinearLayout>

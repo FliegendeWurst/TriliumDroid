@@ -23,11 +23,20 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
+            android:id="@+id/label_note_revision_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/foreground"
+            android:typeface="monospace"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
             android:id="@+id/text_id"
             android:layout_width="wrap_content"
-            android:layout_height="20dp"
-            android:typeface="monospace"
+            android:layout_height="wrap_content"
             android:textColor="@color/foreground"
+            android:typeface="monospace"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 

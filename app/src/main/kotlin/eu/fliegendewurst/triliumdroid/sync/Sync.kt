@@ -250,6 +250,7 @@ object Sync {
 						}
 						val keys = entity.keys().asSequence().toList()
 
+						// TODO: lookup notes related to blob!
 						if (entityName == "notes") {
 							notes[entityName]?.makeInvalid()
 							notes.remove(entityName)

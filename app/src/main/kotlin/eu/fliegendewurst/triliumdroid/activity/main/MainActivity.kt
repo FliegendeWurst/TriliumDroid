@@ -58,6 +58,7 @@ import eu.fliegendewurst.triliumdroid.TreeItemAdapter
 import eu.fliegendewurst.triliumdroid.activity.AboutActivity
 import eu.fliegendewurst.triliumdroid.activity.SetupActivity
 import eu.fliegendewurst.triliumdroid.activity.WelcomeActivity
+import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
@@ -98,6 +99,7 @@ import eu.fliegendewurst.triliumdroid.sync.Sync
 import eu.fliegendewurst.triliumdroid.util.CrashReport
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import eu.fliegendewurst.triliumdroid.util.Preferences
+import eu.fliegendewurst.triliumdroid.view.ListViewAutoExpand
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -1288,6 +1290,40 @@ class MainActivity : AppCompatActivity() {
 			}
 		}
 
+		// revisions
+		val revisionListView = findViewById<ListViewAutoExpand>(R.id.widget_note_revisions_list)
+		val revs = noteContent.revisions()
+		val revAdapter = ListAdapter(revs) { revision, convertView ->
+			var vi = convertView
+			if (vi == null) {
+				vi = layoutInflater.inflate(
+					R.layout.item_note_revision,
+					notePaths,
+					false
+				)
+			}
+			val timestamp = vi!!.findViewById<TextView>(R.id.revision_time)
+			val view = vi!!.findViewById<Button>(R.id.revision_view)
+			val restore = vi!!.findViewById<Button>(R.id.revision_restore)
+			val delete = vi!!.findViewById<Button>(R.id.revision_delete)
+			timestamp.text = revision.dateCreated.substring(0 until 19)
+			view.setOnClickListener {
+				lifecycleScope.launch {
+					val content = revision.content()
+					noteHistory.addAndRestore(BlobItem(noteContent, content), this@MainActivity)
+				}
+			}
+			restore.setOnClickListener {
+
+			}
+			delete.setOnClickListener {
+
+			}
+			return@ListAdapter vi!!
+		}
+		revisionListView.adapter = revAdapter
+
+		// metadata
 		val noteId = findViewById<TextView>(R.id.widget_note_info_id_content)
 		noteId.text = noteContent.id
 		val noteType = findViewById<TextView>(R.id.widget_note_info_type_content)
@@ -1315,8 +1351,8 @@ class MainActivity : AppCompatActivity() {
 		noteHistory.addAndRestore(NoteItem(note, branch), this)
 	}
 
-	fun load(note: Note, branch: Branch?) {
-		Log.i(TAG, "loading note ${note.id} @ branch ${branch?.id}")
+	fun load(note: Note, branch: Branch?, content: Blob? = null) {
+		Log.i(TAG, "loading note ${note.id} @ branch ${branch?.id} @ revision $content")
 		Preferences.setLastNote(note.id)
 		// make sure note is visible
 		val path = Branches.getNotePath(note.id)
@@ -1330,7 +1366,7 @@ class MainActivity : AppCompatActivity() {
 			if (noteContent.isProtected && !ProtectedSession.isActive()) {
 				showFragment(EncryptedNoteFragment(), true)
 			} else {
-				getNoteFragment().load(noteContent)
+				getNoteFragment().load(noteContent, content)
 			}
 			binding.drawerLayout.closeDrawers()
 			refreshTitle(noteContent)

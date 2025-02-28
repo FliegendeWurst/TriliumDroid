@@ -121,6 +121,14 @@
     <string name="action_enter_protected_session">Enter protected session</string>
     <string name="button_configure_synchronization">Configure synchronization</string>
     <string name="label_set_ui_language">Set UI language</string>
+    <string name="label_revisions">Revisions</string>
+    <string name="label_metadata">Metadata</string>
+    <string name="label_note_id">Note ID</string>
+    <string name="label_created">Created</string>
+    <string name="label_modified">Modified</string>
+    <string name="description_delete_revision">delete revision</string>
+    <string name="description_revert_to_this_revision">revert to this revision</string>
+    <string name="description_view_revision">view revision</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

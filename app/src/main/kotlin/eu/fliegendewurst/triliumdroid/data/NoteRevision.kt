@@ -11,6 +11,10 @@ class NoteRevision(
 	val isProtected: Boolean,
 	private val blobId: String,
 	val utcDateLastEdited: String,
+	/**
+	 * When this revision was created.
+	 * Mostly useless as it does not state anything about the time the revision was modified.
+	 */
 	val utcDateCreated: String,
 	val utcDateModified: String,
 	val dateLastEdited: String,
@@ -18,7 +22,7 @@ class NoteRevision(
 ) {
 	private var content: Blob? = null
 
-	fun content(): Blob {
+	suspend fun content(): Blob {
 		if (content != null) {
 			return content!!
 		} else {

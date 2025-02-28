@@ -3,6 +3,7 @@ package eu.fliegendewurst.triliumdroid.data
 import android.util.Log
 import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.NoteRevisions
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +38,7 @@ class Note(
 	private var inheritedRelations: List<Relation>? = null
 	var children: SortedSet<Branch>? = null
 	var icon: String? = null
+	private var revisions: MutableList<NoteRevision>? = null
 
 	/**
 	 * Note clones for this note.
@@ -231,6 +233,7 @@ class Note(
 		inheritedLabels = emptyList()
 		relations = emptyList()
 		inheritedRelations = emptyList()
+		revisions = mutableListOf()
 	}
 
 	fun invalid(): Boolean = title == "INVALID" || mime == "INVALID"
@@ -332,6 +335,14 @@ class Note(
 			Notes.renameNote(this, title)
 			Notes.setNoteContent(id, this.content!!.decodeToString())
 		}
+	}
+
+	suspend fun revisions(): List<NoteRevision> {
+		if (revisions != null) {
+			return revisions!!
+		}
+		revisions = NoteRevisions.list(this).toMutableList()
+		return revisions!!
 	}
 
 	override fun compareTo(other: Note): Int {

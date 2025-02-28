@@ -5,14 +5,18 @@ import androidx.core.database.getStringOrNull
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteRevision
 import eu.fliegendewurst.triliumdroid.database.Cache.db
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object NoteRevisions {
 	private const val TAG = "NoteRevisions"
 
 	/**
+	 * Prefer to use [Note.revisions], which will cache the result.
+	 *
 	 * @return previous revisions of the provided note
 	 */
-	fun list(note: Note): List<NoteRevision> {
+	suspend fun list(note: Note): List<NoteRevision> = withContext(Dispatchers.IO) {
 		val revs = mutableListOf<NoteRevision>()
 		db!!.query(
 			"revisions",
@@ -70,6 +74,6 @@ object NoteRevisions {
 				)
 			}
 		}
-		return revs
+		return@withContext revs
 	}
 }

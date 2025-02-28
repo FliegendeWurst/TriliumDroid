@@ -22,6 +22,7 @@ import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.FrontendBackendApi
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
+import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.database.Attributes
 import eu.fliegendewurst.triliumdroid.database.Cache
@@ -41,6 +42,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 	private lateinit var binding: FragmentNoteBinding
 	private var handler: Handler? = null
 	private var note: Note? = null
+	private var blob: Blob? = null
 	private var load: Boolean = false
 	private var subCodeNotes: List<Note>? = null
 	var console: MutableList<ConsoleMessage> = mutableListOf()
@@ -135,7 +137,12 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 						return null // TODO: catch all invalid IDs
 					}
 					val note = runBlocking { Notes.getNoteWithContent(id) }
-					var content = note?.content()
+					// viewing revision: override response for main note
+					var content = if (blob != null && id == this@NoteFragment.note?.id) {
+						blob!!.content
+					} else {
+						note?.content()
+					}
 					var mime = note?.mime
 					if (note == null) {
 						// try attachment
@@ -169,7 +176,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 
 		if (load) {
 			viewLifecycleOwner.lifecycleScope.launch {
-				load(note)
+				load(note, blob)
 			}
 		}
 
@@ -179,9 +186,10 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 	fun loadLater(note: Note?) {
 		load = true
 		this.note = note
+		this.blob = null
 	}
 
-	suspend fun load(noteToLoad: Note?) {
+	suspend fun load(noteToLoad: Note?, blobToDisplay: Blob? = null) {
 		var note = noteToLoad
 		// if called before proper creation
 		if (this.activity == null) {
@@ -192,13 +200,14 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		subCodeNotes = emptyList()
 
 		this.note = note
+		this.blob = blobToDisplay
 		this.load = true
 		Log.i(TAG, "loading ${note?.id}")
 		if (note == null) {
 			return
 		}
 		binding.textId.text = note.id
-		if (note.content() == null) {
+		if (note.content() == null && blob == null) {
 			Cache.initializeDatabase(requireContext())
 			note = Notes.getNoteWithContent(note.id)
 		}
@@ -268,6 +277,13 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		if (!this.load || context == null) {
 			return
 		}
+		if (blob != null) {
+			// previous revision: hide labels
+			binding.labelNoteRevisionInfo.text = blob!!.dateModified
+			binding.noteHeaderAttributes.visibility = View.GONE
+			return
+		}
+		binding.labelNoteRevisionInfo.text = ""
 		val constraintLayout = binding.noteHeader
 		val flow = binding.noteHeaderAttributes
 		val attributeContentDesc = getString(R.string.attribute)
