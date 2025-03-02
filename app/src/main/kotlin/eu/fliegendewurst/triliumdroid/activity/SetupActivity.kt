@@ -14,6 +14,7 @@ import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureSyncDialog
+import eu.fliegendewurst.triliumdroid.dialog.YesNoDialog
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import kotlinx.coroutines.launch
 import java.io.File
@@ -169,17 +170,10 @@ class SetupActivity : AppCompatActivity() {
 		}
 
 		binding.buttonNukeDatabase.setOnClickListener {
-			AlertDialog.Builder(this)
-				.setTitle("Delete database")
-				.setMessage("Do you really want to delete all notes and related data?")
-				.setIconAttribute(android.R.attr.alertDialogIcon)
-				.setPositiveButton(
-					android.R.string.ok
-				) { _, _ ->
-					Cache.nukeDatabase(this)
-					binding.status.setText(R.string.status_unknown)
-				}
-				.setNegativeButton(android.R.string.cancel, null).show()
+			YesNoDialog.show(this, R.string.title_delete_database, R.string.text_nuke_database) {
+				Cache.nukeDatabase(this)
+				binding.status.setText(R.string.status_unknown)
+			}
 		}
 	}
 

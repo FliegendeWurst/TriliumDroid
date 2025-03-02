@@ -129,6 +129,10 @@
     <string name="description_delete_revision">delete revision</string>
     <string name="description_revert_to_this_revision">revert to this revision</string>
     <string name="description_view_revision">view revision</string>
+    <string name="title_delete_database">Delete database</string>
+    <string name="text_nuke_database">Do you really want to delete all notes and related data?</string>
+    <string name="title_delete_revision">Delete revision</string>
+    <string name="text_delete_revision">Do you really want to delete this revision?</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

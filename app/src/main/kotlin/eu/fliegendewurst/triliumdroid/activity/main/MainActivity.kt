@@ -83,6 +83,7 @@ import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
 import eu.fliegendewurst.triliumdroid.dialog.SelectNoteDialog
+import eu.fliegendewurst.triliumdroid.dialog.YesNoDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.fragment.EncryptedNoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.NavigationFragment
@@ -1322,11 +1323,16 @@ class MainActivity : AppCompatActivity() {
 				}
 			}
 			delete.setOnClickListener {
-				// TODO: ask for confirmation
-				lifecycleScope.launch {
-					NoteRevisions.delete(revision)
-					revs.remove(revision)
-					(revisionListView.adapter as ListAdapter<*>).notifyDataSetChanged()
+				YesNoDialog.show(
+					this,
+					R.string.title_delete_revision,
+					R.string.text_delete_revision
+				) {
+					lifecycleScope.launch {
+						NoteRevisions.delete(revision)
+						revs.remove(revision)
+						(revisionListView.adapter as ListAdapter<*>).notifyDataSetChanged()
+					}
 				}
 			}
 			return@ListAdapter vi!!
