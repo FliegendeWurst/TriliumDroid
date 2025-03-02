@@ -21,6 +21,8 @@ class Note(
 	var type: String,
 	val created: String,
 	var modified: String,
+	var utcCreated: String,
+	var utcModified: String,
 	var isProtected: Boolean,
 	blobId: String
 ) : Comparable<Note>, ProtectedSession.NotifyProtectedSessionEnd {
@@ -291,21 +293,38 @@ class Note(
 
 	/**
 	 * Set user-facing note content.
+	 *
+	 * @param newBlob whether to store the previous content as revision
 	 */
 	@OptIn(ExperimentalEncodingApi::class)
-	suspend fun updateContent(new: ByteArray) {
+	suspend fun updateContent(new: ByteArray, newBlob: Boolean = false) {
 		if (isProtected && !ProtectedSession.isActive()) {
 			Log.e(TAG, "tried to update protected note without session")
 			return
 		}
 		if (isProtected && ProtectedSession.isActive()) {
+			if (newBlob) {
+				NoteRevisions.create(this)
+				this.blob =
+					Blobs.new(Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!))
+				this.blobId = blob!!.blobId
+				Notes.refreshDatabaseRow(this)
+			} else {
+				this.blob = Blobs.update(
+					blobId,
+					Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!)
+				)
+			}
 			this.contentDecrypted = new
-			this.blob = Blobs.update(
-				blobId,
-				Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!)
-			)
 		} else {
-			this.blob = Blobs.update(blobId, new)
+			if (newBlob) {
+				NoteRevisions.create(this)
+				this.blob = Blobs.new(new)
+				this.blobId = blob!!.blobId
+				Notes.refreshDatabaseRow(this)
+			} else {
+				this.blob = Blobs.update(blobId, new)
+			}
 		}
 	}
 
@@ -341,6 +360,10 @@ class Note(
 		}
 		revisions = NoteRevisions.list(this).toMutableList()
 		return revisions!!
+	}
+
+	fun revisionsInvalidate() {
+		revisions = null
 	}
 
 	override fun compareTo(other: Note): Int {

@@ -156,6 +156,8 @@ object Cache {
 					it.getString(3),
 					"INVALID",
 					"INVALID",
+					"INVALID",
+					"INVALID",
 					false,
 					"INVALID"
 				)
@@ -183,6 +185,8 @@ object Cache {
 					"notes.dateCreated, " +
 					"notes.dateModified, " +
 					"notes.isProtected, " +
+					"notes.utcDateCreated, " +
+					"notes.utcDateModified, " +
 					"notes.blobId " +
 					"FROM branches INNER JOIN notes USING (noteId) WHERE notes.isDeleted = 0 AND branches.isDeleted = 0 $filter",
 			arrayOf()
@@ -205,7 +209,9 @@ object Cache {
 				val dateCreated = it.getString(9)
 				val dateModified = it.getString(10)
 				val isProtected = it.getInt(11) != 0
-				val blobId = it.getString(12)
+				val utcDateCreated = it.getString(12)
+				val utcDateModified = it.getString(13)
+				val blobId = it.getString(14)
 				val b = Branch(
 					branchId,
 					noteId,
@@ -223,6 +229,8 @@ object Cache {
 						type,
 						dateCreated,
 						dateModified,
+						utcDateCreated,
+						utcDateModified,
 						isProtected,
 						blobId
 					)
@@ -398,7 +406,7 @@ object Cache {
 					if (currentNote != null) {
 						list.add(currentNote)
 					}
-					currentNote = Note(id, "", title, "", "", "", false, "")
+					currentNote = Note(id, "", title, "", "", "", "", "", false, "")
 				}
 				if (attrValue != null && !attrValue.startsWith('_') && !attrName.startsWith(
 						"child:"

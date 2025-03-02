@@ -18,9 +18,9 @@ object Blobs {
 	private val blobCache: MutableMap<String, Blob> = WeakHashMap()
 
 	suspend fun new(content: ByteArray?): Blob = withContext(Dispatchers.IO) {
-		val blobId = Util.newNoteId()
-		val dateModified = Cache.dateModified()
-		val utcDateModified = Cache.utcDateModified()
+		val blobId = Util.randomString(20)
+		val dateModified = dateModified()
+		val utcDateModified = utcDateModified()
 
 		val cv = ContentValues()
 		cv.put("blobId", blobId)

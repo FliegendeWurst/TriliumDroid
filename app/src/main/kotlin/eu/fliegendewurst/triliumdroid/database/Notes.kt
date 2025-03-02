@@ -70,6 +70,8 @@ object Notes {
 					"text",
 					dateModified,
 					dateModified,
+					utcDateModified,
+					utcDateModified,
 					false,
 					blob.blobId
 				)
@@ -129,7 +131,9 @@ object Notes {
 					"notes.blobId, " + // 12
 					"attributes.attributeId, " + // 13
 					"blobs.dateModified, " + // 14
-					"blobs.utcDateModified " + // 15
+					"blobs.utcDateModified, " + // 15
+					"notes.utcDateCreated, " + // 16
+					"notes.utcDateModified " + // 17
 					"FROM notes LEFT JOIN blobs USING (blobId) " +
 					"LEFT JOIN attributes USING(noteId)" +
 					"WHERE notes.noteId = ? AND notes.isDeleted = 0 AND (attributes.isDeleted = 0 OR attributes.isDeleted IS NULL)",
@@ -140,6 +144,8 @@ object Notes {
 				val blobId = it.getString(12)
 				val blobDateModified = it.getString(14)
 				val blobUtcDateModified = it.getString(15)
+				val utcDateCreated = it.getString(16)
+				val utcDateModified = it.getString(17)
 				note = Note(
 					id,
 					it.getString(1),
@@ -147,6 +153,8 @@ object Notes {
 					it.getString(6),
 					it.getString(7),
 					it.getString(8),
+					utcDateCreated,
+					utcDateModified,
 					it.getInt(11) != 0,
 					blobId
 				)
@@ -183,6 +191,8 @@ object Notes {
 								notes[value] =
 									Note(
 										value,
+										"INVALID",
+										"INVALID",
 										"INVALID",
 										"INVALID",
 										"INVALID",
@@ -232,9 +242,28 @@ object Notes {
 		cv.put("dateModified", date)
 		cv.put("utcDateModified", utc)
 		cv.put("isProtected", notes[id]!!.isProtected.boolToIntValue())
+		cv.put("blobId", notes[id]!!.blobId)
 		db!!.update("notes", cv, "noteId = ?", arrayOf(id))
 		notes[id]!!.modified = date
+		notes[id]!!.utcModified = utc
 		registerEntityChangeNote(notes[id]!!)
+	}
+
+	/**
+	 * Update the note's date modified, and store all to the database.
+	 */
+	suspend fun refreshDatabaseRow(note: Note) = withContext(Dispatchers.IO) {
+		val date = dateModified()
+		val utc = utcDateModified()
+		val cv = ContentValues()
+		cv.put("dateModified", date)
+		cv.put("utcDateModified", utc)
+		cv.put("isProtected", note.isProtected.boolToIntValue())
+		cv.put("blobId", note.blobId)
+		db!!.update("notes", cv, "noteId = ?", arrayOf(note.id))
+		note.modified = date
+		note.utcModified = utc
+		registerEntityChangeNote(note)
 	}
 
 	suspend fun changeNoteProtection(id: String, protection: Boolean) {

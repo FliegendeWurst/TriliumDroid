@@ -1315,7 +1315,11 @@ class MainActivity : AppCompatActivity() {
 				}
 			}
 			restore.setOnClickListener {
-				// TODO
+				lifecycleScope.launch {
+					val contentToRestore = revision.content()
+					noteContent.updateContent(contentToRestore.content, true)
+					reloadNote()
+				}
 			}
 			delete.setOnClickListener {
 				// TODO: ask for confirmation
