@@ -4,7 +4,9 @@ import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase.CONFLICT_FAIL
 import android.util.Log
 import eu.fliegendewurst.triliumdroid.data.Blob
+import eu.fliegendewurst.triliumdroid.database.Cache.dateModified
 import eu.fliegendewurst.triliumdroid.database.Cache.db
+import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.service.Util
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -60,6 +62,34 @@ object Blobs {
 		}
 		Log.w(TAG, "cannot find blobId = $blobId")
 		return@withContext null
+	}
+
+	fun loadInternal(blob: Blob) {
+		blobCache[blob.blobId] = blob
+	}
+
+	suspend fun update(blobId: String, newContent: ByteArray): Blob = withContext(Dispatchers.IO) {
+		val cv = ContentValues()
+		cv.put("content", newContent)
+		val dateModified = dateModified()
+		cv.put("dateModified", dateModified)
+		val utcDateModified = utcDateModified()
+		cv.put("utcDateModified", utcDateModified)
+		db!!.update("blobs", cv, "blobId = ?", arrayOf(blobId))
+
+		val previousBlob = blobCache[blobId]
+		if (previousBlob == null) {
+			val newBlob = Blob(blobId, newContent, dateModified, utcDateModified)
+			blobCache[blobId] = newBlob
+			registerEntityChangeBlob(newBlob)
+			return@withContext newBlob
+		} else {
+			previousBlob.content = newContent
+			previousBlob.dateModified = dateModified
+			previousBlob.utcDateModified = utcDateModified
+			registerEntityChangeBlob(previousBlob)
+			return@withContext previousBlob
+		}
 	}
 
 	suspend fun delete(blobId: String) = withContext(Dispatchers.IO) {

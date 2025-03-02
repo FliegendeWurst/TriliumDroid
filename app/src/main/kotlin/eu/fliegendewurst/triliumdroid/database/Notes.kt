@@ -1,6 +1,9 @@
 package eu.fliegendewurst.triliumdroid.database
 
+import android.content.ContentValues
 import android.util.Log
+import androidx.core.database.getBlobOrNull
+import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
@@ -12,19 +15,12 @@ import eu.fliegendewurst.triliumdroid.database.Cache.getTreeData
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import eu.fliegendewurst.triliumdroid.service.Util
-import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
-@OptIn(ExperimentalEncodingApi::class)
 object Notes {
 	private const val TAG = "Notes"
-	private val FIXER: Regex =
-		"\\s*(<div>|<div class=\"[^\"]+\">)(.*)</div>\\s*".toRegex(RegexOption.DOT_MATCHES_ALL)
 
 	val notes: MutableMap<String, Note> = ConcurrentHashMap()
 
@@ -131,7 +127,9 @@ object Notes {
 					"attributes.isDeleted, " + // 10
 					"notes.isProtected, " + // 11
 					"notes.blobId, " + // 12
-					"attributes.attributeId " + // 13
+					"attributes.attributeId, " + // 13
+					"blobs.dateModified, " + // 14
+					"blobs.utcDateModified " + // 15
 					"FROM notes LEFT JOIN blobs USING (blobId) " +
 					"LEFT JOIN attributes USING(noteId)" +
 					"WHERE notes.noteId = ? AND notes.isDeleted = 0 AND (attributes.isDeleted = 0 OR attributes.isDeleted IS NULL)",
@@ -139,6 +137,9 @@ object Notes {
 			"notes"
 		).use {
 			if (it.moveToFirst()) {
+				val blobId = it.getString(12)
+				val blobDateModified = it.getString(14)
+				val blobUtcDateModified = it.getString(15)
 				note = Note(
 					id,
 					it.getString(1),
@@ -147,24 +148,14 @@ object Notes {
 					it.getString(7),
 					it.getString(8),
 					it.getInt(11) != 0,
-					it.getString(12)
+					blobId
 				)
-				val noteContent = if (!it.isNull(0)) {
-					var content = it.getBlob(0).decodeToString()
-					// fixup useless nested divs
-					while (true) {
-						val contentFixed = FIXER.matchEntire(content)
-						if (contentFixed != null) {
-							content = contentFixed.groups[2]!!.value
-						} else {
-							break
-						}
-					}
-					content.toByteArray()
-				} else {
-					ByteArray(0)
+				val noteContent = it.getBlobOrNull(0)
+				if (noteContent != null) {
+					val blob = Blob(blobId, noteContent, blobDateModified, blobUtcDateModified)
+					Blobs.loadInternal(blob)
+					note!!.updateContentRaw(blob)
 				}
-				note!!.updateContentRaw(noteContent)
 			}
 			while (!it.isAfterLast) {
 				if (!it.isNull(3)) {
@@ -235,49 +226,13 @@ object Notes {
 		val data = content.encodeToByteArray()
 		notes[id]!!.updateContent(data)
 
-		var blobId = ""
-		db!!.rawQuery(
-			"SELECT blobId FROM blobs LEFT JOIN notes USING (blobId) WHERE noteId = ?",
-			arrayOf(id)
-		).use {
-			if (it.moveToNext()) {
-				blobId = it.getString(0)
-			}
-		}
-		if (blobId == "") {
-			Log.e(TAG, "failed to find blob for note")
-			return@withContext
-		}
-
 		val date = dateModified()
 		val utc = utcDateModified()
-		db!!.execSQL(
-			"UPDATE blobs SET content = ?, dateModified = ?, utcDateModified = ? " +
-					"WHERE blobId = ?", arrayOf(notes[id]!!.rawContent()!!, date, utc, blobId)
-		)
-		val md = MessageDigest.getInstance("SHA-1")
-		md.update(data, 0, data.size)
-		val sha1hash = md.digest()
-		val hash = Base64.encode(sha1hash)
-		db!!.execSQL(
-			"INSERT OR REPLACE INTO entity_changes (entityName, entityId, hash, isErased, changeId, componentId, instanceId, isSynced, utcDateChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-			arrayOf(
-				"blobs",
-				blobId,
-				hash,
-				0,
-				Util.randomString(12),
-				"NA",
-				ConnectionUtil.instanceId,
-				1,
-				utc
-			)
-		)
-		db!!.execSQL(
-			"UPDATE notes SET dateModified = ?, utcDateModified = ?, isProtected = ? " +
-					"WHERE noteId = ?",
-			arrayOf(date, utc, notes[id]!!.isProtected.boolToIntValue(), id)
-		)
+		val cv = ContentValues()
+		cv.put("dateModified", date)
+		cv.put("utcDateModified", utc)
+		cv.put("isProtected", notes[id]!!.isProtected.boolToIntValue())
+		db!!.update("notes", cv, "noteId = ?", arrayOf(id))
 		notes[id]!!.modified = date
 		registerEntityChangeNote(notes[id]!!)
 	}

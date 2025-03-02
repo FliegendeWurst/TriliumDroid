@@ -37,6 +37,8 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		private const val TAG: String = "NoteFragment"
 		private const val WEBVIEW_DOMAIN: String = "https://trilium-notes.invalid/"
 		private const val WEBVIEW_HOST: String = "trilium-notes.invalid"
+		private val FIXER: Regex =
+			"\\s*(<div>|<div class=\"[^\"]+\">)(.*)</div>\\s*".toRegex(RegexOption.DOT_MATCHES_ALL)
 	}
 
 	private lateinit var binding: FragmentNoteBinding
@@ -151,8 +153,19 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 						mime = attachment?.mime
 					}
 					return if (content != null) {
-						var data = content
-						if (note != null && note.id == this@NoteFragment.note?.id && subCodeNotes != null && !note.contentFixed) {
+						var data: ByteArray = content
+						if (mime == "text/html") {
+							// fixup useless nested divs
+							while (true) {
+								val contentFixed = FIXER.matchEntire(data.decodeToString())
+								if (contentFixed != null) {
+									data = contentFixed.groups[2]!!.value.encodeToByteArray()
+								} else {
+									break
+								}
+							}
+						}
+						if (note != null && note.id == this@NoteFragment.note?.id && subCodeNotes != null) {
 							// append <script> tags to load children
 							if (data.isEmpty()) {
 								data += "<!DOCTYPE html>".encodeToByteArray()
@@ -160,7 +173,6 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 							for (n in subCodeNotes!!) {
 								data += "<script src='/${n.id}'></script>".encodeToByteArray()
 							}
-							note.fixContent(data)
 						}
 						if (mime == "text/html") {
 							data += "<style>@media (prefers-color-scheme: dark) { * { color: white; background-color: black; } }</style>".encodeToByteArray()

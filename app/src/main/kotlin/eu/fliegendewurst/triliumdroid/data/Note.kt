@@ -1,6 +1,7 @@
 package eu.fliegendewurst.triliumdroid.data
 
 import android.util.Log
+import eu.fliegendewurst.triliumdroid.database.Blobs
 import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.NoteRevisions
@@ -21,15 +22,15 @@ class Note(
 	val created: String,
 	var modified: String,
 	var isProtected: Boolean,
-	var blobId: String
+	blobId: String
 ) : Comparable<Note>, ProtectedSession.NotifyProtectedSessionEnd {
 	companion object {
 		private const val TAG = "Note"
 	}
 
-	private var content: ByteArray? = null
-	var contentFixed: Boolean = false
+	var blobId: String = blobId
 		private set
+	private var blob: Blob? = null
 	private var contentDecrypted: ByteArray? = null
 	private var titleDecrypted: String? = null
 	private var labels: List<Label>? = null
@@ -226,7 +227,7 @@ class Note(
 	fun makeInvalid() {
 		this.titleDecrypted = null
 		updateTitle("INVALID")
-		this.content = null
+		this.blob = null
 		this.contentDecrypted = null
 		inheritableCached = false
 		labels = emptyList()
@@ -266,7 +267,7 @@ class Note(
 	fun rawTitle() = title
 
 	@OptIn(ExperimentalEncodingApi::class)
-	fun content() = if (content == null) {
+	fun content() = if (blob == null) {
 		null
 	} else if (isProtected && !ProtectedSession.isActive()) {
 		"[protected]".encodeToByteArray()
@@ -274,54 +275,50 @@ class Note(
 		if (contentDecrypted != null) {
 			contentDecrypted
 		} else {
-			contentDecrypted = ProtectedSession.decrypt(Base64.decode(content!!))
+			contentDecrypted = ProtectedSession.decrypt(Base64.decode(blob!!.content))
 			ProtectedSession.addListener(this)
 			contentDecrypted
 		}
 	} else {
-		content
+		blob!!.content
 	}
 
 	/**
 	 * Get note content encoded for database.
 	 * If [isProtected], encrypted and Base64-encoded.
 	 */
-	fun rawContent() = content
-
-	fun fixContent(fixed: ByteArray) {
-		if (isProtected) {
-			this.contentDecrypted = fixed
-		} else {
-			this.content = fixed
-		}
-		this.contentFixed = true
-	}
+	fun rawContent() = blob
 
 	/**
 	 * Set user-facing note content.
 	 */
 	@OptIn(ExperimentalEncodingApi::class)
-	fun updateContent(new: ByteArray) {
+	suspend fun updateContent(new: ByteArray) {
 		if (isProtected && !ProtectedSession.isActive()) {
 			Log.e(TAG, "tried to update protected note without session")
 			return
 		}
 		if (isProtected && ProtectedSession.isActive()) {
 			this.contentDecrypted = new
-			this.content =
-				Base64.encode(ProtectedSession.encrypt(contentDecrypted!!)!!).encodeToByteArray()
+			this.blob = Blobs.update(
+				blobId,
+				Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!)
+			)
 		} else {
-			this.content = new
+			this.blob = Blobs.update(blobId, new)
 		}
 	}
 
-	fun updateContentRaw(new: ByteArray) {
-		this.content = new
+	fun updateContentRaw(new: Blob) {
+		if (this.blobId != new.blobId) {
+			throw IllegalStateException("tried to load wrong blob into note")
+		}
+		this.blob = new
 		this.contentDecrypted = null
 	}
 
 	suspend fun changeProtection(protected: Boolean) {
-		if (!ProtectedSession.isActive() || this.content == null) {
+		if (!ProtectedSession.isActive() || this.blob == null) {
 			return
 		}
 		if (isProtected && !protected) {
@@ -332,8 +329,9 @@ class Note(
 			Notes.setNoteContent(id, content.decodeToString())
 		} else if (!isProtected && protected) {
 			isProtected = true
+			val content = this.blob!!.content
 			Notes.renameNote(this, title)
-			Notes.setNoteContent(id, this.content!!.decodeToString())
+			Notes.setNoteContent(id, content.decodeToString())
 		}
 	}
 

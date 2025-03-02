@@ -1315,7 +1315,7 @@ class MainActivity : AppCompatActivity() {
 				}
 			}
 			restore.setOnClickListener {
-
+				// TODO
 			}
 			delete.setOnClickListener {
 				// TODO: ask for confirmation
