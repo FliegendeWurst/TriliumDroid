@@ -12,9 +12,13 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
+import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.NoteRevisions
 import eu.fliegendewurst.triliumdroid.database.Notes
+import eu.fliegendewurst.triliumdroid.database.parseUtcDate
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteEditBinding
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
+import eu.fliegendewurst.triliumdroid.service.Option
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.wordpress.aztec.Aztec
@@ -135,6 +139,15 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 		val content = binding.visual.toFormattedHtml()
 		if (id != null) {
 			viewLifecycleOwner.lifecycleScope.launch {
+				// create new revision if needed
+				val revisionInterval = Option.revisionInterval()!!
+				val note = Notes.getNote(id!!)!!
+				val utcNow = Cache.utcDateModified()
+				val delta = utcNow.parseUtcDate().toEpochSecond() -
+						note.utcModified.parseUtcDate().toEpochSecond()
+				if (delta > revisionInterval) {
+					NoteRevisions.create(note)
+				}
 				Notes.setNoteContent(id!!, content)
 			}
 		}

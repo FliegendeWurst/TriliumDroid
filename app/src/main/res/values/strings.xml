@@ -133,6 +133,7 @@
     <string name="text_nuke_database">Do you really want to delete all notes and related data?</string>
     <string name="title_delete_revision">Delete revision</string>
     <string name="text_delete_revision">Do you really want to delete this revision?</string>
+    <string name="label_revision_interval">Revision interval (seconds between note snapshots)</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

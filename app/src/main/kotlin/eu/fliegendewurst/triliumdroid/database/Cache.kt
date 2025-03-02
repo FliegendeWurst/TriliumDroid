@@ -743,3 +743,6 @@ fun Boolean.boolToIntString(): String = if (this) {
 } else {
 	"0"
 }
+
+fun String.parseUtcDate(): OffsetDateTime =
+	OffsetDateTime.parse(this.replace(' ', 'T'))

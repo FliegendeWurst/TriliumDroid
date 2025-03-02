@@ -15,8 +15,10 @@ import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureSyncDialog
 import eu.fliegendewurst.triliumdroid.dialog.YesNoDialog
+import eu.fliegendewurst.triliumdroid.service.Option
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 
 
@@ -161,6 +163,10 @@ class SetupActivity : AppCompatActivity() {
 		}
 		 */
 
+		runBlocking {
+			binding.revisionInterval.setText(Option.revisionInterval().toString())
+		}
+
 		binding.buttonExportDatabase.setOnClickListener {
 			val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
 			intent.addCategory(Intent.CATEGORY_OPENABLE)
@@ -173,6 +179,17 @@ class SetupActivity : AppCompatActivity() {
 			YesNoDialog.show(this, R.string.title_delete_database, R.string.text_nuke_database) {
 				Cache.nukeDatabase(this)
 				binding.status.setText(R.string.status_unknown)
+			}
+		}
+	}
+
+	override fun onStop() {
+		super.onStop()
+
+		runBlocking {
+			val newInterval = binding.revisionInterval.text.toString().toIntOrNull()
+			if (newInterval != null && newInterval != Option.revisionInterval()) {
+				Option.revisionIntervalUpdate(newInterval)
 			}
 		}
 	}
