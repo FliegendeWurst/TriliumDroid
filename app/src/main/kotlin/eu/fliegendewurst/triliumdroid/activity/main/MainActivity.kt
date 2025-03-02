@@ -982,10 +982,11 @@ class MainActivity : AppCompatActivity() {
 			binding.fabTree.show()
 			binding.fab.show()
 		}
+		val item = binding.toolbar.menu.findItem(R.id.action_edit)
 		if (frag is NoteEditFragment) {
-			binding.toolbar.menu.findItem(R.id.action_edit).setIcon(R.drawable.bx_save)
+			item?.setIcon(R.drawable.bx_save)
 		} else {
-			binding.toolbar.menu.findItem(R.id.action_edit).setIcon(R.drawable.bx_edit_alt)
+			item?.setIcon(R.drawable.bx_edit_alt)
 		}
 		supportFragmentManager.beginTransaction()
 			.replace(R.id.fragment_container, frag)
