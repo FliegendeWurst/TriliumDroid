@@ -982,6 +982,11 @@ class MainActivity : AppCompatActivity() {
 			binding.fabTree.show()
 			binding.fab.show()
 		}
+		if (frag is NoteEditFragment) {
+			binding.toolbar.menu.findItem(R.id.action_edit).setIcon(R.drawable.bx_save)
+		} else {
+			binding.toolbar.menu.findItem(R.id.action_edit).setIcon(R.drawable.bx_edit_alt)
+		}
 		supportFragmentManager.beginTransaction()
 			.replace(R.id.fragment_container, frag)
 			.commit()
