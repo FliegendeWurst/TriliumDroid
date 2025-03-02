@@ -1049,7 +1049,10 @@ class MainActivity : AppCompatActivity() {
 		binding.toolbarIcon.text = Icon.getUnicodeCharacter(note?.icon() ?: "bx bx-file-blank")
 	}
 
-	fun reloadNote() {
+	fun reloadNote(skipEditors: Boolean = false) {
+		if (skipEditors && noteHistory.last() == NoteEditItem::class) {
+			return
+		}
 		noteHistory.restore(this)
 	}
 

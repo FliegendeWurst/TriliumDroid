@@ -1,6 +1,7 @@
 package eu.fliegendewurst.triliumdroid.activity.main
 
 import eu.fliegendewurst.triliumdroid.data.Branch
+import kotlin.reflect.KClass
 
 class HistoryList {
 	private var items: MutableList<HistoryItem> = mutableListOf(
@@ -46,6 +47,7 @@ class HistoryList {
 
 	fun isEmpty(): Boolean = items.isEmpty() || (items.size == 1 && items.first() is StartItem)
 
+	fun last(): KClass<out HistoryItem> = items.last()::class
 	fun noteId(): String = items.last().noteId()
 	fun branch(): Branch? = items.last().branch()
 	fun setBranch(x: Branch) = items.last().setBranch(x)

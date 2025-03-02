@@ -138,17 +138,25 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 		// save to database
 		val content = binding.visual.toFormattedHtml()
 		if (id != null) {
-			viewLifecycleOwner.lifecycleScope.launch {
+			val main = requireActivity() as MainActivity
+			main.lifecycleScope.launch {
 				// create new revision if needed
-				val revisionInterval = Option.revisionInterval()!!
-				val note = Notes.getNote(id!!)!!
-				val utcNow = Cache.utcDateModified()
-				val delta = utcNow.parseUtcDate().toEpochSecond() -
-						note.utcModified.parseUtcDate().toEpochSecond()
-				if (delta > revisionInterval) {
-					NoteRevisions.create(note)
+				try {
+					val revisionInterval = Option.revisionInterval()!!
+					val note = Notes.getNote(id!!)!!
+					val revisions = note.revisions()
+					val utcThen = revisions.lastOrNull()?.utcDateModified ?: note.utcCreated
+					val utcNow = Cache.utcDateModified()
+					val delta = utcNow.parseUtcDate().toEpochSecond() -
+							utcThen.parseUtcDate().toEpochSecond()
+					if (delta > revisionInterval) {
+						NoteRevisions.create(note)
+					}
+				} catch (e: Exception) {
+					Log.e(TAG, "failed to create revision ", e)
 				}
 				Notes.setNoteContent(id!!, content)
+				main.reloadNote(true)
 			}
 		}
 	}
