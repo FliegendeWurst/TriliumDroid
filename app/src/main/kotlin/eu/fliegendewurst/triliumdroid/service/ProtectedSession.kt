@@ -2,6 +2,7 @@ package eu.fliegendewurst.triliumdroid.service
 
 import android.util.Log
 import eu.fliegendewurst.triliumdroid.util.Preferences
+import kotlinx.coroutines.runBlocking
 import org.bouncycastle.crypto.BufferedBlockCipher
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.generators.SCrypt
@@ -34,13 +35,23 @@ object ProtectedSession {
 	 */
 	fun enter(): String? {
 		val password = Preferences.password()?.encodeToByteArray() ?: return "no password"
-		val salt = Option.passwordDerivedKeySalt()?.encodeToByteArray() ?: return "no salt"
-		val encryptedDataKey = Option.encryptedDataKey() ?: return "no encrypted data key"
+		var salt: ByteArray? = null
+		var encryptedDataKey: ByteArray? = null
+		val error = runBlocking {
+			salt =
+				Option.passwordDerivedKeySalt()?.encodeToByteArray() ?: return@runBlocking "no salt"
+			encryptedDataKey =
+				Option.encryptedDataKey() ?: return@runBlocking "no encrypted data key"
+			return@runBlocking null
+		}
+		if (error != null) {
+			return error
+		}
 
 		try {
 			val passwordDerivedKey = SCrypt.generate(password, salt, 16384, 8, 1, 32)
 
-			key = decryptInternal(passwordDerivedKey, encryptedDataKey)
+			key = decryptInternal(passwordDerivedKey, encryptedDataKey!!)
 		} catch (e: Exception) {
 			return "${e.javaClass.simpleName}: ${e.message}"
 		}
