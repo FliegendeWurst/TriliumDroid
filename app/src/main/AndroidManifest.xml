@@ -28,8 +28,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.TriliumDroid"
         android:usesCleartextTraffic="true">
+        <receiver
+            android:name=".widget.NoteWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/note_widget_info" />
+        </receiver>
+
         <activity
-            android:name="eu.fliegendewurst.triliumdroid.activity.main.MainActivity"
+            android:name=".activity.main.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -44,11 +56,11 @@
                 <data android:mimeType="text/html" />
             </intent-filter>
         </activity>
-        <activity android:name="eu.fliegendewurst.triliumdroid.activity.SetupActivity" />
-        <activity android:name="eu.fliegendewurst.triliumdroid.activity.AboutActivity" />
-        <activity android:name="eu.fliegendewurst.triliumdroid.activity.WelcomeActivity" />
+        <activity android:name=".activity.SetupActivity" />
+        <activity android:name=".activity.AboutActivity" />
+        <activity android:name=".activity.WelcomeActivity" />
 
-        <receiver android:name="eu.fliegendewurst.triliumdroid.AlarmReceiver" />
+        <receiver android:name=".AlarmReceiver" />
 
         <provider
             android:name=".TriliumFileProvider"
@@ -68,7 +80,6 @@
                 android:name="autoStoreLocales"
                 android:value="true" />
         </service>
-
     </application>
 
 </manifest>

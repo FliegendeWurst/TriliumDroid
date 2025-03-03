@@ -1,6 +1,8 @@
 package eu.fliegendewurst.triliumdroid.util
 
 import android.content.SharedPreferences
+import eu.fliegendewurst.triliumdroid.activity.main.HistoryItem
+import eu.fliegendewurst.triliumdroid.widget.parseWidgetAction
 
 object Preferences {
 	// TODO: make this variable private
@@ -32,6 +34,9 @@ object Preferences {
 		null
 	}
 
+	fun widgetAction(appWidgetId: Int): HistoryItem? =
+		parseWidgetAction(prefs.getString("widget_$appWidgetId", null))
+
 	fun isLeftAction(action: String) = prefs.getBoolean("fab_${action}_left", false)
 	fun isRightAction(action: String) = prefs.getBoolean("fab_${action}_right", false)
 
@@ -47,6 +52,8 @@ object Preferences {
 		prefs.edit().putString(DOCUMENT_SECRET, newValue).apply()
 
 	fun setDatabaseMigration(newValue: Int) = prefs.edit().putInt(DB_MIGRATION, newValue).apply()
+	fun setWidgetAction(appWidgetId: Int, action: String) =
+		prefs.edit().putString("widget_$appWidgetId", action).apply()
 
 	fun clearMTLS() = prefs.edit().remove(MTLS_CERT).apply()
 	fun clearSyncSSID() = prefs.edit().remove(SYNC_SSID).apply()

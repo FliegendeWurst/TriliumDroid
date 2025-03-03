@@ -9,7 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.database.Cache
@@ -19,7 +18,6 @@ import eu.fliegendewurst.triliumdroid.database.parseUtcDate
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteEditBinding
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
 import eu.fliegendewurst.triliumdroid.service.Option
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.wordpress.aztec.Aztec
 import org.wordpress.aztec.AztecAttributes
@@ -139,7 +137,7 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit),
 		val content = binding.visual.toFormattedHtml()
 		if (id != null) {
 			val main = requireActivity() as MainActivity
-			main.lifecycleScope.launch {
+			runBlocking {
 				// create new revision if needed
 				try {
 					val revisionInterval = Option.revisionInterval()!!

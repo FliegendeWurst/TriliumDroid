@@ -69,4 +69,14 @@
     <style name="WidgetTableRowLabel">
         <item name="android:paddingRight">@dimen/bigger_margin</item>
     </style>
+
+    <style name="Widget.TriliumDroid.AppWidget.Container" parent="android:Widget">
+        <item name="android:id">@android:id/background</item>
+        <item name="android:background">?android:attr/colorBackground</item>
+    </style>
+
+    <style name="Widget.TriliumDroid.AppWidget.InnerView" parent="android:Widget">
+        <item name="android:background">?android:attr/colorPrimary</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+    </style>
 </resources>

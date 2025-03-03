@@ -367,6 +367,7 @@ object Cache {
 	}
 
 	fun closeDatabase() {
+		Log.d(TAG, "closing database")
 		db?.close()
 		dbHelper?.close()
 	}

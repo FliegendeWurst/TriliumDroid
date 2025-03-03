@@ -1,0 +1,54 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.TriliumDroid.AppWidget.Container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:theme="@style/Theme.TriliumDroid.AppWidgetContainer">
+
+    <ImageView
+        android:id="@+id/widget_note_icon"
+        android:layout_width="@dimen/extra_big_text_icon_size"
+        android:layout_height="@dimen/extra_big_text_icon_size"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="@dimen/normal_margin"
+        android:clickable="true"
+        android:contentDescription="@string/description_app_icon"
+        android:focusable="true"
+        android:scaleType="center"
+        android:src="@drawable/icon_color" />
+
+    <TextView
+        android:id="@+id/widget_note_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_gravity="center_vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title"
+        android:textColor="@color/foreground" />
+
+    <TextView
+        android:id="@+id/note_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="@dimen/small_margin" />
+
+    <Button
+        android:id="@+id/appwidget_text"
+        style="@style/Widget.TriliumDroid.AppWidget.InnerView"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_margin="0dp"
+        android:drawableLeft="@drawable/bx_cog"
+        android:padding="12dp"
+        tools:ignore="RtlHardcoded" />
+</RelativeLayout>

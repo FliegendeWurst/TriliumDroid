@@ -134,6 +134,13 @@
     <string name="title_delete_revision">Delete revision</string>
     <string name="text_delete_revision">Do you really want to delete this revision?</string>
     <string name="label_revision_interval">Revision interval (seconds between note snapshots)</string>
+    <string name="title_configure_widget">Configure widget</string>
+    <string name="settings_action_label">Action to perform</string>
+    <string name="widget_action_note_selection">(none selected)</string>
+    <string name="widget_action_note_heading">Note to use</string>
+    <string name="widget_action_edit">Edit note</string>
+    <string name="widget_description">TriliumDroid widget</string>
+    <string name="open_note">Open note</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>
@@ -148,5 +155,10 @@
     <string-array name="note_types_array">
         <item>Text</item>
         <item>Code</item>
+    </string-array>
+    <!-- new entries need to be handled in ConfigureWidgetDialog -->
+    <string-array name="widget_actions_array">
+        <item>@string/widget_action_edit</item>
+        <item>@string/open_note</item>
     </string-array>
 </resources>

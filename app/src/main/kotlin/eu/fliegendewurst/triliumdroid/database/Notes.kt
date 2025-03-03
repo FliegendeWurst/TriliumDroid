@@ -100,7 +100,6 @@ object Notes {
 	}
 
 	suspend fun getNoteWithContent(id: String): Note? {
-		Log.d(TAG, "fetching note $id")
 		val note = notes[id]
 		if (note != null && !note.invalid() && note.content() != null) {
 			return note
@@ -110,6 +109,7 @@ object Notes {
 
 
 	private suspend fun getNoteInternal(id: String): Note? = withContext(Dispatchers.IO) {
+		Log.d(TAG, "fetching note $id")
 		var note: Note? = null
 		CursorFactory.selectionArgs = arrayOf(id)
 		val labels = mutableListOf<Label>()

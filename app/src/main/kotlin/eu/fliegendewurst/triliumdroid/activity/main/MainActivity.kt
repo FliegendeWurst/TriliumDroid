@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.appwidget.AppWidgetManager
 import android.content.ClipData
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -78,6 +79,7 @@ import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.NOTE_NAVIGATION
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SHARE_NOTE
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SHOW_NOTE_TREE
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SYNC
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureWidgetDialog
 import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
@@ -102,6 +104,7 @@ import eu.fliegendewurst.triliumdroid.util.CrashReport
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import eu.fliegendewurst.triliumdroid.view.ListViewAutoExpand
+import eu.fliegendewurst.triliumdroid.widget.NoteWidget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -132,9 +135,12 @@ class MainActivity : AppCompatActivity() {
 
 	// initial note to show
 	private var firstNote: String? = null
+	private var firstAction: HistoryItem? = null
 
 	// navigation history
 	private val noteHistory = HistoryList()
+
+	private var active = false
 
 	/**
 	 * Show the next sync error as [SyncErrorFragment] instead of just Toast.
@@ -242,6 +248,23 @@ class MainActivity : AppCompatActivity() {
 
 		Preferences.prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
 		ConfigureFabsDialog.init()
+
+		val appWidgetId = intent.extras?.getInt("appWidgetId")
+		if (appWidgetId != null) {
+			val action = Preferences.widgetAction(appWidgetId)
+			if (action == null) {
+				// user must configure this widget before use
+				ConfigureWidgetDialog.showDialog(this, appWidgetId) {
+					val intent = Intent(this, NoteWidget::class.java)
+					intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
+					val ids = intArrayOf(appWidgetId)
+					intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+					sendBroadcast(intent)
+				}
+			} else {
+				firstAction = action
+			}
+		}
 
 		if (intent?.action == Intent.ACTION_SEND) {
 			if (intent.type == "text/plain" || intent.type == "text/html") {
@@ -443,6 +466,22 @@ class MainActivity : AppCompatActivity() {
 
 	override fun onStart() {
 		super.onStart()
+		binding.fab.setImageResource(
+			ConfigureFabsDialog.getIcon(
+				ConfigureFabsDialog.getRightAction()
+			)
+		)
+		binding.fabTree.setImageResource(
+			ConfigureFabsDialog.getIcon(
+				ConfigureFabsDialog.getLeftAction()
+			)
+		)
+		if (firstAction != null) {
+			if (Cache.haveDatabase(this)) {
+				runBlocking { Cache.initializeDatabase(applicationContext) }
+			}
+			return
+		}
 		if (Cache.haveDatabase(this)) {
 			runBlocking { Cache.initializeDatabase(applicationContext) }
 			if (Preferences.hostname() == null) {
@@ -475,16 +514,6 @@ class MainActivity : AppCompatActivity() {
 			val intent = Intent(this, WelcomeActivity::class.java)
 			startActivity(intent)
 		}
-		binding.fab.setImageResource(
-			ConfigureFabsDialog.getIcon(
-				ConfigureFabsDialog.getRightAction()
-			)
-		)
-		binding.fabTree.setImageResource(
-			ConfigureFabsDialog.getIcon(
-				ConfigureFabsDialog.getLeftAction()
-			)
-		)
 	}
 
 	fun handleEmptyNote() {
@@ -553,11 +582,18 @@ class MainActivity : AppCompatActivity() {
 					.commit()
 			}
 		}
+		active = false
 		super.onPause()
 	}
 
 	override fun onResume() {
 		super.onResume()
+		active = true
+		if (firstAction != null) {
+			noteHistory.addAndRestore(firstAction!!, this)
+			firstAction = null
+			return
+		}
 		// if the user deleted the database, nuke the history too
 		if (!Preferences.hasSyncContext() || !Cache.haveDatabase(this)) {
 			noteHistory.reset()
@@ -737,6 +773,13 @@ class MainActivity : AppCompatActivity() {
 			val pref = ConfigureFabsDialog.getPref(action.key) ?: continue
 			menuItem.isVisible = pref.show
 		}
+		val frag = getFragment()
+		val item = menu.findItem(R.id.action_edit)
+		if (frag is NoteEditFragment) {
+			item?.setIcon(R.drawable.bx_save)
+		} else {
+			item?.setIcon(R.drawable.bx_edit_alt)
+		}
 		return true
 	}
 
@@ -783,6 +826,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	private fun doMenuAction(actionId: Int): Boolean {
+		Log.d(TAG, "menu action = $actionId")
 		return when (actionId) {
 			R.id.action_enter_protected_session -> {
 				val error = ProtectedSession.enter()
@@ -826,7 +870,9 @@ class MainActivity : AppCompatActivity() {
 					}
 
 					is NoteEditFragment -> {
-						noteHistory.goBack(this)
+						if (noteHistory.goBack(this)) {
+							finish()
+						}
 					}
 
 					else -> {
@@ -988,6 +1034,9 @@ class MainActivity : AppCompatActivity() {
 		} else {
 			item?.setIcon(R.drawable.bx_edit_alt)
 		}
+		if (supportFragmentManager.isStateSaved) {
+			return // early return if activity is being shut down
+		}
 		supportFragmentManager.beginTransaction()
 			.replace(R.id.fragment_container, frag)
 			.commit()
@@ -1045,12 +1094,15 @@ class MainActivity : AppCompatActivity() {
 		navigateTo(Notes.getNote(notePath.split("/").last())!!)
 	}
 
-	private fun refreshTitle(note: Note?) {
+	fun refreshTitle(note: Note?) {
 		binding.toolbarTitle.text = note?.title() ?: "(nothing loaded)"
 		binding.toolbarIcon.text = Icon.getUnicodeCharacter(note?.icon() ?: "bx bx-file-blank")
 	}
 
 	fun reloadNote(skipEditors: Boolean = false) {
+		if (!active) {
+			return
+		}
 		if (skipEditors && noteHistory.last() == NoteEditItem::class) {
 			return
 		}

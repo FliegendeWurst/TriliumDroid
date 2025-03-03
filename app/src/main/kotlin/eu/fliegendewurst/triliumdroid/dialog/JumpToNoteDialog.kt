@@ -3,6 +3,7 @@ package eu.fliegendewurst.triliumdroid.dialog
 import android.view.WindowManager
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
@@ -22,7 +23,11 @@ object JumpToNoteDialog {
 		}
 	}
 
-	fun showDialogReturningNote(activity: MainActivity, title: Int, callback: (Branch) -> Unit) {
+	fun showDialogReturningNote(
+		activity: AppCompatActivity,
+		title: Int,
+		callback: (Branch) -> Unit
+	) {
 		val dialog = AlertDialog.Builder(activity)
 			.setTitle(title)
 			.setView(R.layout.dialog_jump)

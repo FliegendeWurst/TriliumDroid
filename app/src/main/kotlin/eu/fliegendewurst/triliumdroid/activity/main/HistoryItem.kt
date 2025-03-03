@@ -62,6 +62,7 @@ class NoteEditItem(val note: Note) : HistoryItem() {
 		val frag = NoteEditFragment()
 		frag.loadLater(note.id)
 		activity.showFragment(frag, true)
+		activity.refreshTitle(note)
 		return true
 	}
 

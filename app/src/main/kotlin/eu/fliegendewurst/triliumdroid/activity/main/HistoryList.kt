@@ -26,6 +26,9 @@ class HistoryList {
 		items.last().restore(activity)
 	}
 
+	/**
+	 * Returns whether the app should close.
+	 */
 	fun goBack(activity: MainActivity): Boolean {
 		// remove currently active item
 		if (items.isNotEmpty()) {
