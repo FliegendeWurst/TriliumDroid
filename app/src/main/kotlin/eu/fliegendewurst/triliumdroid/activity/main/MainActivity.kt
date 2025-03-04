@@ -46,7 +46,6 @@ import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
-import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.snackbar.Snackbar
@@ -246,7 +245,7 @@ class MainActivity : AppCompatActivity() {
 		super.onCreate(savedInstanceState)
 		firstNote = intent.extras?.getString("note")
 
-		Preferences.prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+		Preferences.init(applicationContext)
 		ConfigureFabsDialog.init()
 
 		val appWidgetId = intent.extras?.getInt("appWidgetId")
@@ -592,6 +591,10 @@ class MainActivity : AppCompatActivity() {
 		if (firstAction != null) {
 			noteHistory.addAndRestore(firstAction!!, this)
 			firstAction = null
+			lifecycleScope.launch {
+				Cache.getTreeData("")
+				refreshTree()
+			}
 			return
 		}
 		// if the user deleted the database, nuke the history too

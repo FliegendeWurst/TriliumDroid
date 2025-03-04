@@ -1,12 +1,15 @@
 package eu.fliegendewurst.triliumdroid.util
 
+import android.content.Context
 import android.content.SharedPreferences
+import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.activity.main.HistoryItem
 import eu.fliegendewurst.triliumdroid.widget.parseWidgetAction
 
 object Preferences {
 	// TODO: make this variable private
 	lateinit var prefs: SharedPreferences
+		private set
 
 	private const val HOSTNAME = "hostname"
 	private const val PASSWORD = "password"
@@ -18,6 +21,10 @@ object Preferences {
 	private const val LAST_NOTE = "LastNote"
 	private const val SYNC_VERSION = "syncVersion"
 	private const val DB_MIGRATION = "dbMigration"
+
+	fun init(applicationContext: Context) {
+		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+	}
 
 	fun hostname(): String? = prefs.getString(HOSTNAME, null)
 	fun password(): String? = prefs.getString(PASSWORD, null)

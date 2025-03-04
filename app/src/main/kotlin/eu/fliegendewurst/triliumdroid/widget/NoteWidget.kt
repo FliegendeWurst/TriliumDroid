@@ -12,7 +12,6 @@ import android.util.Log
 import android.util.SizeF
 import android.view.View
 import android.widget.RemoteViews
-import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.HistoryItem
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
@@ -38,6 +37,7 @@ class NoteWidget : AppWidgetProvider() {
 		appWidgetManager: AppWidgetManager,
 		appWidgetIds: IntArray
 	) {
+		Preferences.init(context.applicationContext)
 		// There may be multiple widgets active, so update all of them
 		for (appWidgetId in appWidgetIds) {
 			updateAppWidget(context, appWidgetManager, appWidgetId, null)
@@ -50,12 +50,12 @@ class NoteWidget : AppWidgetProvider() {
 		appWidgetId: Int,
 		newOptions: Bundle?
 	) {
+		Preferences.init(context.applicationContext)
 		updateAppWidget(context, appWidgetManager, appWidgetId, newOptions)
 	}
 
 	override fun onEnabled(context: Context) {
-		Preferences.prefs =
-			PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
+		Preferences.init(context.applicationContext)
 		if (Cache.haveDatabase(context)) {
 			runBlocking {
 				Cache.initializeDatabase(context)
