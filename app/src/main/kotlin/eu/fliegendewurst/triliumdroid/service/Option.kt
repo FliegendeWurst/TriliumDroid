@@ -25,7 +25,7 @@ object Option {
 	suspend fun revisionIntervalUpdate(new: Int) = putInt("revisionSnapshotTimeInterval", new)
 
 	private suspend fun getString(name: String): String? = withContext(Dispatchers.IO) {
-		Cache.db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf(name))
+		db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf(name))
 			.use {
 				if (it.moveToFirst()) {
 					return@withContext it.getString(0)

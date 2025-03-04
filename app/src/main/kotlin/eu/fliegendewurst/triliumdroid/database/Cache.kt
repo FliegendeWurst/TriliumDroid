@@ -324,6 +324,7 @@ object Cache {
 			db = dbHelper!!.writableDatabase
 		} catch (t: Throwable) {
 			Log.e(TAG, "fatal ", t)
+			return@withContext
 		}
 		// perform migrations as needed
 		val migrationLevel = Preferences.databaseMigration()
@@ -481,7 +482,7 @@ object Cache {
 					"SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name != 'android_metadata' AND name != 'sqlite_sequence'",
 					arrayOf()
 				).use {
-					Log.i(TAG, "successfully created ${it.count} tables")
+					Log.i(TAG, "successfully created ${it.getInt(0)} tables")
 				}
 				// DB migrations are only for fixups
 				Preferences.setDatabaseMigration(1)

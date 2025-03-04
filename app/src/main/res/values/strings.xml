@@ -141,6 +141,13 @@
     <string name="widget_action_edit">Edit note</string>
     <string name="widget_description">TriliumDroid widget</string>
     <string name="open_note">Open note</string>
+    <string name="title_trust_sync_server_certificate">Trust sync server certificate?</string>
+    <string name="snackbar_sync_start">Sync: starting…</string>
+    <string name="snackbar_sync_progress">Sync: %1$d outstanding…</string>
+    <string name="snackbar_sync_error">Sync: error!</string>
+    <string name="snackbar_sync_done">Sync: %1$d pulled, %2$d pushed</string>
+    <string name="sidebar_tab_1">Notes</string>
+    <string name="sidebar_tab_2">Special</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

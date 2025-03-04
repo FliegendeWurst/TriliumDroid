@@ -330,7 +330,7 @@ class Note(
 
 	fun updateContentRaw(new: Blob) {
 		if (this.blobId != new.blobId) {
-			throw IllegalStateException("tried to load wrong blob into note")
+			error("tried to load wrong blob into note")
 		}
 		this.blob = new
 		this.contentDecrypted = null

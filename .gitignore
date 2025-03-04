@@ -17,3 +17,5 @@ local.properties
 /gradle/wrapper/gradle-wrapper.jar
 /app/release
 /signing_key.jks
+/gradle
+/gradlew*

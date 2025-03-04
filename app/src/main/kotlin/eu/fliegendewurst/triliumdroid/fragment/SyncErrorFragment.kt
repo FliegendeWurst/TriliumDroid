@@ -64,7 +64,7 @@ class SyncErrorFragment : Fragment(R.layout.fragment_sync_error) {
 				toString(error!!) + causes.joinToString("") { "\n ${toString(it)}" }
 //				binding!!.labelSyncErrorStacktrace.text = error!!.stackTraceToString()
 			causes.add(error!!)
-			val s = { it: Int -> resources.getString(it) }
+			val s = { id: Int -> resources.getString(id) }
 			var text = s(R.string.error_generic)
 			if (causes.any { it is ConnectException }) {
 				text += " ${s(R.string.error_connect)}"

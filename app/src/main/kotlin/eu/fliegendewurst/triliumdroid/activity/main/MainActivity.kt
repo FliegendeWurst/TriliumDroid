@@ -4,18 +4,13 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.appwidget.AppWidgetManager
-import android.content.ClipData
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Typeface
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.StrictMode
-import android.system.ErrnoException
-import android.system.OsConstants
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -35,13 +30,9 @@ import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.Spinner
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.FileProvider
-import androidx.core.text.parseAsHtml
 import androidx.core.view.GravityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -51,13 +42,10 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayoutMediator
 import eu.fliegendewurst.triliumdroid.AlarmReceiver
-import eu.fliegendewurst.triliumdroid.BuildConfig
 import eu.fliegendewurst.triliumdroid.FrontendBackendApi
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.TreeItemAdapter
-import eu.fliegendewurst.triliumdroid.activity.AboutActivity
-import eu.fliegendewurst.triliumdroid.activity.SetupActivity
-import eu.fliegendewurst.triliumdroid.activity.WelcomeActivity
+import eu.fliegendewurst.triliumdroid.controller.MainController
 import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
@@ -65,10 +53,8 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Cache
-import eu.fliegendewurst.triliumdroid.database.NoteRevisions
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
-import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.DELETE_NOTE
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.EDIT_NOTE
@@ -78,13 +64,8 @@ import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.NOTE_NAVIGATION
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SHARE_NOTE
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SHOW_NOTE_TREE
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SYNC
-import eu.fliegendewurst.triliumdroid.dialog.ConfigureWidgetDialog
-import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
-import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyLabelsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ModifyRelationsDialog
-import eu.fliegendewurst.triliumdroid.dialog.SelectNoteDialog
-import eu.fliegendewurst.triliumdroid.dialog.YesNoDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.fragment.EncryptedNoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.NavigationFragment
@@ -94,28 +75,14 @@ import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment
 import eu.fliegendewurst.triliumdroid.fragment.SyncErrorFragment
-import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
-import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
-import eu.fliegendewurst.triliumdroid.sync.Sync
 import eu.fliegendewurst.triliumdroid.util.CrashReport
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import eu.fliegendewurst.triliumdroid.view.ListViewAutoExpand
-import eu.fliegendewurst.triliumdroid.widget.NoteWidget
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.io.IOException
-import java.security.KeyStore
-import java.security.cert.CertPathValidatorException
-import java.security.cert.CertificateException
-import javax.net.ssl.SSLException
-import javax.net.ssl.SSLHandshakeException
-import kotlin.io.path.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.writeBytes
 
 
 class MainActivity : AppCompatActivity() {
@@ -134,22 +101,12 @@ class MainActivity : AppCompatActivity() {
 
 	// initial note to show
 	private var firstNote: String? = null
-	private var firstAction: HistoryItem? = null
-
-	// navigation history
-	private val noteHistory = HistoryList()
-
-	private var active = false
-
-	/**
-	 * Show the next sync error as [SyncErrorFragment] instead of just Toast.
-	 */
-	private var showSyncError = false
 
 	companion object {
 		private const val TAG = "MainActivity"
 		const val JUMP_TO_NOTE_ENTRY = "JUMP_TO_NOTE_ENTRY"
 		var tree: TreeItemAdapter? = null
+		private var controller: MainController = MainController()
 	}
 
 	private fun oneTimeSetup() {
@@ -181,54 +138,7 @@ class MainActivity : AppCompatActivity() {
 			)
 		}
 
-		val lastReported = Preferences.lastReport() ?: "2020"
-		val pendingReports = CrashReport.pendingReports(this).filter { x -> x.name > lastReported }
-		val toReport = pendingReports.maxByOrNull { x -> x.name }
-		if (toReport != null) {
-			AlertDialog.Builder(this)
-				.setTitle(getString(R.string.dialog_report_app_crash))
-				.setMessage(
-					getString(
-						R.string.label_report_crash,
-						toReport.name
-					)
-				)
-				.setPositiveButton(
-					android.R.string.ok
-				) { _, _ ->
-					Preferences.setLastReport(toReport.name)
-					// read report and create email
-					val intent = Intent(Intent.ACTION_SENDTO).apply {
-						data = Uri.parse("mailto:")
-						putExtra(
-							Intent.EXTRA_EMAIL,
-							arrayOf("arne.keller+triliumdroid-crash@posteo.de")
-						)
-						putExtra(
-							Intent.EXTRA_SUBJECT,
-							"TriliumDroid crash, version ${BuildConfig.VERSION_NAME}"
-						)
-						putExtra(Intent.EXTRA_TEXT, toReport.readText())
-					}
-					startActivity(Intent.createChooser(intent, "Choose email client:"))
-
-					try {
-						pendingReports.forEach { x -> x.deleteOnExit() }
-					} catch (e: IOException) {
-						Log.e(TAG, "failed to delete crash report ", e)
-					}
-				}
-				.setNegativeButton(android.R.string.cancel, null)
-				.setOnDismissListener {
-					try {
-						pendingReports.forEach { x -> x.delete() }
-					} catch (e: IOException) {
-						Log.e(TAG, "failed to delete crash report ", e)
-					}
-				}
-				.setIconAttribute(android.R.attr.alertDialogIcon)
-				.show()
-		}
+		CrashReport.showPendingReports(this)
 	}
 
 	fun checkNotificationPermission(): Boolean {
@@ -243,7 +153,7 @@ class MainActivity : AppCompatActivity() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		firstNote = intent.extras?.getString("note")
+		handler = Handler(applicationContext.mainLooper)
 
 		Preferences.init(applicationContext)
 		ConfigureFabsDialog.init()
@@ -252,38 +162,18 @@ class MainActivity : AppCompatActivity() {
 			runBlocking { Cache.initializeDatabase(applicationContext) }
 		}
 
+		firstNote = intent.extras?.getString("note")
+
 		val appWidgetId = intent.extras?.getInt("appWidgetId")
 		if (appWidgetId != null) {
-			val action = Preferences.widgetAction(appWidgetId)
-			if (action == null) {
-				// user must configure this widget before use
-				ConfigureWidgetDialog.showDialog(this, appWidgetId) {
-					val intent = Intent(this, NoteWidget::class.java)
-					intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
-					val ids = intArrayOf(appWidgetId)
-					intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-					sendBroadcast(intent)
-				}
-			} else {
-				firstAction = action
-			}
+			controller.widgetUsed(this, appWidgetId)
 		}
 
 		if (intent?.action == Intent.ACTION_SEND) {
 			if (intent.type == "text/plain" || intent.type == "text/html") {
 				val text = intent.getStringExtra(Intent.EXTRA_TEXT)
 				if (text != null) {
-					if (Cache.haveDatabase(this)) {
-						runBlocking {
-							Cache.initializeDatabase(applicationContext)
-							val inbox = DateNotes.getInboxNote()
-							val note = Notes.createChildNote(
-								inbox,
-								text.lineSequence().first()
-							)
-							Notes.setNoteContent(note.id, text)
-						}
-					}
+					runBlocking { controller.textShared(this@MainActivity, text) }
 				}
 			}
 			finish()
@@ -293,34 +183,18 @@ class MainActivity : AppCompatActivity() {
 
 		binding = ActivityMainBinding.inflate(layoutInflater)
 		setContentView(binding.root)
-		handler = Handler(applicationContext.mainLooper)
 
 		val toolbar = binding.toolbar
 		toolbar.title = ""
 		setSupportActionBar(toolbar)
 		binding.toolbarTitle.setOnClickListener {
-			val note = getNoteLoaded() ?: return@setOnClickListener
-			if (note.isProtected && !ProtectedSession.isActive()) {
-				return@setOnClickListener
-			}
-			AskForNameDialog.showDialog(this, R.string.dialog_rename_note, note.title()) {
-				lifecycleScope.launch {
-					Notes.renameNote(note, it)
-					refreshTree()
-					refreshTitle(note)
-				}
-			}
+			controller.titleClicked(this)
 		}
 
 		tree = TreeItemAdapter({
-			lifecycleScope.launch {
-				navigateTo(Notes.getNoteWithContent(it.note)!!, it)
-			}
+			controller.noteTreeClicked(this, it)
 		}, {
-			runBlocking {
-				Branches.toggleBranch(it)
-			}
-			refreshTree()
+			controller.noteTreeClickedLong(this, it)
 		})
 
 		binding.pager.adapter = object : FragmentStateAdapter(this) {
@@ -334,30 +208,10 @@ class MainActivity : AppCompatActivity() {
 					frag.initLater {
 						it.binding.treeList.adapter = tree
 						it.binding.buttonNewNote.setOnClickListener {
-							val note = getNoteLoaded()
-							if (note == null) {
-								Toast.makeText(
-									this@MainActivity, getString(R.string.toast_no_note),
-									Toast.LENGTH_LONG
-								).show()
-								return@setOnClickListener
-							}
-							CreateNewNoteDialog.showDialog(this@MainActivity, true, note)
+							controller.newNote(this@MainActivity)
 						}
 						it.binding.buttonNewNoteSibling.setOnClickListener {
-							val note = getNoteLoaded()
-							if (note == null) {
-								Toast.makeText(
-									this@MainActivity, getString(R.string.toast_no_note),
-									Toast.LENGTH_LONG
-								).show()
-								return@setOnClickListener
-							}
-							CreateNewNoteDialog.showDialog(
-								this@MainActivity,
-								false,
-								note
-							)
+							controller.newNoteSibling(this@MainActivity)
 						}
 						for (buttonId in Preferences.prefs.all.keys.filter { pref ->
 							pref.startsWith(
@@ -393,10 +247,7 @@ class MainActivity : AppCompatActivity() {
 								button.text = type
 								button.setOnClickListener {
 									if (type == "Note Map") {
-										noteHistory.addAndRestore(
-											NoteMapItem(null),
-											this@MainActivity
-										)
+										controller.globalNoteMap(this@MainActivity)
 									}
 								}
 								return@ListAdapter vi
@@ -412,11 +263,11 @@ class MainActivity : AppCompatActivity() {
 		TabLayoutMediator(tabLayout, binding.pager) { tab, position ->
 			when (position) {
 				0 -> {
-					tab.text = "NOTES"
+					tab.setText(R.string.sidebar_tab_1)
 				}
 
 				1 -> {
-					tab.text = "SPECIAL"
+					tab.setText(R.string.sidebar_tab_2)
 				}
 			}
 		}.attach()
@@ -438,12 +289,7 @@ class MainActivity : AppCompatActivity() {
 			ModifyRelationsDialog.showDialog(this, getNoteLoaded() ?: return@setOnClickListener)
 		}
 		binding.root.findViewById<Button>(R.id.button_note_paths_add).setOnClickListener {
-			val loaded = getNoteLoaded() ?: return@setOnClickListener
-			JumpToNoteDialog.showDialogReturningNote(this, R.string.dialog_select_note) {
-				runBlocking {
-					Branches.cloneNote(it, loaded)
-				}
-			}
+			controller.addNotePath(this)
 		}
 
 		binding.fab.setOnClickListener {
@@ -460,9 +306,7 @@ class MainActivity : AppCompatActivity() {
 
 		onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
-				if (noteHistory.goBack(this@MainActivity)) {
-					finish()
-				}
+				controller.handleOnBackPressed(this@MainActivity)
 			}
 		})
 	}
@@ -479,43 +323,7 @@ class MainActivity : AppCompatActivity() {
 				ConfigureFabsDialog.getLeftAction()
 			)
 		)
-		if (firstAction != null) {
-			if (Cache.haveDatabase(this)) {
-				runBlocking { Cache.initializeDatabase(applicationContext) }
-			}
-			return
-		}
-		if (Cache.haveDatabase(this)) {
-			if (Preferences.hostname() == null) {
-				Log.i(TAG, "starting setup!")
-				val intent = Intent(this, SetupActivity::class.java)
-				startActivity(intent)
-			} else if (Cache.lastSync == null && noteHistory.isEmpty()) {
-				lifecycleScope.launch {
-					ConnectionUtil.setup(this@MainActivity, {
-						handler.post {
-							startSync(handler)
-						}
-					}, {
-						lifecycleScope.launch {
-							Cache.getTreeData("")
-							refreshTree()
-							handleError(it)
-						}
-					})
-					Cache.getTreeData("")
-					refreshTree()
-					showInitialNote(true)
-				}
-			} else if (noteHistory.isEmpty()) {
-				Log.d(TAG, "last sync is ${Cache.lastSync}, showing initial note")
-				showInitialNote(true)
-			}
-		} else {
-			Log.d(TAG, "no database, starting welcome activity")
-			val intent = Intent(this, WelcomeActivity::class.java)
-			startActivity(intent)
-		}
+		controller.onStart(this)
 	}
 
 	fun handleEmptyNote() {
@@ -529,102 +337,47 @@ class MainActivity : AppCompatActivity() {
 	fun performAction(action: String) {
 		when (action) {
 			SHOW_NOTE_TREE -> {
-				doMenuAction(R.id.action_show_note_tree)
+				controller.doMenuAction(this, R.id.action_show_note_tree)
 			}
 
 			JUMP_TO_NOTE -> {
-				doMenuAction(R.id.action_jump_to_note)
+				controller.doMenuAction(this, R.id.action_jump_to_note)
 			}
 
 			NOTE_NAVIGATION -> {
-				doMenuAction(R.id.action_note_navigation)
+				controller.doMenuAction(this, R.id.action_note_navigation)
 			}
 
 			EDIT_NOTE -> {
-				doMenuAction(R.id.action_edit)
+				controller.doMenuAction(this, R.id.action_edit)
 			}
 
 			SHARE_NOTE -> {
-				doMenuAction(R.id.action_share)
+				controller.doMenuAction(this, R.id.action_share)
 			}
 
 			DELETE_NOTE -> {
-				doMenuAction(R.id.action_delete)
+				controller.doMenuAction(this, R.id.action_delete)
 			}
 
 			NOTE_MAP -> {
-				doMenuAction(R.id.action_note_map)
+				controller.doMenuAction(this, R.id.action_note_map)
 			}
 
 			SYNC -> {
-				doMenuAction(R.id.action_sync)
+				controller.doMenuAction(this, R.id.action_sync)
 			}
 		}
 	}
-
-	private fun showNoteNavigation() = lifecycleScope.launch {
-		var note = Notes.getNote(noteHistory.noteId()) ?: return@launch
-		var branch = noteHistory.branch() ?: note.branches[0]
-		if (note.computeChildren().isEmpty()) {
-			note = Notes.getNote(branch.parentNote)!!
-			branch = note.branches[0] // TODO
-		}
-		noteHistory.addAndRestore(NavigationItem(note, branch), this@MainActivity)
-	}
-
-	private var loadedNoteId: String? = null
 
 	override fun onPause() {
-		// TODO: maybe save the edited content somewhere
-		when (val fragment = getFragment()) {
-			is NoteFragment -> {
-				loadedNoteId = fragment.getNoteId()
-				supportFragmentManager.beginTransaction()
-					.replace(R.id.fragment_container, EmptyFragment())
-					.commit()
-			}
-		}
-		active = false
+		controller.onPause(this)
 		super.onPause()
 	}
 
 	override fun onResume() {
 		super.onResume()
-		active = true
-		if (firstAction != null) {
-			noteHistory.addAndRestore(firstAction!!, this)
-			firstAction = null
-			lifecycleScope.launch {
-				Cache.getTreeData("")
-				refreshTree()
-			}
-			return
-		}
-		// if the user deleted the database, nuke the history too
-		if (!Preferences.hasSyncContext() || !Cache.haveDatabase(this)) {
-			noteHistory.reset()
-			loadedNoteId = null
-			tree?.submitList(emptyList())
-			refreshTitle(null)
-			supportFragmentManager.beginTransaction()
-				.replace(R.id.fragment_container, EmptyFragment())
-				.commit()
-			return
-		}
-		if (loadedNoteId == null) {
-			return
-		}
-		when (getFragment()) {
-			is EmptyFragment -> {
-				lifecycleScope.launch {
-					val frag = NoteFragment()
-					frag.loadLater(Notes.getNoteWithContent(loadedNoteId!!))
-					supportFragmentManager.beginTransaction()
-						.replace(R.id.fragment_container, frag)
-						.commit()
-				}
-			}
-		}
+		controller.onResume(this)
 	}
 
 	fun refreshTree() {
@@ -637,119 +390,39 @@ class MainActivity : AppCompatActivity() {
 		tree!!.submitList(items)
 	}
 
-	private fun handleError(it: Exception) {
-		var toastText: String? = null
-		val cause = it.cause
-		val cause2 = cause?.cause
-		if (it is SSLHandshakeException && cause is CertificateException && cause2 is CertPathValidatorException) {
-			val cert = cause2.certPath.certificates[0]
-			AlertDialog.Builder(this)
-				.setTitle("Trust sync server certificate?")
-				.setMessage(cert.toString())
-				.setPositiveButton(
-					android.R.string.ok
-				) { dialog, _ ->
-					val ks: KeyStore = KeyStore.getInstance("AndroidKeyStore").apply {
-						load(null)
-					}
-					ks.setEntry("syncServer", KeyStore.TrustedCertificateEntry(cert), null)
-					lifecycleScope.launch {
-						ConnectionUtil.resetClient(this@MainActivity) {
-							startSync(handler)
-						}
-						dialog.dismiss()
-					}
-				}
-				.setNegativeButton(android.R.string.cancel, null).show()
-		}
+	private var snackbar: Snackbar? = null
 
-		if (it is SSLException && it.message == "Unable to parse TLS packet header") {
-			toastText = "Invalid TLS configuration"
-		}
-		if (it is IllegalStateException) {
-			toastText = it.message ?: "IllegalStateException"
-		}
-		if (it.cause?.cause is ErrnoException) {
-			when ((it.cause!!.cause as ErrnoException).errno) {
-				OsConstants.ECONNREFUSED -> {
-					toastText = "Sync server refused connection"
-				}
-
-				OsConstants.EHOSTUNREACH -> {
-					toastText = "Sync server unreachable"
-				}
-			}
-		}
-		if (toastText == null) {
-			toastText = it.toString()
-		}
-		Log.e(TAG, "error ", it)
-		Toast.makeText(
-			this, toastText,
-			Toast.LENGTH_LONG
-		).show()
-		if (getFragment() is EmptyFragment || getFragment() is SyncErrorFragment || showSyncError) {
-			val frag = SyncErrorFragment()
-			frag.showError(it)
-			showFragment(frag, true)
-		}
-		showSyncError = false
-	}
-
-	private fun startSync(handler: Handler, resetView: Boolean = true) {
-		val snackbar = Snackbar.make(binding.root, "Sync: starting...", Snackbar.LENGTH_INDEFINITE)
-		snackbar.setTextColor(resources.getColor(R.color.white, null))
-		snackbar.view.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
-		snackbar.view.minimumWidth = 300
-		(snackbar.view.layoutParams as FrameLayout.LayoutParams).gravity =
+	fun indicateSyncStart() {
+		snackbar?.dismiss()
+		snackbar = Snackbar.make(
+			binding.root,
+			R.string.snackbar_sync_start, Snackbar.LENGTH_INDEFINITE
+		)
+		snackbar!!.setTextColor(resources.getColor(R.color.white, null))
+		snackbar!!.view.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
+		snackbar!!.view.minimumWidth = 300
+		(snackbar!!.view.layoutParams as FrameLayout.LayoutParams).gravity =
 			Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
-		snackbar.show()
-		lifecycleScope.launch(Dispatchers.IO) {
-			Cache.initializeDatabase(applicationContext)
-			ConnectionUtil.setup(this@MainActivity, {
-				lifecycleScope.launch {
-					Sync.syncStart({
-						handler.post {
-							snackbar.setText("Sync: $it outstanding...")
-						}
-					}, {
-						handler.post {
-							handleError(it)
-						}
-						// ensure the snackbar doesn't stay visible
-						handler.post {
-							snackbar.setText("Sync: error!")
-							snackbar.duration = Snackbar.LENGTH_SHORT
-							snackbar.show()
-						}
-					}, {
-						lifecycleScope.launch {
-							snackbar.setText("Sync: ${it.first} pulled, ${it.second} pushed")
-							snackbar.duration = Snackbar.LENGTH_SHORT
-							snackbar.show()
-							Cache.getTreeData("")
-							showInitialNote(resetView)
-							showSyncError = false
-						}
-					})
-				}
-			}, {
-				lifecycleScope.launch {
-					Cache.getTreeData("")
-					val showInitial = !showSyncError
-					handleError(it)
-					if (showInitial) {
-						showInitialNote(true)
-					}
-					snackbar.setText("Sync: error!")
-					snackbar.duration = Snackbar.LENGTH_SHORT
-					snackbar.show()
-				}
-			})
-		}
+		snackbar!!.show()
 	}
 
-	private fun showInitialNote(resetView: Boolean) = lifecycleScope.launch {
+	fun indicateSyncProgress(remaining: Int) {
+		snackbar?.setText(getString(R.string.snackbar_sync_progress, remaining))
+	}
+
+	fun indicateSyncError() {
+		snackbar?.setText(R.string.snackbar_sync_error)
+		snackbar?.duration = Snackbar.LENGTH_SHORT
+		snackbar?.show()
+	}
+
+	fun indicateSyncDone(pulled: Int, pushed: Int) {
+		snackbar?.setText(getString(R.string.snackbar_sync_done, pulled, pushed))
+		snackbar?.duration = Snackbar.LENGTH_SHORT
+		snackbar?.show()
+	}
+
+	fun showInitialNote(resetView: Boolean) = lifecycleScope.launch {
 		refreshTree()
 		if (resetView) {
 			val lastNote = Preferences.lastNote()
@@ -828,202 +501,12 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean {
-		return doMenuAction(item.itemId) || super.onOptionsItemSelected(item)
+		Log.d(TAG, "menu action = ${item.itemId}")
+		return controller.doMenuAction(this, item.itemId) || super.onOptionsItemSelected(item)
 	}
 
-	private fun doMenuAction(actionId: Int): Boolean {
-		Log.d(TAG, "menu action = $actionId")
-		return when (actionId) {
-			R.id.action_enter_protected_session -> {
-				val error = ProtectedSession.enter()
-				if (error != null) {
-					Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
-				} else {
-					reloadNote()
-				}
-				true
-			}
-
-			R.id.action_leave_protected_session -> {
-				ProtectedSession.leave()
-				reloadNote()
-				true
-			}
-
-			R.id.action_show_note_tree -> {
-				binding.drawerLayout.openDrawer(GravityCompat.START)
-				true
-			}
-
-			R.id.action_jump_to_note -> {
-				JumpToNoteDialog.showDialog(this)
-				true
-			}
-
-			R.id.action_note_navigation -> {
-				showNoteNavigation()
-				true
-			}
-
-			R.id.action_edit -> {
-				when (val fragment = getFragment()) {
-					is NoteFragment -> {
-						val id = fragment.getNoteId() ?: return true
-						noteHistory.addAndRestore(
-							NoteEditItem(runBlocking { Notes.getNote(id)!! }),
-							this
-						)
-					}
-
-					is NoteEditFragment -> {
-						if (noteHistory.goBack(this)) {
-							finish()
-						}
-					}
-
-					else -> {
-						Log.e(TAG, "failed to identify fragment " + fragment.javaClass)
-					}
-				}
-				true
-			}
-
-			R.id.action_share -> {
-				val id = getNoteFragment().getNoteId() ?: return true
-				val note = runBlocking { Notes.getNoteWithContent(id)!! }
-				val content = note.content() ?: return true
-				val sendIntent: Intent = Intent().apply {
-					action = Intent.ACTION_SEND
-					if (note.type == "text" || note.type == "code") {
-						if (note.mime == "text/html") {
-							val html = String(content)
-							putExtra(Intent.EXTRA_HTML_TEXT, html)
-							putExtra(Intent.EXTRA_TEXT, html.parseAsHtml())
-						} else {
-							putExtra(Intent.EXTRA_TEXT, String(content))
-						}
-					} else if (note.type == "image") {
-						var f = Path(
-							cacheDir.absolutePath,
-							"images"
-						)
-						f = f.createDirectories().resolve("${note.id}.${note.mime.split('/')[1]}")
-						f.writeBytes(content)
-						val contentUri = FileProvider.getUriForFile(
-							this@MainActivity,
-							applicationContext.packageName + ".provider",
-							f.toFile()
-						)
-						clipData = ClipData.newRawUri("", contentUri)
-						putExtra(
-							Intent.EXTRA_STREAM,
-							contentUri
-						)
-						addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-					} else {
-						putExtra(Intent.EXTRA_TEXT, "(cannot share this note type)")
-					}
-					type = note.mime
-				}
-
-				val shareIntent = Intent.createChooser(sendIntent, note.title())
-				startActivity(shareIntent)
-				true
-			}
-
-			R.id.action_execute -> {
-				Log.i(TAG, "executing code note")
-				val noteFrag = getNoteFragment()
-				val noteId = noteFrag.getNoteId()
-				if (noteId != null) {
-					val note = runBlocking { Notes.getNoteWithContent(noteId)!! }
-					val script = String(note.content() ?: return true)
-					runScript(noteFrag, script)
-				}
-				true
-			}
-
-			R.id.action_delete -> {
-				val note = getNoteLoaded()
-				if (note == null || note.id == "root") {
-					Toast.makeText(
-						this, getString(R.string.toast_cannot_delete_root),
-						Toast.LENGTH_SHORT
-					).show()
-				} else {
-					val path = getNotePathLoaded() ?: Branches.getNotePath(note.id)[0]
-					AlertDialog.Builder(this)
-						.setTitle("Delete note")
-						.setMessage("Do you really want to delete this note?")
-						.setPositiveButton(
-							android.R.string.ok
-						) { _, _ ->
-							if (runBlocking { !Notes.deleteNote(path) }) {
-								Toast.makeText(
-									this, getString(R.string.toast_could_not_delete),
-									Toast.LENGTH_SHORT
-								).show()
-							}
-							navigateTo(runBlocking { Notes.getNote(path.parentNote)!! })
-							refreshTree()
-						}
-						.setNegativeButton(android.R.string.cancel, null).show()
-				}
-				true
-			}
-
-			R.id.action_sync -> {
-				showSyncError = true
-				startSync(handler, true)
-				true
-			}
-
-			R.id.action_note_map -> {
-				val frag = getFragment()
-				if (frag is NoteMapFragment) {
-					noteHistory.goBack(this)
-				} else if (frag is NoteFragment) {
-					val id = frag.getNoteId()
-					if (id != null) {
-						noteHistory.addAndRestore(
-							NoteMapItem(runBlocking { Notes.getNote(id)!! }),
-							this
-						)
-					}
-				}
-				true
-			}
-
-			R.id.action_console -> {
-				val dialog = AlertDialog.Builder(this)
-					.setTitle(R.string.action_console_log)
-					.setView(R.layout.dialog_console)
-					.create()
-				val text = StringBuilder()
-				for (entry in getNoteFragment().console) {
-					text.append(entry.message()).append("\n")
-				}
-				dialog.show()
-				dialog.findViewById<TextView>(R.id.dialog_console_output)!!.text = text
-				true
-			}
-
-			R.id.action_settings -> {
-				startActivity(Intent(this, SetupActivity::class.java))
-				true
-			}
-
-			R.id.action_about -> {
-				startActivity(Intent(this, AboutActivity::class.java))
-				true
-			}
-
-			else -> {
-				// If we got here, the user's action was not recognized.
-				// Invoke the superclass to handle it.
-				false
-			}
-		}
+	fun openDrawerTree() {
+		binding.drawerLayout.openDrawer(GravityCompat.START)
 	}
 
 	fun showFragment(frag: Fragment, hideFabs: Boolean) {
@@ -1106,13 +589,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun reloadNote(skipEditors: Boolean = false) {
-		if (!active) {
-			return
-		}
-		if (skipEditors && noteHistory.last() == NoteEditItem::class) {
-			return
-		}
-		noteHistory.restore(this)
+		controller.reloadNote(this, skipEditors)
 	}
 
 	suspend fun refreshWidgets(noteToShow: Note) {
@@ -1221,7 +698,7 @@ class MainActivity : AppCompatActivity() {
 		// note paths
 		val notePaths = findViewById<ListView>(R.id.widget_note_paths_type_content)
 		val paths = Branches.getNotePaths(noteContent.id)!!
-		val currentPath = noteHistory.branch()
+		val currentPath = controller.currentPath()
 		val pathsR = mutableListOf<Pair<String, Branch>>()
 		for (x in paths) {
 			pathsR.add(
@@ -1253,85 +730,7 @@ class MainActivity : AppCompatActivity() {
 					textView.setTypeface(null, Typeface.BOLD)
 					button.visibility = View.VISIBLE
 					button.setOnClickListener {
-						JumpToNoteDialog.showDialogReturningNote(
-							this,
-							R.string.dialog_select_parent_note
-						) { newParent ->
-							lifecycleScope.launch {
-								val newParentNote =
-									Notes.getNote(newParent.note)
-										?: return@launch
-								val children = (listOf(newParent) + newParentNote.computeChildren()
-									.toList()).toMutableList()
-								children.remove(pathBranch)
-								if (children.size == 1) {
-									Branches.moveBranch(pathBranch, newParent, 0)
-								} else {
-									SelectNoteDialog.showDialogReturningNote(
-										this@MainActivity,
-										children
-									) { siblingNote ->
-										lifecycleScope.launch {
-											val siblingIndex = children.indexOf(siblingNote)
-											if (siblingIndex == 0) {
-												// insert as first element
-												Branches.moveBranch(
-													pathBranch,
-													newParent,
-													children[1].position - 10
-												)
-											} else if (siblingIndex < children.size - 1) {
-												val insertBefore = children[siblingIndex + 1]
-												val positionDelta =
-													insertBefore.position - siblingNote.position
-												if (positionDelta <= 1) {
-													// re-order entire list
-													val ourIndex = siblingIndex + 1
-													for (i in 1 until children.size) {
-														if (i < ourIndex) {
-															Branches.moveBranch(
-																children[i],
-																newParent,
-																(i - 1) * 10
-															)
-														} else {
-															Branches.moveBranch(
-																children[i],
-																newParent,
-																i * 10
-															)
-
-														}
-													}
-													Branches.moveBranch(
-														pathBranch,
-														newParent,
-														ourIndex * 10
-													)
-												} else {
-													val ourPosition =
-														siblingNote.position + positionDelta / 2
-													Branches.moveBranch(
-														pathBranch,
-														newParent,
-														ourPosition
-													)
-
-												}
-											} else {
-												Branches.moveBranch(
-													pathBranch,
-													newParent,
-													siblingNote.position + 10
-												)
-											}
-											refreshTree()
-											refreshWidgets(noteContent)
-										}
-									}
-								}
-							}
-						}
+						controller.notePathEdit(this, pathBranch, noteContent)
 					}
 				} else {
 					textView.setTypeface(null, Typeface.NORMAL)
@@ -1348,7 +747,7 @@ class MainActivity : AppCompatActivity() {
 					refreshTree()
 				}
 				if (pathSelected.first().cachedTreeIndex != null) {
-					noteHistory.setBranch(pathSelected.first())
+					controller.switchedBranch(pathSelected.first())
 					lifecycleScope.launch {
 						refreshWidgets(noteContent)
 					}
@@ -1377,29 +776,15 @@ class MainActivity : AppCompatActivity() {
 			val delete = vi!!.findViewById<Button>(R.id.revision_delete)
 			timestamp.text = revision.dateCreated.substring(0 until 19)
 			view.setOnClickListener {
-				lifecycleScope.launch {
-					val content = revision.content()
-					noteHistory.addAndRestore(BlobItem(noteContent, content), this@MainActivity)
-				}
+				controller.revisionView(this, revision)
 			}
 			restore.setOnClickListener {
-				lifecycleScope.launch {
-					val contentToRestore = revision.content()
-					noteContent.updateContent(contentToRestore.content, true)
-					reloadNote()
-				}
+				controller.revisionRestore(this, revision)
 			}
 			delete.setOnClickListener {
-				YesNoDialog.show(
-					this,
-					R.string.title_delete_revision,
-					R.string.text_delete_revision
-				) {
-					lifecycleScope.launch {
-						NoteRevisions.delete(revision)
-						revs.remove(revision)
-						(revisionListView.adapter as ListAdapter<*>).notifyDataSetChanged()
-					}
+				controller.revisionDelete(this, revision) {
+					revs.remove(revision)
+					(revisionListView.adapter as ListAdapter<*>).notifyDataSetChanged()
 				}
 			}
 			return@ListAdapter vi!!
@@ -1431,7 +816,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun navigateTo(note: Note, branch: Branch? = null) {
-		noteHistory.addAndRestore(NoteItem(note, branch), this)
+		controller.navigateTo(this, note, branch)
 	}
 
 	fun load(note: Note, branch: Branch?, content: Blob? = null) {
@@ -1480,10 +865,10 @@ class MainActivity : AppCompatActivity() {
 
 	override fun onDestroy() {
 		super.onDestroy()
-		Cache.closeDatabase()
+		controller.onDestroy()
 	}
 
-	private fun getFragment(): Fragment {
+	fun getFragment(): Fragment {
 		val hostFragment =
 			supportFragmentManager.findFragmentById(R.id.fragment_container)
 		return when (hostFragment) {
@@ -1502,7 +887,7 @@ class MainActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun getNoteFragment(): NoteFragment {
+	fun getNoteFragment(): NoteFragment {
 		var frag = getFragment()
 		if (frag is NoteFragment) {
 			return frag
@@ -1520,9 +905,5 @@ class MainActivity : AppCompatActivity() {
 			return runBlocking { Notes.getNoteWithContent(id) }
 		}
 		return null
-	}
-
-	private fun getNotePathLoaded(): Branch? {
-		return noteHistory.branch()
 	}
 }
