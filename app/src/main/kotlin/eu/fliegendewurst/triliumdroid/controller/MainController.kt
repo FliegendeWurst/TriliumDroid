@@ -728,5 +728,11 @@ class MainController {
 
 	fun onDestroy() {
 		Cache.closeDatabase()
+		// TODO: check if the activity is about to be re-created
+		noteHistory.reset()
+		firstAction = null
+		showSyncError = false
+		active = false
+		loadedNoteId = null
 	}
 }

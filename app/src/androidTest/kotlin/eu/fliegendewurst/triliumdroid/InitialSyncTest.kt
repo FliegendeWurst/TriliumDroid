@@ -87,6 +87,8 @@ class InitialSyncTest {
 	@Throws(IOException::class)
 	fun test_015_renameDialog() {
 		var index = 1
+		// wait for note to load
+		Thread.sleep(5000)
 		// click to open rename dialog
 		onView(withId(R.id.toolbar_title))
 			.perform(click())
@@ -169,10 +171,14 @@ class InitialSyncTest {
 
 	@Test
 	fun test_035_noteLabels() {
+		// wait for note to load
+		Thread.sleep(5000)
 		onView(withId(R.id.drawer_layout))
 			.perform(DrawerActions.open(Gravity.END))
 		onView(withId(R.id.button_labels_modify))
 			.perform(click())
+		// wait for dialog to load
+		Thread.sleep(500)
 		saveScreenshot()
 		onView(withId(R.id.button_add_label))
 			.perform(click())
