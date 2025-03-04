@@ -305,6 +305,9 @@ object Cache {
 	}
 
 	fun haveDatabase(context: Context): Boolean {
+		if (db?.isOpen == true) {
+			return true
+		}
 		val file = File(context.filesDir.parent, "databases/Document.db")
 		return file.exists()
 	}
@@ -313,6 +316,7 @@ object Cache {
 		if (db != null && db!!.isOpen) {
 			return@withContext
 		}
+		Log.d(TAG, "initializing database")
 		try {
 			val sql = context.resources.openRawResource(R.raw.schema).bufferedReader()
 				.use { it.readText() }

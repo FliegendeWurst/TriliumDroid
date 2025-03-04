@@ -248,6 +248,10 @@ class MainActivity : AppCompatActivity() {
 		Preferences.init(applicationContext)
 		ConfigureFabsDialog.init()
 
+		if (Cache.haveDatabase(this)) {
+			runBlocking { Cache.initializeDatabase(applicationContext) }
+		}
+
 		val appWidgetId = intent.extras?.getInt("appWidgetId")
 		if (appWidgetId != null) {
 			val action = Preferences.widgetAction(appWidgetId)
@@ -482,7 +486,6 @@ class MainActivity : AppCompatActivity() {
 			return
 		}
 		if (Cache.haveDatabase(this)) {
-			runBlocking { Cache.initializeDatabase(applicationContext) }
 			if (Preferences.hostname() == null) {
 				Log.i(TAG, "starting setup!")
 				val intent = Intent(this, SetupActivity::class.java)
