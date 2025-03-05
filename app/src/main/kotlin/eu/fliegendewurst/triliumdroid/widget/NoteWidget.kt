@@ -5,13 +5,19 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Paint.Align
 import android.os.Build
 import android.os.Bundle
 import android.text.Html
 import android.util.Log
 import android.util.SizeF
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.content.res.ResourcesCompat
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.HistoryItem
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
@@ -20,9 +26,11 @@ import eu.fliegendewurst.triliumdroid.activity.main.NoteItem
 import eu.fliegendewurst.triliumdroid.activity.main.StartItem
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
+import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
+
 
 /**
  * Implementation of App Widget functionality.
@@ -145,12 +153,20 @@ internal fun updateAppWidget(
 
 	val action = Preferences.widgetAction(appWidgetId)
 	if (action != null && h == 1) {
+		val note = runBlocking { Notes.getNote(action.noteId()) }!!
 		if (w == 1) {
+			val size = TypedValue.applyDimension(
+				TypedValue.COMPLEX_UNIT_SP,
+				48F,
+				context.resources.displayMetrics
+			)
+			val icon = Icon.getUnicodeCharacter(note.icon()) ?: ""
+			val iconBitmap = renderIcon(context, size, size, icon)
+			views.setImageViewBitmap(R.id.widget_note_icon, iconBitmap)
 			views.setViewVisibility(R.id.widget_note_icon, View.VISIBLE)
 			views.setViewVisibility(R.id.widget_note_title, View.GONE)
 		} else {
 			views.setViewVisibility(R.id.widget_note_icon, View.GONE)
-			val note = runBlocking { Notes.getNote(action.noteId()) }!!
 			views.setTextViewText(R.id.widget_note_title, note.title())
 			views.setViewVisibility(R.id.widget_note_title, View.VISIBLE)
 		}
@@ -179,4 +195,21 @@ internal fun updateAppWidget(
 
 	// Instruct the widget manager to update the widget
 	appWidgetManager.updateAppWidget(appWidgetId, views)
+}
+
+fun renderIcon(context: Context, width: Float, height: Float, icon: String): Bitmap {
+	val myBitmap =
+		Bitmap.createBitmap(width.roundToInt(), height.roundToInt(), Bitmap.Config.ARGB_8888)
+	val myCanvas = Canvas(myBitmap)
+	val paint = Paint()
+	val typeface = ResourcesCompat.getFont(context, R.font.boxicons)
+	paint.isAntiAlias = true
+	paint.isSubpixelText = true
+	paint.setTypeface(typeface)
+	paint.style = Paint.Style.FILL
+	paint.color = context.getColor(R.color.foreground)
+	paint.textSize = height
+	paint.textAlign = Align.CENTER
+	myCanvas.drawText(icon, width / 2, height, paint)
+	return myBitmap
 }

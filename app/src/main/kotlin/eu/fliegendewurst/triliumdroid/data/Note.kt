@@ -208,6 +208,9 @@ class Note(
 	}
 
 	fun setLabels(labels: List<Label>) {
+		labels.filter { it.name == "iconClass" }.forEach {
+			icon = it.value
+		}
 		this.labels = labels
 	}
 
