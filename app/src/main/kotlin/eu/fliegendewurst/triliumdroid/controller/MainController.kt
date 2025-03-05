@@ -1,18 +1,24 @@
 package eu.fliegendewurst.triliumdroid.controller
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.appwidget.AppWidgetManager
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.os.StrictMode
 import android.system.ErrnoException
 import android.system.OsConstants
 import android.util.Log
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity.NOTIFICATION_SERVICE
 import androidx.core.content.FileProvider
 import androidx.core.text.parseAsHtml
 import androidx.lifecycle.lifecycleScope
+import eu.fliegendewurst.triliumdroid.AlarmReceiver
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.AboutActivity
 import eu.fliegendewurst.triliumdroid.activity.SetupActivity
@@ -29,11 +35,13 @@ import eu.fliegendewurst.triliumdroid.activity.main.NoteMapItem
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteRevision
+import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.NoteRevisions
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureWidgetDialog
 import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
@@ -48,6 +56,7 @@ import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.sync.Sync
+import eu.fliegendewurst.triliumdroid.util.CrashReport
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import eu.fliegendewurst.triliumdroid.widget.NoteWidget
 import kotlinx.coroutines.launch
@@ -76,6 +85,9 @@ class MainController {
 	private val noteHistory = HistoryList()
 	private var firstAction: HistoryItem? = null
 
+	// initial note to show
+	private var firstNote: String? = null
+
 	/**
 	 * Whether to show the next sync error as a full [SyncErrorFragment]
 	 */
@@ -92,6 +104,37 @@ class MainController {
 	private var loadedNoteId: String? = null
 
 	/**
+	 * Called when the app is created, possibly in the background.
+	 */
+	fun onCreate(activity: MainActivity, intent: Intent) {
+		oneTimeSetup(activity)
+
+		Preferences.init(activity.applicationContext)
+		ConfigureFabsDialog.init()
+
+		if (Cache.haveDatabase(activity)) {
+			runBlocking { Cache.initializeDatabase(activity.applicationContext) }
+		}
+
+		firstNote = intent.extras?.getString("note")
+
+		val appWidgetId = intent.extras?.getInt("appWidgetId")
+		if (appWidgetId != null) {
+			widgetUsed(activity, appWidgetId)
+		}
+
+		if (intent.action == Intent.ACTION_SEND) {
+			if (intent.type == "text/plain" || intent.type == "text/html") {
+				val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+				if (text != null) {
+					runBlocking { textShared(activity, text) }
+				}
+			}
+			activity.finish()
+		}
+	}
+
+	/**
 	 * Called when the app is started.
 	 *
 	 * Possible outcomes:
@@ -102,6 +145,8 @@ class MainController {
 	 * - database not present → WelcomeActivity
 	 */
 	fun onStart(activity: MainActivity) {
+		CrashReport.showPendingReports(activity)
+
 		if (firstAction != null) {
 			if (Cache.haveDatabase(activity)) {
 				runBlocking { Cache.initializeDatabase(activity.applicationContext) }
@@ -128,11 +173,11 @@ class MainController {
 					})
 					Cache.getTreeData("")
 					activity.refreshTree()
-					activity.showInitialNote(true)
+					showInitialNote(activity, true)
 				}
 			} else if (noteHistory.isEmpty()) {
 				Log.d(TAG, "last sync is ${Cache.lastSync}, showing initial note")
-				activity.showInitialNote(true)
+				showInitialNote(activity, true)
 			}
 		} else {
 			Log.d(TAG, "no database, starting welcome activity")
@@ -319,10 +364,10 @@ class MainController {
 					Toast.LENGTH_SHORT
 				).show()
 			} else {
-				val path = noteHistory.branch() ?: Branches.getNotePath(note.id)[0]
+				val path = noteHistory.branch() ?: runBlocking { Branches.getNotePath(note.id)[0] }
 				AlertDialog.Builder(activity)
-					.setTitle("Delete note")
-					.setMessage("Do you really want to delete this note?")
+					.setTitle(R.string.title_dialog_delete_note)
+					.setMessage(R.string.text_really_delete)
 					.setPositiveButton(
 						android.R.string.ok
 					) { _, _ ->
@@ -428,7 +473,7 @@ class MainController {
 	/**
 	 * Widget with given ID was used to launch the app.
 	 */
-	fun widgetUsed(activity: MainActivity, appWidgetId: Int) {
+	private fun widgetUsed(activity: MainActivity, appWidgetId: Int) {
 		val action = Preferences.widgetAction(appWidgetId)
 		if (action == null) {
 			// user must configure this widget before use
@@ -447,7 +492,7 @@ class MainController {
 	/**
 	 * App received text from another app (share target).
 	 */
-	suspend fun textShared(context: Context, text: String) {
+	private suspend fun textShared(context: Context, text: String) {
 		if (Cache.haveDatabase(context)) {
 			Cache.initializeDatabase(context.applicationContext)
 			val inbox = DateNotes.getInboxNote()
@@ -612,6 +657,36 @@ class MainController {
 		}
 	}
 
+	fun notePathClicked(activity: MainActivity, pathSelected: List<Branch>, noteContent: Note) {
+		if (runBlocking { ensurePathIsExpanded(pathSelected) }) {
+			activity.refreshTree()
+		}
+		if (pathSelected.first().cachedTreeIndex != null) {
+			noteHistory.setBranch(pathSelected.first())
+			activity.lifecycleScope.launch {
+				activity.refreshWidgets(noteContent)
+			}
+			activity.scrollTreeToBranch(pathSelected.first())
+			activity.openDrawerTree()
+		}
+	}
+
+	suspend fun ensurePathIsExpanded(path: List<Branch>): Boolean {
+		var expandedAny = false
+		for (n in path) {
+			// expanded = the children of this note are visible
+			if (!n.expanded) {
+				Branches.toggleBranch(n)
+				expandedAny = true
+			}
+		}
+		return expandedAny
+	}
+
+	fun relationTargetClicked(activity: MainActivity, attribute: Relation) {
+		navigateTo(activity, attribute.target ?: return)
+	}
+
 	fun reloadNote(activity: MainActivity, skipEditors: Boolean = false) {
 		if (!active) {
 			return
@@ -622,9 +697,30 @@ class MainController {
 		noteHistory.restore(activity)
 	}
 
-	fun switchedBranch(branch: Branch) = noteHistory.setBranch(branch)
-
 	fun currentPath() = noteHistory.branch()
+
+	private fun showInitialNote(activity: MainActivity, resetView: Boolean) =
+		activity.lifecycleScope.launch {
+			activity.refreshTree()
+			if (resetView) {
+				val lastNote = Preferences.lastNote()
+				// first use: open the drawer
+				if (lastNote == null && Cache.lastSync != null) {
+					activity.openDrawerTree()
+					return@launch
+				}
+				var n = firstNote ?: lastNote
+				if (n == null || Notes.getNote(n) == null) {
+					n = "root" // may happen in case of new database or note deleted
+				}
+				val note = Notes.getNote(n) ?: return@launch
+				navigateTo(activity, note, note.branches.firstOrNull())
+			} else {
+				val noteId = activity.getNoteFragment().getNoteId() ?: return@launch
+				val note = Notes.getNote(noteId) ?: return@launch
+				navigateTo(activity, note)
+			}
+		}
 
 	private fun handleError(activity: MainActivity, it: Exception) {
 		var toastText: String? = null
@@ -707,7 +803,7 @@ class MainController {
 						activity.lifecycleScope.launch {
 							activity.indicateSyncDone(it.first, it.second)
 							Cache.getTreeData("")
-							activity.showInitialNote(resetView)
+							showInitialNote(activity, resetView)
 							showSyncError = false
 						}
 					})
@@ -718,7 +814,7 @@ class MainController {
 					val showInitial = !showSyncError
 					handleError(activity, it)
 					if (showInitial) {
-						activity.showInitialNote(true)
+						showInitialNote(activity, true)
 					}
 					activity.indicateSyncError()
 				}
@@ -731,8 +827,46 @@ class MainController {
 		// TODO: check if the activity is about to be re-created
 		noteHistory.reset()
 		firstAction = null
+		firstNote = null
 		showSyncError = false
 		active = false
 		loadedNoteId = null
+	}
+}
+
+/**
+ * Set up:
+ * - [StrictMode] policy
+ * - [CrashReport] saving
+ * - notification channel
+ */
+private fun oneTimeSetup(context: Context) {
+	StrictMode.setVmPolicy(
+		StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
+			.detectLeakedClosableObjects()
+			.penaltyLog()
+			.build()
+	)
+
+	val oldHandler = Thread.getDefaultUncaughtExceptionHandler()
+
+	Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
+		CrashReport.saveReport(context, paramThread, paramThrowable)
+		oldHandler?.uncaughtException(
+			paramThread,
+			paramThrowable
+		)
+	}
+
+	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+		// Create the NotificationChannel.
+		val name = context.getString(R.string.channel_name)
+		val importance = NotificationManager.IMPORTANCE_DEFAULT
+		val mChannel = NotificationChannel(AlarmReceiver.CHANNEL_ID, name, importance)
+		// Register the channel with the system. You can't change the importance
+		// or other notification behaviors after this.
+		val notificationManager =
+			context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+		notificationManager.createNotificationChannel(mChannel)
 	}
 }

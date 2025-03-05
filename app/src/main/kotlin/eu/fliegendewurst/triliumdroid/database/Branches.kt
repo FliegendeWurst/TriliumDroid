@@ -24,11 +24,11 @@ object Branches {
 	/**
 	 * Get one possible note path for the provided note id.
 	 */
-	fun getNotePath(id: String): List<Branch> {
+	suspend fun getNotePath(id: String): List<Branch> = withContext(Dispatchers.IO) {
 		val l = mutableListOf<Branch>()
 		var lastId = id
 		while (true) {
-			db!!.rawQuery(
+			val shouldBreak = db!!.rawQuery(
 				"SELECT branchId, parentNoteId, isExpanded, notePosition, prefix FROM branches WHERE noteId = ? AND isDeleted = 0 LIMIT 1",
 				arrayOf(lastId)
 			).use {
@@ -50,21 +50,26 @@ object Branches {
 						l.add(branch)
 					}
 					if (parentId == "none") {
-						return l
+						return@use true
 					}
 					lastId = parentId
 				} else {
-					return l
+					return@use true
 				}
+				return@use false
+			}
+			if (shouldBreak) {
+				break
 			}
 		}
+		return@withContext l
 	}
 
 	/**
 	 * Return all note paths to a given note.
 	 */
-	suspend fun getNotePaths(noteId: String): List<List<Branch>>? = withContext(Dispatchers.IO) {
-		val branches = Notes.getNote(noteId)?.branches ?: return@withContext null
+	suspend fun getNotePaths(noteId: String): List<List<Branch>>? {
+		val branches = Notes.getNote(noteId)?.branches ?: return null
 		var possibleBranches = branches.map { x -> listOf(x) }.toMutableList()
 		while (true) {
 			val newPossibleBranches = mutableListOf<List<Branch>>()
@@ -87,7 +92,7 @@ object Branches {
 				break
 			}
 		}
-		return@withContext possibleBranches
+		return possibleBranches
 	}
 
 	suspend fun cloneNote(parentBranch: Branch, note: Note) {

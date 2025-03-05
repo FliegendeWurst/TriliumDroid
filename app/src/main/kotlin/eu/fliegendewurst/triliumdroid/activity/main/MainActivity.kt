@@ -2,15 +2,11 @@ package eu.fliegendewurst.triliumdroid.activity.main
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
-import android.os.StrictMode
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -41,7 +37,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayoutMediator
-import eu.fliegendewurst.triliumdroid.AlarmReceiver
 import eu.fliegendewurst.triliumdroid.FrontendBackendApi
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.TreeItemAdapter
@@ -77,7 +72,6 @@ import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment
 import eu.fliegendewurst.triliumdroid.fragment.SyncErrorFragment
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
-import eu.fliegendewurst.triliumdroid.util.CrashReport
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import eu.fliegendewurst.triliumdroid.view.ListViewAutoExpand
@@ -99,46 +93,11 @@ class MainActivity : AppCompatActivity() {
 	private var shareVisible: Boolean = false
 	private var deleteVisible: Boolean = true
 
-	// initial note to show
-	private var firstNote: String? = null
-
 	companion object {
 		private const val TAG = "MainActivity"
 		const val JUMP_TO_NOTE_ENTRY = "JUMP_TO_NOTE_ENTRY"
 		var tree: TreeItemAdapter? = null
 		private var controller: MainController = MainController()
-	}
-
-	private fun oneTimeSetup() {
-		StrictMode.setVmPolicy(
-			StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
-				.detectLeakedClosableObjects()
-				.penaltyLog()
-				.build()
-		)
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			// Create the NotificationChannel.
-			val name = getString(R.string.channel_name)
-			val importance = NotificationManager.IMPORTANCE_DEFAULT
-			val mChannel = NotificationChannel(AlarmReceiver.CHANNEL_ID, name, importance)
-			// Register the channel with the system. You can't change the importance
-			// or other notification behaviors after this.
-			val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-			notificationManager.createNotificationChannel(mChannel)
-		}
-
-		val oldHandler = Thread.getDefaultUncaughtExceptionHandler()
-
-		Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
-			CrashReport.saveReport(this, paramThread, paramThrowable)
-			oldHandler?.uncaughtException(
-				paramThread,
-				paramThrowable
-			)
-		}
-
-		CrashReport.showPendingReports(this)
 	}
 
 	fun checkNotificationPermission(): Boolean {
@@ -155,31 +114,7 @@ class MainActivity : AppCompatActivity() {
 		super.onCreate(savedInstanceState)
 		handler = Handler(applicationContext.mainLooper)
 
-		Preferences.init(applicationContext)
-		ConfigureFabsDialog.init()
-
-		if (Cache.haveDatabase(this)) {
-			runBlocking { Cache.initializeDatabase(applicationContext) }
-		}
-
-		firstNote = intent.extras?.getString("note")
-
-		val appWidgetId = intent.extras?.getInt("appWidgetId")
-		if (appWidgetId != null) {
-			controller.widgetUsed(this, appWidgetId)
-		}
-
-		if (intent?.action == Intent.ACTION_SEND) {
-			if (intent.type == "text/plain" || intent.type == "text/html") {
-				val text = intent.getStringExtra(Intent.EXTRA_TEXT)
-				if (text != null) {
-					runBlocking { controller.textShared(this@MainActivity, text) }
-				}
-			}
-			finish()
-		}
-
-		oneTimeSetup()
+		controller.onCreate(this, intent)
 
 		binding = ActivityMainBinding.inflate(layoutInflater)
 		setContentView(binding.root)
@@ -328,7 +263,7 @@ class MainActivity : AppCompatActivity() {
 
 	fun handleEmptyNote() {
 		Log.d(TAG, "empty note, opening drawer")
-		binding.drawerLayout.openDrawer(GravityCompat.START)
+		openDrawerTree()
 	}
 
 	/**
@@ -386,7 +321,7 @@ class MainActivity : AppCompatActivity() {
 			return
 		}
 		val items = Cache.getTreeList("none_root", 0)
-		Log.i(TAG, "about to show ${items.size} tree items")
+		Log.d(TAG, "about to show ${items.size} tree items")
 		tree!!.submitList(items)
 	}
 
@@ -420,28 +355,6 @@ class MainActivity : AppCompatActivity() {
 		snackbar?.setText(getString(R.string.snackbar_sync_done, pulled, pushed))
 		snackbar?.duration = Snackbar.LENGTH_SHORT
 		snackbar?.show()
-	}
-
-	fun showInitialNote(resetView: Boolean) = lifecycleScope.launch {
-		refreshTree()
-		if (resetView) {
-			val lastNote = Preferences.lastNote()
-			// first use: open the drawer
-			if (lastNote == null && Cache.lastSync != null) {
-				binding.drawerLayout.openDrawer(GravityCompat.START)
-				return@launch
-			}
-			var n = firstNote ?: lastNote
-			if (n == null || Notes.getNote(n) == null) {
-				n = "root" // may happen in case of new database or note deleted
-			}
-			val note = Notes.getNote(n) ?: return@launch
-			navigateTo(note, note.branches.firstOrNull())
-		} else {
-			val noteId = getNoteFragment().getNoteId() ?: return@launch
-			val note = Notes.getNote(noteId) ?: return@launch
-			navigateTo(note)
-		}
 	}
 
 	override fun onCreateOptionsMenu(m: Menu?): Boolean {
@@ -506,6 +419,9 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun openDrawerTree() {
+		if (binding.drawerLayout.isDrawerOpen(GravityCompat.END)) {
+			binding.drawerLayout.closeDrawers()
+		}
 		binding.drawerLayout.openDrawer(GravityCompat.START)
 	}
 
@@ -569,7 +485,7 @@ class MainActivity : AppCompatActivity() {
 		)
 	}
 
-	private fun scrollTreeToBranch(branch: Branch) {
+	fun scrollTreeToBranch(branch: Branch) {
 		Log.d(TAG, "scrolling to ${branch.cachedTreeIndex}")
 		val pos = branch.cachedTreeIndex ?: return
 		val frag = supportFragmentManager.findFragmentByTag("f0") ?: return
@@ -662,7 +578,7 @@ class MainActivity : AppCompatActivity() {
 				val button = vi!!.findViewById<Button>(R.id.button_relation_target)
 				button.text = attribute.target?.title() ?: "none"
 				button.setOnClickListener {
-					navigateTo(attribute.target ?: return@setOnClickListener)
+					controller.relationTargetClicked(this, attribute)
 				}
 				return@ListAdapter vi!!
 			}
@@ -689,7 +605,7 @@ class MainActivity : AppCompatActivity() {
 					val button = vi!!.findViewById<Button>(R.id.button_relation_target)
 					button.text = attribute.target?.title() ?: "none"
 					button.setOnClickListener {
-						navigateTo(attribute.target ?: return@setOnClickListener)
+						controller.relationTargetClicked(this, attribute)
 					}
 					return@ListAdapter vi!!
 				}
@@ -743,18 +659,7 @@ class MainActivity : AppCompatActivity() {
 			// switch to the note path in the tree
 			if (position >= 0 && position < paths.size) {
 				val pathSelected = paths[position]
-				if (ensurePathIsExpanded(pathSelected)) {
-					refreshTree()
-				}
-				if (pathSelected.first().cachedTreeIndex != null) {
-					controller.switchedBranch(pathSelected.first())
-					lifecycleScope.launch {
-						refreshWidgets(noteContent)
-					}
-					scrollTreeToBranch(pathSelected.first())
-					binding.drawerLayout.closeDrawers()
-					binding.drawerLayout.openDrawer(GravityCompat.START)
-				}
+				controller.notePathClicked(this, pathSelected, noteContent)
 			}
 		}
 
@@ -823,13 +728,13 @@ class MainActivity : AppCompatActivity() {
 		Log.i(TAG, "loading note ${note.id} @ branch ${branch?.id} @ revision $content")
 		Preferences.setLastNote(note.id)
 		// make sure note is visible
-		val path = Branches.getNotePath(note.id)
-		val expandedAny = ensurePathIsExpanded(path)
-		if (expandedAny) {
-			refreshTree()
-		}
-		tree!!.select(note.id)
 		lifecycleScope.launch {
+			val path = Branches.getNotePath(note.id)
+			val expandedAny = controller.ensurePathIsExpanded(path)
+			if (expandedAny) {
+				refreshTree()
+			}
+			tree!!.select(note.id)
 			val noteContent = Notes.getNoteWithContent(note.id)!!
 			if (noteContent.isProtected && !ProtectedSession.isActive()) {
 				showFragment(EncryptedNoteFragment(), true)
@@ -847,20 +752,6 @@ class MainActivity : AppCompatActivity() {
 			// update right drawer
 			refreshWidgets(noteContent)
 		}
-	}
-
-	private fun ensurePathIsExpanded(path: List<Branch>): Boolean {
-		var expandedAny = false
-		for (n in path) {
-			// expanded = the children of this note are visible
-			if (!n.expanded) {
-				runBlocking {
-					Branches.toggleBranch(n)
-				}
-				expandedAny = true
-			}
-		}
-		return expandedAny
 	}
 
 	override fun onDestroy() {

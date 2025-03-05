@@ -148,6 +148,8 @@
     <string name="snackbar_sync_done">Sync: %1$d pulled, %2$d pushed</string>
     <string name="sidebar_tab_1">Notes</string>
     <string name="sidebar_tab_2">Special</string>
+    <string name="title_dialog_delete_note">Delete note</string>
+    <string name="text_really_delete">Do you really want to delete this note?</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>
