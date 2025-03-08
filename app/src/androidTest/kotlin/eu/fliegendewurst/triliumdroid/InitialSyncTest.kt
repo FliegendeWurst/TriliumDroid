@@ -142,7 +142,6 @@ class InitialSyncTest {
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
 		for (text in arrayOf("Journal", "2021", "12 - December")) {
-			println("navigating to $text")
 			onView(
 				allOf(
 					withText(text),
@@ -202,6 +201,49 @@ class InitialSyncTest {
 		onView(withId(R.id.drawer_layout))
 			.perform(DrawerActions.close(Gravity.END))
 		saveScreenshot()
+
+		// test deleting the note label
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.END))
+		onView(withId(R.id.button_labels_modify))
+			.perform(click())
+		// wait for dialog to load
+		Thread.sleep(500)
+		onView(
+			allOf(
+				withId(R.id.button_delete_label),
+				hasSibling(withText("santaClaus"))
+			)
+		)
+			.perform(click())
+		onView(
+			allOf(
+				withId(R.id.button_delete_label),
+				hasSibling(withText("label:santaClaus"))
+			)
+		)
+			.perform(click())
+		onView(withText(android.R.string.ok))
+			.perform(click())
+	}
+
+	@Test
+	fun test_038_noteIcon() {
+		// wait for note to load
+		Thread.sleep(5000)
+
+		// click on note icon
+		onView(withId(R.id.toolbar_icon))
+			.perform(click())
+		// wait for dialog to load
+		Thread.sleep(5000)
+		saveScreenshot() // shows: dialog
+
+		// select note icon
+		onView(withText("\uE946"))
+			.perform(click())
+		Thread.sleep(100)
+		saveScreenshot() // shows: changed icon
 	}
 
 	private val screenshotCounts = mutableMapOf<String, Int>()

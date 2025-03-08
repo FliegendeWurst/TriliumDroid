@@ -15,6 +15,8 @@ object Util {
 		return randomString(12)
 	}
 
+	fun isRegularId(id: String) = id.length == 12
+
 	@OptIn(ExperimentalEncodingApi::class)
 	fun contentHash(data: ByteArray): String {
 		val md = MessageDigest.getInstance("SHA-512")

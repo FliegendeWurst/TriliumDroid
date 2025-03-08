@@ -24,6 +24,7 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Branches.branches
 import eu.fliegendewurst.triliumdroid.database.Notes.notes
+import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.util.Preferences
@@ -260,6 +261,11 @@ object Cache {
 		}
 		val query1 = System.currentTimeMillis() - startTime
 		val query2Start = System.currentTimeMillis()
+		val stats = if (filter == "") {
+			mutableMapOf<String, Int>()
+		} else {
+			null
+		}
 		db!!.rawQuery(
 			"SELECT notes.noteId, attributes.value " +
 					"FROM attributes " +
@@ -273,7 +279,17 @@ object Cache {
 				val noteId = it.getString(0)
 				val noteIcon = it.getString(1)
 				notes[noteId]!!.icon = noteIcon
+				// gather statistics on note icons of user notes
+				if (stats != null && Util.isRegularId(noteId)) {
+					stats[noteIcon] = stats.getOrDefault(noteIcon, 0) + 1
+				}
 			}
+		}
+		if (stats != null) {
+			Icon.iconStatistics =
+				stats.entries.sortedWith(Comparator.comparingInt<MutableMap.MutableEntry<String, Int>?> { -it.value }
+					.thenComparing { it -> it.key })
+					.map { Pair(Icon.getUnicodeCharacter(it.key), it.value) }
 		}
 		val query2 = System.currentTimeMillis() - query2Start
 		if (query1 + query2 > 50) {

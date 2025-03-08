@@ -36,6 +36,7 @@ import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteRevision
 import eu.fliegendewurst.triliumdroid.data.Relation
+import eu.fliegendewurst.triliumdroid.database.Attributes
 import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.NoteRevisions
@@ -45,6 +46,7 @@ import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureWidgetDialog
 import eu.fliegendewurst.triliumdroid.dialog.CreateNewNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
+import eu.fliegendewurst.triliumdroid.dialog.NoteIconDialog
 import eu.fliegendewurst.triliumdroid.dialog.SelectNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.YesNoDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
@@ -53,6 +55,7 @@ import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.SyncErrorFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
+import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.sync.Sync
@@ -501,6 +504,20 @@ class MainController {
 				text.lineSequence().first()
 			)
 			Notes.setNoteContent(note.id, text)
+		}
+	}
+
+	/**
+	 * User clicked on the note icon in the toolbar.
+	 */
+	fun titleIconClicked(activity: MainActivity) {
+		val note = activity.getNoteLoaded() ?: return
+		NoteIconDialog.showDialogReturningIcon(activity) {
+			activity.lifecycleScope.launch {
+				val cssClass = Icon.getCssClass(it)!!
+				Attributes.updateLabel(note, "iconClass", cssClass, false)
+				activity.refreshTitle(Notes.getNote(note.id))
+			}
 		}
 	}
 

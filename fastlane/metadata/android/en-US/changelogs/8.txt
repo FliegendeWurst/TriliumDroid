@@ -1,4 +1,6 @@
-- Note revisions: viewing, deleting
-- Label editor improved to configure metadata (promoted, multi)
+- Home screen widget: shows note icon/title/content
+- Note revisions: creating, viewing, deleting
+- Note icon: dialog to modify
+- Label editor improved to configure metadata (promoted)
 - Turkish UI translation
 - Sync deleted objects correctly

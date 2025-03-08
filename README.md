@@ -13,7 +13,7 @@ Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Andr
 - Displaying/editing/sharing note content
 - Displaying/editing note attributes (labels and relations)
 - Attribute inheritance and templating
-- Displaying note icon
+- Displaying/modifying note icon
 - Displaying/modifying note paths
 - Displaying/collapsing/expanding note tree
 - Navigating using internal links
@@ -49,7 +49,6 @@ There is also some preliminary support for scripting, but it doesn't work exactl
 - Search
 - Folder view of child nodes
 - Jump to note dialog: smart sort
-- Modifying note icon
 - Advanced Scripting
 - Included notes
 - Undeleting content

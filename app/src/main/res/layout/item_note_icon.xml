@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Button xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/icon"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:autoSizeMaxTextSize="100sp"
+    android:autoSizeMinTextSize="12sp"
+    android:autoSizeStepGranularity="2sp"
+    android:autoSizeTextType="uniform"
+    android:fontFamily="@font/boxicons"
+    android:padding="@dimen/medium_margin_plus"
+    android:text=""
+    android:textColor="@color/foreground"
+    android:textSize="24sp"
+    tools:ignore="HardcodedText,UnusedAttribute" />

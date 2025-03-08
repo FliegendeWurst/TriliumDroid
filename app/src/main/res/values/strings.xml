@@ -150,6 +150,9 @@
     <string name="sidebar_tab_2">Special</string>
     <string name="title_dialog_delete_note">Delete note</string>
     <string name="text_really_delete">Do you really want to delete this note?</string>
+    <string name="title_select_note_icon">Select note icon</string>
+    <string name="label_frequently_used">Frequently used</string>
+    <string name="label_all_icons">All icons</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

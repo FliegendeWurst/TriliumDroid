@@ -12,6 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clickable="true"
+        android:focusable="true"
         android:orientation="vertical">
 
         <androidx.appcompat.widget.Toolbar
@@ -29,6 +30,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:layout_marginEnd="@dimen/smaller_margin"
+                android:clickable="true"
+                android:focusable="true"
                 android:fontFamily="@font/boxicons"
                 android:textAppearance="@style/TextAppearance.AppCompat.Title"
                 android:textColor="@color/black" />
@@ -39,6 +42,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:clickable="true"
+                android:focusable="true"
                 android:textAppearance="@style/TextAppearance.AppCompat.Title"
                 android:textColor="@color/black" />
 

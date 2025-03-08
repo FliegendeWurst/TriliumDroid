@@ -122,6 +122,9 @@ class MainActivity : AppCompatActivity() {
 		val toolbar = binding.toolbar
 		toolbar.title = ""
 		setSupportActionBar(toolbar)
+		binding.toolbarIcon.setOnClickListener {
+			controller.titleIconClicked(this)
+		}
 		binding.toolbarTitle.setOnClickListener {
 			controller.titleClicked(this)
 		}
@@ -501,7 +504,8 @@ class MainActivity : AppCompatActivity() {
 
 	fun refreshTitle(note: Note?) {
 		binding.toolbarTitle.text = note?.title() ?: "(nothing loaded)"
-		binding.toolbarIcon.text = Icon.getUnicodeCharacter(note?.icon() ?: "bx bx-file-blank")
+		binding.toolbarIcon.text =
+			Icon.getUnicodeCharacter(note?.icon() ?: "bx bx-file-blank") ?: "\ueac6"
 	}
 
 	fun reloadNote(skipEditors: Boolean = false) {
