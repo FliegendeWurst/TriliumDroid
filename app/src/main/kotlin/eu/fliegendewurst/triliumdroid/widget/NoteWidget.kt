@@ -46,9 +46,14 @@ class NoteWidget : AppWidgetProvider() {
 		appWidgetIds: IntArray
 	) {
 		Preferences.init(context.applicationContext)
-		// There may be multiple widgets active, so update all of them
-		for (appWidgetId in appWidgetIds) {
-			updateAppWidget(context, appWidgetManager, appWidgetId, null)
+		if (Cache.haveDatabase(context)) {
+			runBlocking {
+				Cache.initializeDatabase(context)
+				// There may be multiple widgets active, so update all of them
+				for (appWidgetId in appWidgetIds) {
+					updateAppWidget(context, appWidgetManager, appWidgetId, null)
+				}
+			}
 		}
 	}
 
@@ -59,7 +64,12 @@ class NoteWidget : AppWidgetProvider() {
 		newOptions: Bundle?
 	) {
 		Preferences.init(context.applicationContext)
-		updateAppWidget(context, appWidgetManager, appWidgetId, newOptions)
+		if (Cache.haveDatabase(context)) {
+			runBlocking {
+				Cache.initializeDatabase(context)
+				updateAppWidget(context, appWidgetManager, appWidgetId, newOptions)
+			}
+		}
 	}
 
 	override fun onEnabled(context: Context) {
@@ -112,7 +122,7 @@ fun parseWidgetAction(action: String?): HistoryItem? {
 	}
 }
 
-internal fun updateAppWidget(
+private suspend fun updateAppWidget(
 	context: Context,
 	appWidgetManager: AppWidgetManager,
 	appWidgetId: Int,
@@ -153,7 +163,7 @@ internal fun updateAppWidget(
 
 	val action = Preferences.widgetAction(appWidgetId)
 	if (action != null && h == 1) {
-		val note = runBlocking { Notes.getNote(action.noteId()) }!!
+		val note = Notes.getNote(action.noteId()) ?: return
 		if (w == 1) {
 			val size = TypedValue.applyDimension(
 				TypedValue.COMPLEX_UNIT_SP,
@@ -173,7 +183,7 @@ internal fun updateAppWidget(
 		views.setViewVisibility(R.id.appwidget_text, View.GONE)
 		views.setViewVisibility(R.id.note_content, View.GONE)
 	} else if (action != null) {
-		val content = runBlocking { Notes.getNoteWithContent(action.noteId()) }!!
+		val content = Notes.getNoteWithContent(action.noteId()) ?: return
 		views.setTextViewText(
 			R.id.note_content,
 			Html.fromHtml(
