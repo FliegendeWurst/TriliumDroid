@@ -86,4 +86,5 @@
     <string name="text_really_delete">确定要删除此笔记吗？</string>
     <string name="sidebar_tab_2">特色功能</string>
     <string name="status_login_fail">登陆失败（检查密码）</string>
+    <string name="label_widget_basic_properties">基本属性</string>
 </resources>
