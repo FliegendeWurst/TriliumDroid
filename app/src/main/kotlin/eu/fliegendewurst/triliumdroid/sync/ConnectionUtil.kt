@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.database.Cache
-import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.util.CookieJar
 import eu.fliegendewurst.triliumdroid.util.GetSSID
 import eu.fliegendewurst.triliumdroid.util.Preferences
@@ -52,7 +51,6 @@ object ConnectionUtil {
 	private var client: OkHttpClient? = null
 	private var server: String = "http://0.0.0.0"
 	private var password: String = "aaaaaa" // easy to catch in logs
-	var instanceId: String? = null
 	private var syncVersion: Int = Cache.Versions.SYNC_VERSION
 	private var loginFails = 0
 
@@ -82,11 +80,7 @@ object ConnectionUtil {
 	) {
 		server = Preferences.hostname()!!
 		password = Preferences.password()!!
-		instanceId = Preferences.instanceId()
-		if (instanceId == null) {
-			instanceId = "mobile" + Util.randomString(6)
-			Preferences.setInstanceId(instanceId!!)
-		}
+		val instanceId = Preferences.instanceId()
 		Log.d(TAG, "setup with server = $server, instance ID = $instanceId")
 		val documentSecret = Preferences.documentSecret()
 		if (documentSecret == null) {

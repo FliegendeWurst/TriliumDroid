@@ -24,7 +24,6 @@ import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Util
-import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
@@ -374,7 +373,7 @@ class FrontendBackendApi(
 
 	@JavascriptInterface
 	fun getInstanceName(): String {
-		return ConnectionUtil.instanceId!!
+		return Preferences.instanceId()
 	}
 
 	@JavascriptInterface

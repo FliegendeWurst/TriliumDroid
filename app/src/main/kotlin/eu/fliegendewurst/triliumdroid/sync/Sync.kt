@@ -9,6 +9,7 @@ import eu.fliegendewurst.triliumdroid.database.Cache.db
 import eu.fliegendewurst.triliumdroid.database.Cache.lastSync
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.database.Notes.notes
+import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -26,6 +27,8 @@ object Sync {
 	private const val TAG = "Sync"
 
 	private suspend fun syncPush(): Int = withContext(Dispatchers.IO) {
+		val instanceId = Preferences.instanceId()
+
 		var lastSyncedPush = 0
 		db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPush"))
 			.use {
@@ -38,7 +41,7 @@ object Sync {
 		val changesUri = "/api/sync/update?logMarkerId=$logMarkerId"
 
 		val data = JSONObject()
-		data.put("instanceId", ConnectionUtil.instanceId)
+		data.put("instanceId", instanceId)
 		val entities = JSONArray()
 		var largestId = lastSyncedPush
 		db!!.rawQuery(
@@ -48,7 +51,7 @@ object Sync {
 
 			while (it.moveToNext()) {
 				val instanceIdSaved = it.getString(7)
-				if (instanceIdSaved != ConnectionUtil.instanceId) {
+				if (instanceIdSaved != instanceId) {
 					continue
 				}
 
@@ -60,7 +63,7 @@ object Sync {
 				val isErased = it.getInt(4)
 				val changeId = it.getString(5)
 				val componentId = it.getString(6)
-				val instanceId = it.getString(7)
+				val instanceIdHere = it.getString(7)
 				val isSynced = it.getString(8)
 				val utc = it.getString(9)
 
@@ -74,7 +77,7 @@ object Sync {
 				entityChange.put("isErased", isErased)
 				entityChange.put("changeId", changeId)
 				entityChange.put("componentId", componentId)
-				entityChange.put("instanceId", instanceId)
+				entityChange.put("instanceId", instanceIdHere)
 				entityChange.put("isSynced", isSynced)
 				entityChange.put("utcDateChanged", utc)
 				row.put("entityChange", entityChange)
@@ -208,7 +211,7 @@ object Sync {
 				}
 			val logMarkerId = "trilium-droid"
 			val changesUri =
-				"/api/sync/changed?instanceId=${ConnectionUtil.instanceId}&lastEntityChangeId=${lastSyncedPull}&logMarkerId=${logMarkerId}"
+				"/api/sync/changed?instanceId=${Preferences.instanceId()}&lastEntityChangeId=${lastSyncedPull}&logMarkerId=${logMarkerId}"
 
 			ConnectionUtil.doSyncRequest(changesUri, { resp ->
 				val outstandingPullCount = resp.getInt("outstandingPullCount")

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.activity.main.HistoryItem
+import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.widget.parseWidgetAction
 
 object Preferences {
@@ -28,7 +29,13 @@ object Preferences {
 
 	fun hostname(): String? = prefs.getString(HOSTNAME, null)
 	fun password(): String? = prefs.getString(PASSWORD, null)
-	fun instanceId(): String? = prefs.getString(INSTANCE_ID, null)
+	fun instanceId(): String = prefs.getString(INSTANCE_ID, null).let {
+		if (it == null) {
+			setInstanceId("mobile" + Util.randomString(6))
+		}
+		instanceId()
+	}
+
 	fun documentSecret(): String? = prefs.getString(DOCUMENT_SECRET, null)
 	fun syncSSID(): String? = prefs.getString(SYNC_SSID, null)
 	fun mTLS(): String? = prefs.getString(MTLS_CERT, null)

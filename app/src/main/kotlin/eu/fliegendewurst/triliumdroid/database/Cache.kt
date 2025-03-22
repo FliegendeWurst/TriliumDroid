@@ -26,7 +26,6 @@ import eu.fliegendewurst.triliumdroid.database.Branches.branches
 import eu.fliegendewurst.triliumdroid.database.Notes.notes
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.service.Util
-import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -85,7 +84,7 @@ object Cache {
 				isErased.boolToIntValue(),
 				Util.randomString(12),
 				"Android",
-				ConnectionUtil.instanceId,
+				Preferences.instanceId(),
 				1,
 				utc
 			)
