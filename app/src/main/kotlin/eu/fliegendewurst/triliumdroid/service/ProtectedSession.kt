@@ -4,6 +4,7 @@ import android.util.Log
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.runBlocking
 import org.bouncycastle.crypto.BufferedBlockCipher
+import org.bouncycastle.crypto.InvalidCipherTextException
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.generators.SCrypt
 import org.bouncycastle.crypto.modes.CBCBlockCipher
@@ -59,6 +60,9 @@ object ProtectedSession {
 		return null
 	}
 
+	/**
+	 * @throws InvalidCipherTextException if cipher text invalid
+	 */
 	fun decrypt(cipherTextWithIV: ByteArray): ByteArray? {
 		return decryptInternal(key ?: return null, cipherTextWithIV)
 	}

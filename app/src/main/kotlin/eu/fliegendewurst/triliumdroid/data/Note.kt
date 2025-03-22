@@ -9,6 +9,7 @@ import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.bouncycastle.crypto.InvalidCipherTextException
 import java.util.SortedSet
 import java.util.TreeSet
 import kotlin.io.encoding.Base64
@@ -262,7 +263,11 @@ class Note(
 	fun title() = if (isProtected && !ProtectedSession.isActive()) {
 		"[protected]"
 	} else if (isProtected && ProtectedSession.isActive()) {
-		titleDecrypted = ProtectedSession.decrypt(Base64.decode(this.title))!!.decodeToString()
+		titleDecrypted = try {
+			ProtectedSession.decrypt(Base64.decode(this.title))!!.decodeToString()
+		} catch (e: InvalidCipherTextException) {
+			"[data corrupted]"
+		}
 		ProtectedSession.addListener(this)
 		titleDecrypted!!
 	} else {
@@ -280,7 +285,11 @@ class Note(
 		if (contentDecrypted != null) {
 			contentDecrypted
 		} else {
-			contentDecrypted = ProtectedSession.decrypt(Base64.decode(blob!!.content))
+			contentDecrypted = try {
+				ProtectedSession.decrypt(Base64.decode(blob!!.content))
+			} catch (e: InvalidCipherTextException) {
+				"[data corrupted, please report to the developer]".encodeToByteArray()
+			}
 			ProtectedSession.addListener(this)
 			contentDecrypted
 		}
