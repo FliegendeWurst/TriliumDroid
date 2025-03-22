@@ -740,6 +740,11 @@ class MainController {
 		}
 
 	private fun handleError(activity: MainActivity, it: Exception) {
+		if (!active) {
+			// too bad, I guess. At least we can log the error
+			Log.e(TAG, "error received in background ", it)
+			return
+		}
 		var toastText: String? = null
 		val cause = it.cause
 		val cause2 = cause?.cause
