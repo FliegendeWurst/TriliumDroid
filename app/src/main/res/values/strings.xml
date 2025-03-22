@@ -153,6 +153,7 @@
     <string name="title_select_note_icon">Select note icon</string>
     <string name="label_frequently_used">Frequently used</string>
     <string name="label_all_icons">All icons</string>
+    <string name="toast_note_not_in_database">Note not in database.</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>Show note tree sidebar</item>

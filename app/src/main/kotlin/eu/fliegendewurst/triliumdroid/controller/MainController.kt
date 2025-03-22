@@ -572,7 +572,14 @@ class MainController {
 
 	fun noteTreeClicked(activity: MainActivity, branch: Branch) {
 		activity.lifecycleScope.launch {
-			navigateTo(activity, Notes.getNoteWithContent(branch.note)!!, branch)
+			val note = Notes.getNoteWithContent(branch.note)
+			if (note == null) {
+				Log.e(TAG, "clicked on branch ${branch.id} with invalid note id ${branch.note}")
+				Toast.makeText(activity, R.string.toast_note_not_in_database, Toast.LENGTH_LONG)
+					.show()
+				return@launch
+			}
+			navigateTo(activity, note, branch)
 		}
 	}
 
