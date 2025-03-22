@@ -32,8 +32,10 @@ object Preferences {
 	fun instanceId(): String = prefs.getString(INSTANCE_ID, null).let {
 		if (it == null) {
 			setInstanceId("mobile" + Util.randomString(6))
+			instanceId()
+		} else {
+			it
 		}
-		instanceId()
 	}
 
 	fun documentSecret(): String? = prefs.getString(DOCUMENT_SECRET, null)
