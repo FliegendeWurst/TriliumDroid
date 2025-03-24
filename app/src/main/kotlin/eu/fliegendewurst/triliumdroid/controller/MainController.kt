@@ -755,8 +755,15 @@ class MainController {
 		var toastText: String? = null
 		val cause = it.cause
 		val cause2 = cause?.cause
-		if (it is SSLHandshakeException && cause is CertificateException && cause2 is CertPathValidatorException) {
-			val cert = cause2.certPath.certificates[0]
+		var certException: CertPathValidatorException? = null
+		if (cause is CertPathValidatorException) {
+			certException = cause
+		}
+		if (cause2 is CertPathValidatorException) {
+			certException = cause2
+		}
+		if (it is SSLHandshakeException && certException != null) {
+			val cert = certException.certPath.certificates[0]
 			AlertDialog.Builder(activity)
 				.setTitle(R.string.title_trust_sync_server_certificate)
 				.setMessage(cert.toString())
