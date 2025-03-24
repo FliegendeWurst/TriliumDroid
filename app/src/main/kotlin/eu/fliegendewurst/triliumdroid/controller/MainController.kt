@@ -66,7 +66,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.security.KeyStore
 import java.security.cert.CertPathValidatorException
-import java.security.cert.CertificateException
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import kotlin.io.path.Path
@@ -790,8 +789,15 @@ class MainController {
 		if (it is IllegalStateException) {
 			toastText = it.message ?: "IllegalStateException"
 		}
-		if (it.cause?.cause is ErrnoException) {
-			when ((it.cause!!.cause as ErrnoException).errno) {
+		var errno: ErrnoException? = null
+		if (cause is ErrnoException) {
+			errno = cause
+		}
+		if (cause2 is ErrnoException) {
+			errno = cause2
+		}
+		if (errno != null) {
+			when (errno.errno) {
 				OsConstants.ECONNREFUSED -> {
 					toastText = "Sync server refused connection"
 				}
