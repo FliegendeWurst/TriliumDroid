@@ -3,6 +3,7 @@ package eu.fliegendewurst.triliumdroid.util
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import eu.fliegendewurst.triliumdroid.BuildConfig
@@ -27,9 +28,14 @@ object CrashReport {
 		val fos = FileOutputStream(file)
 
 		try {
-			val bytes =
-				"\n\nThread: ${thread.name} (ID = ${thread.id})\nError: ${throwable}\nStacktrace:\n${throwable.stackTraceToString()}".encodeToByteArray()
-			fos.write(bytes)
+			var bytes = "\n\n"
+			bytes += "Thread: ${thread.name} (ID = ${thread.id})\n"
+			bytes += "Error: ${throwable}\n"
+			bytes += "API Level: ${Build.VERSION.SDK_INT} (${Build.VERSION.RELEASE})\n"
+			bytes += "Stacktrace:\n"
+			bytes += throwable.stackTraceToString()
+			fos.write(bytes.encodeToByteArray())
+			fos.flush()
 		} catch (e: IOException) {
 			// ignored
 		}
