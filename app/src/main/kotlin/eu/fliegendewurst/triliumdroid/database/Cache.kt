@@ -497,7 +497,11 @@ object Cache {
 					"SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name != 'android_metadata' AND name != 'sqlite_sequence'",
 					arrayOf()
 				).use {
-					Log.i(TAG, "successfully created ${it.getInt(0)} tables")
+					if (it.moveToNext()) {
+						Log.i(TAG, "successfully created ${it.getInt(0)} tables")
+					} else {
+						Log.w(TAG, "unable to fetch sqlite_master table data")
+					}
 				}
 				// DB migrations are only for fixups
 				Preferences.setDatabaseMigration(1)
