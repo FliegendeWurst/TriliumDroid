@@ -172,7 +172,7 @@ class MainActivity : AppCompatActivity() {
 						it.binding.treeList.visibility = View.GONE
 						it.binding.treeListSimple.visibility = View.VISIBLE
 						it.binding.treeListSimple.adapter =
-							ListAdapter(listOf("Note Map")) { type, convertView ->
+							ListAdapter(listOf(getString(R.string.action_note_map))) { type, convertView ->
 								var vi = convertView
 								if (vi == null) {
 									vi = layoutInflater.inflate(
@@ -184,7 +184,7 @@ class MainActivity : AppCompatActivity() {
 								val button = vi!!.findViewById<Button>(R.id.label)
 								button.text = type
 								button.setOnClickListener {
-									if (type == "Note Map") {
+									if (type == getString(R.string.action_note_map)) {
 										controller.globalNoteMap(this@MainActivity)
 									}
 								}

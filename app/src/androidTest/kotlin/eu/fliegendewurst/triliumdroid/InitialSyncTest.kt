@@ -84,6 +84,18 @@ class InitialSyncTest {
 	}
 
 	@Test
+	fun test_012_globalNoteMap() {
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.START))
+		onView(withText(R.string.sidebar_tab_2))
+			.perform(click())
+		onView(withText(R.string.action_note_map))
+			.perform(click())
+		// The output is unpredictable, but it should not crash.
+		Thread.sleep(5000)
+	}
+
+	@Test
 	@Throws(IOException::class)
 	fun test_015_renameDialog() {
 		var index = 1
