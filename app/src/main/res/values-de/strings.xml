@@ -148,4 +148,8 @@
     <string name="error_mismatched_database">Die lokale Datenbank passt nicht zur Datenbank des Sync-Servers. Falls du wirklich die Datenbank wechseln möchtest, musst du zuerst die Datenbank in den Einstellungen löschen.</string>
     <string name="error_incorrect_password">Passwort ist falsch.</string>
     <string name="label_set_ui_language">GUI-Sprache konfigurieren</string>
+    <string name="toast_note_not_in_database">Notiz nicht vorhanden.</string>
+    <string name="action_local_note_map">Lokale Notizen-Karte anzeigen</string>
+    <string name="action_share_note">Notiz teilen</string>
+    <string name="text_about_3">Die Desktop-Anwendung wird von zadam seit 2017 entwickelt und läuft unter Windows, Mac und Linux. Seit 2024 wird die Entwicklung in der TriliumNext-Organisation fortgesetzt.</string>
 </resources>
