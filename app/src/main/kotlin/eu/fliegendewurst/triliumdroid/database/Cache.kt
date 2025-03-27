@@ -407,10 +407,10 @@ object Cache {
 					"attributes.value," + // 3
 					"attributes.attributeId " + // 4
 					"FROM notes " +
-					"LEFT JOIN attributes USING(noteId) " +
+					"LEFT JOIN attributes USING (noteId) " +
 					"WHERE notes.isDeleted = 0 " +
-					"AND attributes.isDeleted = 0 " +
-					"AND attributes.type == 'relation' " +
+					"AND (attributes.isDeleted = 0 OR attributes.isDeleted IS NULL) " +
+					"AND (attributes.type == 'relation' OR attributes.type IS NULL) " +
 					"AND SUBSTR(noteId, 1, 1) != '_' " +
 					"ORDER BY noteId",
 			arrayOf()
@@ -447,6 +447,11 @@ object Cache {
 			}
 			if (relationsByIdIncoming[rel.second] == null) {
 				relationsByIdIncoming[rel.second] = mutableListOf()
+			}
+			if (!notesById.containsKey(rel.second)) {
+				// relation points to deleted note??
+				Log.w(TAG, "relation from ${rel.first} to deleted ${rel.second} found")
+				continue
 			}
 			val relation = Relation(
 				rel.third.second,
