@@ -154,16 +154,18 @@
     <string name="label_frequently_used">Frequently used</string>
     <string name="label_all_icons">All icons</string>
     <string name="toast_note_not_in_database">Note not in database.</string>
+    <string name="action_share_note">Share note</string>
+    <string name="action_local_note_map">Show local note map</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
-        <item>Show note tree sidebar</item>
-        <item>Jump to note</item>
+        <item>@string/action_show_note_tree</item>
+        <item>@string/jump_to_dialog</item>
         <item>@string/action_note_navigation</item>
-        <item>Edit note</item>
-        <item>Share note</item>
-        <item>Delete note</item>
-        <item>Show local note map</item>
-        <item>Synchronize</item>
+        <item>@string/widget_action_edit</item>
+        <item>@string/action_share_note</item>
+        <item>@string/title_dialog_delete_note</item>
+        <item>@string/action_local_note_map</item>
+        <item>@string/action_sync</item>
     </string-array>
     <string-array name="note_types_array">
         <item>Text</item>

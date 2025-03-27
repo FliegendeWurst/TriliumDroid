@@ -93,6 +93,9 @@ class MainActivity : AppCompatActivity() {
 	private var shareVisible: Boolean = false
 	private var deleteVisible: Boolean = true
 
+	private var hideLeftFAB = false
+	private var hideRightFAB = false
+
 	companion object {
 		private const val TAG = "MainActivity"
 		const val JUMP_TO_NOTE_ENTRY = "JUMP_TO_NOTE_ENTRY"
@@ -253,16 +256,16 @@ class MainActivity : AppCompatActivity() {
 
 	override fun onStart() {
 		super.onStart()
-		binding.fab.setImageResource(
-			ConfigureFabsDialog.getIcon(
-				ConfigureFabsDialog.getRightAction()
-			)
-		)
-		binding.fabTree.setImageResource(
-			ConfigureFabsDialog.getIcon(
-				ConfigureFabsDialog.getLeftAction()
-			)
-		)
+		val rightAction = ConfigureFabsDialog.getRightAction()
+		if (rightAction != null) {
+			binding.fab.setImageResource(ConfigureFabsDialog.getIcon(rightAction))
+		}
+		hideRightFAB = rightAction == null
+		val leftAction = ConfigureFabsDialog.getLeftAction()
+		if (leftAction != null) {
+			binding.fabTree.setImageResource(ConfigureFabsDialog.getIcon(leftAction))
+		}
+		hideLeftFAB = leftAction == null
 		controller.onStart(this)
 	}
 
@@ -435,8 +438,12 @@ class MainActivity : AppCompatActivity() {
 			binding.fabTree.hide()
 			binding.fab.hide()
 		} else {
-			binding.fabTree.show()
-			binding.fab.show()
+			if (!hideLeftFAB) {
+				binding.fabTree.show()
+			}
+			if (!hideRightFAB) {
+				binding.fab.show()
+			}
 		}
 		val item = binding.toolbar.menu.findItem(R.id.action_edit)
 		if (frag is NoteEditFragment) {

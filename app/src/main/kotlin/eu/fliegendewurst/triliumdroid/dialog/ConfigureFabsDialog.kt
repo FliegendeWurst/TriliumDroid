@@ -93,17 +93,25 @@ object ConfigureFabsDialog {
 			}
 			vi!!.findViewById<TextView>(R.id.label_fab_action).text =
 				labels[actions.keys.indexOf(action)]
-			val settings = getPref(action)!!
+			val settingsInitial = getPref(action)!!
 			val left = vi.findViewById<RadioButton>(R.id.button_fab_left)
 			val right = vi.findViewById<RadioButton>(R.id.button_fab_right)
 			val show = vi.findViewById<CheckBox>(R.id.checkbox_fab_show)
 			left.setOnCheckedChangeListener(null)
 			right.setOnCheckedChangeListener(null)
 			show.setOnCheckedChangeListener(null)
-			left.isChecked = settings.left
-			right.isChecked = settings.right
-			show.isChecked = settings.show
-			left.setOnCheckedChangeListener { _, isChecked ->
+			left.isChecked = settingsInitial.left
+			right.isChecked = settingsInitial.right
+			show.isChecked = settingsInitial.show
+			left.setOnClickListener {
+				val isChecked = left.isChecked
+				val settings = getPref(action)!!
+				// special case: user clicks on checked radio button again
+				if (isChecked && settings.left) {
+					setPref(action, false, settings.right, settings.show)
+					left.isChecked = false
+					return@setOnClickListener
+				}
 				setPref(action, isChecked, settings.right, settings.show)
 				for (otherAction in actions.keys) {
 					if (action == otherAction) {
@@ -116,7 +124,15 @@ object ConfigureFabsDialog {
 				}
 				(list.adapter as ListAdapter<*>).notifyDataSetChanged()
 			}
-			right.setOnCheckedChangeListener { _, isChecked ->
+			right.setOnClickListener {
+				val isChecked = right.isChecked
+				val settings = getPref(action)!!
+				// special case: user clicks on checked radio button again
+				if (isChecked && getPref(action)?.right == true) {
+					setPref(action, settings.left, false, settings.show)
+					right.isChecked = false
+					return@setOnClickListener
+				}
 				setPref(action, settings.left, isChecked, settings.show)
 				for (otherAction in actions.keys) {
 					if (action == otherAction) {
@@ -130,6 +146,7 @@ object ConfigureFabsDialog {
 				(list.adapter as ListAdapter<*>).notifyDataSetChanged()
 			}
 			show.setOnCheckedChangeListener { _, isChecked ->
+				val settings = getPref(action)!!
 				setPref(action, settings.left, settings.right, isChecked)
 			}
 			return@ListAdapter vi
