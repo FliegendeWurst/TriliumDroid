@@ -99,6 +99,18 @@ class InitialSyncTest {
 	}
 
 	@Test
+	fun test_011_jumpToNote() {
+		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
+		onView(withText(R.string.jump_to_dialog))
+			.perform(click())
+		saveScreenshot()
+		onView(withId(R.id.note_title))
+			.perform(typeText("pho"))
+		Thread.sleep(2000) // wait for DB query
+		saveScreenshot()
+	}
+
+	@Test
 	fun test_012_globalNoteMap() {
 		onView(withId(R.id.drawer_layout))
 			.perform(DrawerActions.open(Gravity.START))

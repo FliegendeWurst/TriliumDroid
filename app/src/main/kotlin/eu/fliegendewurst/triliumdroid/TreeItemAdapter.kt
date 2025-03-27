@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.updatePadding
@@ -106,9 +107,9 @@ class TreeItemAdapter(
 		val button = holder.itemView.findViewById<Button>(R.id.label)
 		// make sure entries in the "jump to note" dialog are wide
 		if (item.first.id == MainActivity.JUMP_TO_NOTE_ENTRY) {
-			button.layoutParams = LinearLayout.LayoutParams(
-				LinearLayout.LayoutParams.MATCH_PARENT,
-				LinearLayout.LayoutParams.WRAP_CONTENT
+			button.layoutParams = FrameLayout.LayoutParams(
+				FrameLayout.LayoutParams.MATCH_PARENT,
+				FrameLayout.LayoutParams.WRAP_CONTENT
 			)
 		}
 		// highlight the selected note
