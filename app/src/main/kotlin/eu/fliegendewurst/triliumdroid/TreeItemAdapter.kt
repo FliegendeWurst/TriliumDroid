@@ -1,11 +1,13 @@
 package eu.fliegendewurst.triliumdroid
 
+import android.content.res.Resources
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -14,6 +16,7 @@ import eu.fliegendewurst.triliumdroid.activity.main.MainActivity.Companion.tree
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.ItemTreeNoteBinding
+import eu.fliegendewurst.triliumdroid.service.Icon
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.ConcurrentHashMap
 
@@ -60,11 +63,27 @@ class TreeItemAdapter(
 	) :
 		RecyclerView.ViewHolder(itemView) {
 		fun bind(item: Pair<Branch, Int>) {
-			binding.label.text =
-				runBlocking { Notes.getNote(item.first.note) }?.title() ?: item.first.note
+			val note = runBlocking { Notes.getNote(item.first.note) }
+			val noteIcon = note?.icon()
+			var setNoteIcon = false
+			if (noteIcon != null && noteIcon != "bx bx-file-blank") {
+				binding.noteIcon.text = Icon.getUnicodeCharacter(noteIcon)
+				setNoteIcon = true
+			} else {
+				binding.noteIcon.text = ""
+			}
+			binding.label.text = note?.title() ?: item.first.note
 			val params = binding.label.layoutParams
-			if (params is ViewGroup.MarginLayoutParams) {
+			val params2 = binding.noteIcon.layoutParams
+			if (params is ViewGroup.MarginLayoutParams && params2 is ViewGroup.MarginLayoutParams) {
 				params.leftMargin = item.second * 20
+				if (setNoteIcon) {
+					binding.label.updatePadding(left = itemView.resources.getDimensionPixelOffset(R.dimen.section_margin))
+				} else {
+					// guessed
+					binding.label.updatePadding(left = itemView.resources.getDimensionPixelOffset(R.dimen.normal_margin))
+				}
+				params2.leftMargin = item.second * 20
 			}
 			binding.label.isLongClickable = true
 			binding.label.setOnClickListener { onClick(item.first) }

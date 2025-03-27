@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="40dp"
-    android:orientation="vertical">
+    android:layout_height="40dp">
 
     <Button
         android:id="@+id/label"
@@ -10,6 +10,18 @@
         android:layout_height="40dp"
         android:ellipsize="end"
         android:gravity="start|center_vertical"
+        android:paddingLeft="@dimen/section_margin"
+        android:singleLine="true"
         android:textColor="@color/foreground"
-        android:singleLine="true" />
-</LinearLayout>
+        tools:ignore="RtlHardcoded,RtlSymmetry" />
+
+    <TextView
+        android:id="@+id/note_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:elevation="7dp"
+        android:fontFamily="@font/boxicons"
+        android:gravity="start|center_vertical"
+        android:paddingLeft="@dimen/normal_margin"
+        tools:ignore="RtlHardcoded,RtlSymmetry" />
+</FrameLayout>

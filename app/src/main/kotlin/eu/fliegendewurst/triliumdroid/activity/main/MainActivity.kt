@@ -181,7 +181,9 @@ class MainActivity : AppCompatActivity() {
 										false
 									)
 								}
-								val button = vi!!.findViewById<Button>(R.id.label)
+								vi!!.findViewById<TextView>(R.id.note_icon).text =
+									Icon.getUnicodeCharacter("bx bx-map-alt")
+								val button = vi.findViewById<Button>(R.id.label)
 								button.text = type
 								button.setOnClickListener {
 									if (type == getString(R.string.action_note_map)) {

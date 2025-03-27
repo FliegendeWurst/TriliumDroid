@@ -21,7 +21,10 @@ import androidx.test.ext.junit.rules.activityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
+import eu.fliegendewurst.triliumdroid.database.Cache.Versions.SYNC_VERSION_0_90_12
+import eu.fliegendewurst.triliumdroid.database.Cache.Versions.SYNC_VERSION_0_91_6
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
+import eu.fliegendewurst.triliumdroid.util.Preferences
 import org.hamcrest.Matchers.allOf
 import org.junit.FixMethodOrder
 import org.junit.Rule
@@ -70,9 +73,21 @@ class InitialSyncTest {
 		// (these will only be synced after the DB nuke in 020)
 
 		// Trilium 0.91+: Demo Document has different default expanded state
-		onView(withText("Trilium Demo"))
-			.perform(longClick())
-		Thread.sleep(2000)
+		if (Preferences.syncVersion()!! >= SYNC_VERSION_0_91_6) {
+			onView(withText("Trilium Demo"))
+				.perform(longClick())
+			Thread.sleep(2000)
+		} else if (Preferences.syncVersion()!! == SYNC_VERSION_0_90_12) {
+			onView(withText("Journal"))
+				.perform(longClick())
+			Thread.sleep(2000)
+			onView(withText("11 - November"))
+				.perform(longClick())
+			Thread.sleep(2000)
+			onView(withText("12 - December"))
+				.perform(longClick())
+			Thread.sleep(2000)
+		}
 		// End Trilium 0.91+
 		onView(ViewMatchers.isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
