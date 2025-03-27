@@ -1,0 +1,12 @@
+New UI translation: Chinese (Simplified Han script)
+New feature: note tree now shows note icons
+
+Bugfixes:
+- Handle decryption errors without crashing
+- Handle sync errors when app is closed without crashing
+- Fix crash when editing content without successful sync
+- Fix crash when clicking on deleted note in tree
+- Fix startup crash on some old Android devices
+- Fix self-signed certificate detection on some devices
+- Fix crash in note map with broken relations
+- Allow FABs to be disabled completely
