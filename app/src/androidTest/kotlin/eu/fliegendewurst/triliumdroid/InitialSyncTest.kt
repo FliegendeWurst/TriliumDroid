@@ -104,7 +104,7 @@ class InitialSyncTest {
 		onView(withText(R.string.jump_to_dialog))
 			.perform(click())
 		saveScreenshot()
-		onView(withId(R.id.note_title))
+		onView(withId(R.id.jump_input))
 			.perform(typeText("pho"))
 		Thread.sleep(2000) // wait for DB query
 		saveScreenshot()
