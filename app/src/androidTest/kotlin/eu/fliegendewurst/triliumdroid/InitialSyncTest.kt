@@ -2,6 +2,7 @@ package eu.fliegendewurst.triliumdroid
 
 import android.graphics.Bitmap
 import android.view.Gravity
+import android.view.View
 import androidx.test.core.graphics.writeToTestStorage
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
@@ -12,7 +13,6 @@ import androidx.test.espresso.action.ViewActions.longClick
 import androidx.test.espresso.action.ViewActions.swipeDown
 import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.contrib.DrawerActions
-import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -21,11 +21,15 @@ import androidx.test.ext.junit.rules.activityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
+import eu.fliegendewurst.triliumdroid.database.Cache.Versions.DATABASE_VERSION_0_92_6
 import eu.fliegendewurst.triliumdroid.database.Cache.Versions.SYNC_VERSION_0_90_12
 import eu.fliegendewurst.triliumdroid.database.Cache.Versions.SYNC_VERSION_0_91_6
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.util.Preferences
+import org.hamcrest.Description
+import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
+import org.hamcrest.TypeSafeMatcher
 import org.junit.FixMethodOrder
 import org.junit.Rule
 import org.junit.Test
@@ -33,6 +37,7 @@ import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import java.io.IOException
+
 
 @RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -50,9 +55,9 @@ class InitialSyncTest {
 	@Test
 	@Throws(IOException::class)
 	fun test_010_initialSync() {
-		var index = 1
 		onView(withId(R.id.button_setup_sync))
 			.perform(click())
+		// see ./app/test/setup-sync-server.sh
 		onView(withId(R.id.server))
 			.perform(typeText("http://10.0.2.2:8080"))
 		onView(withId(R.id.password))
@@ -73,7 +78,15 @@ class InitialSyncTest {
 		// (these will only be synced after the DB nuke in 020)
 
 		// Trilium 0.91+: Demo Document has different default expanded state
-		if (Preferences.syncVersion()!! >= SYNC_VERSION_0_91_6) {
+		if (Preferences.databaseVersion()!! >= DATABASE_VERSION_0_92_6) {
+			for (name in listOf("Inbox", "Formatting examples")) {
+				onView(withText(name))
+					.perform(longClick())
+				Thread.sleep(2000)
+			}
+			onView(withIndex(withText("Journal"), 0)).perform(longClick())
+			Thread.sleep(2000)
+		} else if (Preferences.syncVersion()!! >= SYNC_VERSION_0_91_6) {
 			onView(withText("Trilium Demo"))
 				.perform(longClick())
 			Thread.sleep(2000)
@@ -89,13 +102,11 @@ class InitialSyncTest {
 			Thread.sleep(2000)
 		}
 		// End Trilium 0.91+
-		onView(ViewMatchers.isRoot())
-			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
+		saveScreenshot()
 		onView(withText("Trilium Demo"))
 			.perform(click())
 		Thread.sleep(2000) // wait for WebView to load
-		onView(ViewMatchers.isRoot())
-			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
+		saveScreenshot()
 	}
 
 	@Test
@@ -125,7 +136,6 @@ class InitialSyncTest {
 	@Test
 	@Throws(IOException::class)
 	fun test_015_renameDialog() {
-		var index = 1
 		// wait for note to load
 		Thread.sleep(5000)
 		// click to open rename dialog
@@ -133,14 +143,12 @@ class InitialSyncTest {
 			.perform(click())
 		// wait for WebView to load
 		Thread.sleep(2000)
-		onView(ViewMatchers.isRoot())
-			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
+		saveScreenshot()
 		onView(withId(R.id.note_title))
 			.perform(typeText(" Title Edited!"))
 		onView(withId(R.id.button_rename_note))
 			.perform(click())
-		onView(ViewMatchers.isRoot())
-			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
+		saveScreenshot()
 		// click to sync
 		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
 		onView(withText(R.string.action_sync))
@@ -152,7 +160,6 @@ class InitialSyncTest {
 	@Test
 	@Throws(IOException::class)
 	fun test_020_nukeDatabase() {
-		var index = 1
 		// click to open settings
 		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
 		onView(withText(R.string.action_settings))
@@ -167,20 +174,17 @@ class InitialSyncTest {
 		Espresso.pressBack()
 		// wait to sync
 		Thread.sleep(SYNC_WAIT_MS)
-		onView(ViewMatchers.isRoot())
-			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
+		saveScreenshot()
 	}
 
 	@Test
 	fun test_030_noteNavigation() {
-		var index = 1
 		Thread.sleep(2000) // wait until ready
 		onView(withId(R.id.fab))
 			.perform(click())
 		Thread.sleep(2000) // wait until ready
-		onView(ViewMatchers.isRoot())
-			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
-		for (text in arrayOf("Journal", "2021", "12 - December")) {
+		saveScreenshot()
+		for (text in arrayOf("root", "Journal", "2021", "12 - December")) {
 			onView(
 				allOf(
 					withText(text),
@@ -189,22 +193,11 @@ class InitialSyncTest {
 			).perform(click())
 			Thread.sleep(500)
 		}
-		onView(ViewMatchers.isRoot())
-			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
+		saveScreenshot()
 		onView(withId(R.id.navigation_list))
 			.perform(swipeDown())
 		Thread.sleep(500)
-		for (i in 0..0) {
-			onView(
-				allOf(
-					withText("24 - Sunday - Christmas Eve!"),
-					hasSibling(withId(R.id.navigation_button_icon))
-				)
-			).perform(click())
-			Thread.sleep(500)
-		}
-		onView(ViewMatchers.isRoot())
-			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${javaClass.simpleName}_${nameRule.methodName}_${index++}") })
+		saveScreenshot()
 	}
 
 	@Test
@@ -279,10 +272,38 @@ class InitialSyncTest {
 		saveScreenshot() // shows: dialog
 
 		// select note icon
-		onView(withText("\uE946"))
+		val triliumDemoIcon = if (Preferences.databaseVersion()!! >= DATABASE_VERSION_0_92_6) {
+			"\uE9f0"
+		} else {
+			"\uE946"
+		}
+		onView(withText(triliumDemoIcon))
 			.perform(click())
 		Thread.sleep(100)
 		saveScreenshot() // shows: changed icon
+	}
+
+	fun test_040_deleteJournal2021() {
+		// wait for note to load
+		Thread.sleep(5000)
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.START))
+		onView(withText("2021"))
+			.perform(click())
+		// wait for note to load
+		Thread.sleep(5000)
+		// click to delete
+		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
+		onView(withText(R.string.action_delete))
+			.perform(click())
+		saveScreenshot()
+		onView(withText(android.R.string.ok))
+			.perform(click())
+		// wait for delete to finish
+		Thread.sleep(5000)
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.START))
+		saveScreenshot()
 	}
 
 	private val screenshotCounts = mutableMapOf<String, Int>()
@@ -295,5 +316,22 @@ class InitialSyncTest {
 		onView(isRoot())
 			.perform(captureToBitmap { bitmap: Bitmap -> bitmap.writeToTestStorage("${id}_${screenshotCounts[id]}") })
 		screenshotCounts[id] = screenshotCounts[id]!! + 1
+	}
+}
+
+// https://stackoverflow.com/a/39756832/5837178
+private fun withIndex(matcher: Matcher<View>, index: Int): Matcher<View> {
+	return object : TypeSafeMatcher<View>() {
+		var currentIndex: Int = 0
+
+		override fun describeTo(description: Description) {
+			description.appendText("with index: ")
+			description.appendValue(index)
+			matcher.describeTo(description)
+		}
+
+		override fun matchesSafely(view: View): Boolean {
+			return matcher.matches(view) && currentIndex++ == index
+		}
 	}
 }
