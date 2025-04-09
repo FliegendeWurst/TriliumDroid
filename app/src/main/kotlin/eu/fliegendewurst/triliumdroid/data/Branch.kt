@@ -16,4 +16,8 @@ class Branch(
 		}
 		return note.compareTo(other.note)
 	}
+
+	override fun toString(): String {
+		return "Branch($id,parent=$parentNote,cachedPos=$cachedTreeIndex)"
+	}
 }

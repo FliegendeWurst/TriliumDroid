@@ -498,8 +498,12 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun scrollTreeToBranch(branch: Branch) {
-		Log.d(TAG, "scrolling to ${branch.cachedTreeIndex}")
-		val pos = branch.cachedTreeIndex ?: return
+		val pos = branch.cachedTreeIndex
+		Log.d(TAG, "scrolling to $pos")
+		if (pos == null) {
+			Log.e(TAG, "trying to scroll to branch with null cachedTreeIndex: $branch")
+			return
+		}
 		val frag = supportFragmentManager.findFragmentByTag("f0") ?: return
 		((frag as NoteTreeFragment).binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
 			pos,

@@ -167,9 +167,7 @@ class MainController {
 							startSync(activity)
 						}
 					}, {
-						activity.lifecycleScope.launch {
-							Cache.getTreeData("")
-							activity.refreshTree()
+						activity.handler.post {
 							handleError(activity, it)
 						}
 					})
