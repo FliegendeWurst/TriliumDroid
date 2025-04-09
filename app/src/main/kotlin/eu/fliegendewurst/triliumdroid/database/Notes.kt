@@ -325,6 +325,11 @@ object Notes {
 		// remove branches
 		Branches.delete(branch)
 		note.branches.remove(branch)
+		// clean up stale reference in parent
+		val parentNote = notes[branch.parentNote]
+		if (parentNote != null) {
+			parentNote.children = null
+		}
 		return@withContext true
 	}
 }
