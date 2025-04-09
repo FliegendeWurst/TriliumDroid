@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -9,42 +10,47 @@
         style="@style/SettingsTextLabelStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@id/edit_label_content"
         android:labelFor="@id/edit_label_content"
-        android:text="@string/label_title" />
+        android:text="@string/label_title"
+        app:layout_constraintBaseline_toBaselineOf="@id/edit_label_content"
+        app:layout_constraintLeft_toLeftOf="parent" />
 
     <EditText
         android:id="@+id/edit_label_content"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_toEndOf="@id/label_label_title"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         android:focusable="true"
         android:imeOptions="actionNext"
         android:importantForAutofill="no"
         android:inputType="text"
         android:minWidth="90dp"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintLeft_toRightOf="@id/label_label_title"
+        app:layout_constraintRight_toLeftOf="@id/checkbox_promoted"
+        app:layout_constraintTop_toTopOf="parent"
         tools:ignore="RelativeOverlap" />
 
     <CheckBox
         android:id="@+id/checkbox_promoted"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_toLeftOf="@id/button_delete_label"
-        android:text="Promoted" />
+        android:text="@string/label_promoted"
+        app:layout_constraintBaseline_toBaselineOf="@id/edit_label_content"
+        app:layout_constraintRight_toLeftOf="@id/button_delete_label" />
 
     <Button
         android:id="@+id/button_delete_label"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
         android:contentDescription="@string/description_delete_label"
         android:drawableStart="@drawable/bx_trash"
         android:paddingStart="4dp"
         android:paddingTop="0dp"
         android:paddingEnd="0dp"
-        android:paddingBottom="0dp" />
-</RelativeLayout>
+        android:paddingBottom="0dp"
+        app:layout_constraintBaseline_toBaselineOf="@id/checkbox_promoted"
+        app:layout_constraintRight_toRightOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
