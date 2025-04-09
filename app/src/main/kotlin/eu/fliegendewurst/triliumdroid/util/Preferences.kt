@@ -67,30 +67,30 @@ object Preferences {
 	fun isLeftAction(action: String) = prefs.getBoolean("fab_${action}_left", false)
 	fun isRightAction(action: String) = prefs.getBoolean("fab_${action}_right", false)
 
-	fun setHostname(hostname: String) = prefs.edit().putString(HOSTNAME, hostname).apply()
-	fun setPassword(password: String) = prefs.edit().putString(PASSWORD, password).apply()
-	fun setInstanceId(newValue: String) = prefs.edit().putString(INSTANCE_ID, newValue).apply()
-	fun setSyncVersion(newValue: Int) = prefs.edit().putInt(SYNC_VERSION, newValue).apply()
+	fun setHostname(hostname: String) = prefs.edit { putString(HOSTNAME, hostname) }
+	fun setPassword(password: String) = prefs.edit { putString(PASSWORD, password) }
+	fun setInstanceId(newValue: String) = prefs.edit { putString(INSTANCE_ID, newValue) }
+	fun setSyncVersion(newValue: Int) = prefs.edit { putInt(SYNC_VERSION, newValue) }
 	fun setDatabaseVersion(newValue: Int) = prefs.edit { putInt(DATABASE_VERSION, newValue) }
-	fun setLastReport(newValue: String) = prefs.edit().putString(LAST_REPORT, newValue).apply()
-	fun setLastNote(noteId: String) = prefs.edit().putString(LAST_NOTE, noteId).apply()
-	fun setSyncSSID(ssid: String) = prefs.edit().putString(SYNC_SSID, ssid).apply()
-	fun setMTLS(alias: String) = prefs.edit().putString(MTLS_CERT, alias).apply()
+	fun setLastReport(newValue: String) = prefs.edit { putString(LAST_REPORT, newValue) }
+	fun setLastNote(noteId: String) = prefs.edit { putString(LAST_NOTE, noteId) }
+	fun setSyncSSID(ssid: String) = prefs.edit { putString(SYNC_SSID, ssid) }
+	fun setMTLS(alias: String) = prefs.edit { putString(MTLS_CERT, alias) }
 	fun setDocumentSecret(newValue: String) =
-		prefs.edit().putString(DOCUMENT_SECRET, newValue).apply()
+		prefs.edit { putString(DOCUMENT_SECRET, newValue) }
 
-	fun setDatabaseMigration(newValue: Int) = prefs.edit().putInt(DB_MIGRATION, newValue).apply()
+	fun setDatabaseMigration(newValue: Int) = prefs.edit { putInt(DB_MIGRATION, newValue) }
 	fun setWidgetAction(appWidgetId: Int, action: String) =
-		prefs.edit().putString("widget_$appWidgetId", action).apply()
+		prefs.edit { putString("widget_$appWidgetId", action) }
 
-	fun clearMTLS() = prefs.edit().remove(MTLS_CERT).apply()
-	fun clearSyncSSID() = prefs.edit().remove(SYNC_SSID).apply()
+	fun clearMTLS() = prefs.edit { remove(MTLS_CERT) }
+	fun clearSyncSSID() = prefs.edit { remove(SYNC_SSID) }
 
-	fun clearSyncContext() = prefs.edit()
-		.remove(DOCUMENT_SECRET)
-		.remove(SYNC_VERSION)
-		.remove(INSTANCE_ID)
-		.apply()
+	fun clearSyncContext() = prefs.edit {
+		remove(DOCUMENT_SECRET)
+			.remove(SYNC_VERSION)
+			.remove(INSTANCE_ID)
+	}
 
 	fun hasSyncContext() =
 		listOf(DOCUMENT_SECRET, SYNC_VERSION, INSTANCE_ID).all { prefs.contains(it) }
