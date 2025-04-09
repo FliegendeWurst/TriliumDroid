@@ -179,6 +179,7 @@ object Sync {
 		ConnectionUtil.getAppInfo {
 			Log.d(TAG, "app info: $it")
 			if (it != null) {
+				Preferences.setDatabaseVersion(it.dbVersion)
 				if (Versions.SUPPORTED_SYNC_VERSIONS.contains(it.syncVersion) &&
 					Versions.SUPPORTED_DATABASE_VERSIONS.contains(it.dbVersion)
 				) {

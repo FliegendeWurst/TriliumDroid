@@ -2,6 +2,7 @@ package eu.fliegendewurst.triliumdroid.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.activity.main.HistoryItem
 import eu.fliegendewurst.triliumdroid.service.Util
@@ -22,6 +23,7 @@ object Preferences {
 	private const val LAST_NOTE = "LastNote"
 	private const val SYNC_VERSION = "syncVersion"
 	private const val DB_MIGRATION = "dbMigration"
+	private const val DATABASE_VERSION = "databaseVersion"
 
 	fun init(applicationContext: Context) {
 		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
@@ -50,6 +52,15 @@ object Preferences {
 		null
 	}
 
+	/**
+	 * Get the database version reported by the sync server.
+	 */
+	fun databaseVersion(): Int? = if (prefs.contains(DATABASE_VERSION)) {
+		prefs.getInt(DATABASE_VERSION, 0)
+	} else {
+		null
+	}
+
 	fun widgetAction(appWidgetId: Int): HistoryItem? =
 		parseWidgetAction(prefs.getString("widget_$appWidgetId", null))
 
@@ -60,6 +71,7 @@ object Preferences {
 	fun setPassword(password: String) = prefs.edit().putString(PASSWORD, password).apply()
 	fun setInstanceId(newValue: String) = prefs.edit().putString(INSTANCE_ID, newValue).apply()
 	fun setSyncVersion(newValue: Int) = prefs.edit().putInt(SYNC_VERSION, newValue).apply()
+	fun setDatabaseVersion(newValue: Int) = prefs.edit { putInt(DATABASE_VERSION, newValue) }
 	fun setLastReport(newValue: String) = prefs.edit().putString(LAST_REPORT, newValue).apply()
 	fun setLastNote(noteId: String) = prefs.edit().putString(LAST_NOTE, noteId).apply()
 	fun setSyncSSID(ssid: String) = prefs.edit().putString(SYNC_SSID, ssid).apply()
