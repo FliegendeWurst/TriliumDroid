@@ -518,6 +518,7 @@ object Cache {
 		override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
 			try {
 				// source: https://github.com/zadam/trilium/tree/master/db/migrations
+				// and: https://github.com/TriliumNext/Notes/tree/develop/db/migrations
 				db.transaction {
 					if (oldVersion < 215 && newVersion >= 215) {
 						Log.i(TAG, "migrating to version 215")
@@ -698,6 +699,14 @@ object Cache {
 						execSQL("UPDATE entity_changes SET entityId = REPLACE(entityId, '+', 'A') WHERE entityName = 'blobs'")
 						execSQL("UPDATE entity_changes SET entityId = REPLACE(entityId, '/', 'B') WHERE entityName = 'blobs';")
 					}
+					if (oldVersion < 229 && newVersion >= 229) {
+						Log.i(TAG, "migrating to version 229")
+						execSQL(
+							"CREATE TABLE IF NOT EXISTS user_data (tmpID INT, username TEXT, email TEXT, userIDEncryptedDataKey TEXT," +
+									"userIDVerificationHash TEXT,salt TEXT,derivedKey TEXT,isSetup TEXT DEFAULT \"false\"," +
+									"UNIQUE (tmpID),PRIMARY KEY (tmpID))"
+						)
+					}
 				}
 			} catch (t: Throwable) {
 				Log.e(TAG, "fatal error in database migration", t)
@@ -716,21 +725,27 @@ object Cache {
 		const val DATABASE_VERSION_0_60_4 = 214
 		const val DATABASE_VERSION_0_61_5 = 225
 		const val DATABASE_VERSION_0_62_3 = 227
-		const val DATABASE_VERSION_0_63_3 = 228 // same up to 0.91.6
+		const val DATABASE_VERSION_0_63_3 = 228 // same up to 0.92.4
+		const val DATABASE_VERSION_0_92_6 = 229
+
 		const val SYNC_VERSION_0_59_4 = 29
 		const val SYNC_VERSION_0_60_4 = 29
 		const val SYNC_VERSION_0_62_3 = 31
 		const val SYNC_VERSION_0_63_3 = 32
 		const val SYNC_VERSION_0_90_12 = 33
-		const val SYNC_VERSION_0_91_6 = 34
+		const val SYNC_VERSION_0_91_6 = 34 // same up to 0.92.6
 
 		val SUPPORTED_SYNC_VERSIONS: Set<Int> = setOf(
 			SYNC_VERSION_0_91_6,
 			SYNC_VERSION_0_90_12,
 			SYNC_VERSION_0_63_3,
 		)
+		val SUPPORTED_DATABASE_VERSIONS: Set<Int> = setOf(
+			DATABASE_VERSION_0_63_3,
+			DATABASE_VERSION_0_92_6,
+		)
 
-		const val DATABASE_VERSION = DATABASE_VERSION_0_63_3
+		const val DATABASE_VERSION = DATABASE_VERSION_0_92_6
 		const val DATABASE_NAME = "Document.db"
 
 		// sync version is largely irrelevant

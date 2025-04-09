@@ -179,7 +179,9 @@ object Sync {
 		ConnectionUtil.getAppInfo {
 			Log.d(TAG, "app info: $it")
 			if (it != null) {
-				if (Versions.SUPPORTED_SYNC_VERSIONS.contains(it.syncVersion) && it.dbVersion == Versions.DATABASE_VERSION) {
+				if (Versions.SUPPORTED_SYNC_VERSIONS.contains(it.syncVersion) &&
+					Versions.SUPPORTED_DATABASE_VERSIONS.contains(it.dbVersion)
+				) {
 					runBlocking {
 						sync(0, callbackOutstanding, callbackError, callbackDone)
 					}
