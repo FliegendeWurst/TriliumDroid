@@ -436,7 +436,9 @@ object Cache {
 					relations.add(Triple(id, attrValue, Pair(attrName, attrId)))
 				}
 			}
-			list.add(currentNote!!)
+			if (currentNote != null) {
+				list.add(currentNote)
+			}
 		}
 		val notesById = list.associateBy { x -> x.id }
 		val relationsById = mutableMapOf<String, MutableList<Relation>>()
