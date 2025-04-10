@@ -30,6 +30,8 @@ import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.TypeSafeMatcher
+import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.FixMethodOrder
 import org.junit.Rule
 import org.junit.Test
@@ -55,6 +57,7 @@ class InitialSyncTest {
 	@Test
 	@Throws(IOException::class)
 	fun test_010_initialSync() {
+		Thread.sleep(3000) // wait for network
 		onView(withId(R.id.button_setup_sync))
 			.perform(click())
 		// see ./app/test/setup-sync-server.sh
@@ -283,6 +286,7 @@ class InitialSyncTest {
 		saveScreenshot() // shows: changed icon
 	}
 
+	@Test
 	fun test_040_deleteJournal2021() {
 		// wait for note to load
 		Thread.sleep(5000)
@@ -292,7 +296,11 @@ class InitialSyncTest {
 			.perform(click())
 		// wait for note to load
 		Thread.sleep(5000)
-		// click to delete
+		// empty note, close sidebar
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.close(Gravity.START))
+		Thread.sleep(500)
+		// click delete in overflow menu
 		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
 		onView(withText(R.string.action_delete))
 			.perform(click())
