@@ -1,0 +1,3 @@
+- Compatibility with TriliumNext 0.92.6+
+- Fix crash when deleting notes
+- Fix crash when viewing global note map
