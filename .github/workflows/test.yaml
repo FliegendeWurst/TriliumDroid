@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v16
       - name: Install Trilium Server and ImageMagick
-        run: nix profile install nixpkgs/nixpkgs-unstable#trilium-next-server nixpkgs/nixpkgs-unstable#imagemagick
+        run: nix profile install nixpkgs/master#trilium-next-server nixpkgs/master#imagemagick
       - name: Run Trilium Server
         run: ./app/test/setup-test-server.sh
       - uses: actions/setup-java@v4
