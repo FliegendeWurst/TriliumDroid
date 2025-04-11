@@ -1,0 +1,23 @@
+name: Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Build release APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'adopt'
+          cache: gradle
+      - name: Run Gradle task :app:assembleRelease
+        run: gradle :app:assembleRelease
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: app/release/app-release.apk
