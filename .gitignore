@@ -19,3 +19,5 @@ local.properties
 /signing_key.jks
 /gradle
 /gradlew*
+/*.apk
+/*.idsig

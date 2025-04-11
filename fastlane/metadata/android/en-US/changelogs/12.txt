@@ -1,0 +1,7 @@
+Changes in Alpha 7:
+
+- Compatibility with TriliumNext 0.92.6+
+- Fix crash when deleting notes
+- Fix crash when viewing global note map
+
+Alpha 7.1 contains only internal build system changes.
