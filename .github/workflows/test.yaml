@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'adopt'
+          distribution: 'temurin'
           cache: gradle
       - name: Build tests
         run: gradle :app:packageDebugAndroidTest

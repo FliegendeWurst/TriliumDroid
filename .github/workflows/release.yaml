@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'adopt'
+          distribution: 'temurin'
           cache: gradle
       - name: Run Gradle task :app:assembleRelease
         run: gradle :app:assembleRelease
