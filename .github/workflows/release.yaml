@@ -13,9 +13,10 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: gradle
+      - name: Configure Gradle wrapper
+        run: gradle wrapper && killall java
       - name: Run Gradle task :app:assembleRelease
-        run: gradle :app:assembleRelease
+        run: ./gradlew :app:assembleRelease
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
