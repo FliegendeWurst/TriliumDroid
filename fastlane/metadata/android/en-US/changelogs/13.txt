@@ -1,0 +1,1 @@
+- APK is optimized using ProGuard for smaller size and better performance
