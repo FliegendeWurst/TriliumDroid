@@ -107,4 +107,12 @@
     <string name="label_set_ui_language">Arayüz dilini seçin</string>
     <string name="password_placeholder">Trilium parola</string>
     <string name="dialog_add_relation">Bağıntı ekle</string>
+    <string name="label_revisions">Düzeltme</string>
+    <string name="label_metadata">Meta veri</string>
+    <string name="label_note_id">Not KNu</string>
+    <string name="label_created">Oluşturuldu</string>
+    <string name="label_modified">Değiştirildi</string>
+    <string name="description_delete_revision">düzeltmeyi sil</string>
+    <string name="label_new_note_next">Geçerli notun yanında oluştur</string>
+    <string name="text_about_6">Android bağlantı noktası</string>
 </resources>
