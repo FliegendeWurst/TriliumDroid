@@ -2,67 +2,59 @@
 
 <img align="right" width="200" src="./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" />
 
-Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Notes) to Android. Related: https://github.com/TriliumNext/Notes/issues/72
+Unofficial port of [TriliumNext Notes](https://github.com/TriliumNext/Notes) to Android. Related: https://github.com/TriliumNext/Notes/issues/72
 
 [<img src="https://github.com/user-attachments/assets/38acb15c-dbe2-4bc1-9f8b-1539654d3641" width="170">](https://apt.izzysoft.de/fdroid/index/apk/eu.fliegendewurst.triliumdroid)
 
 ## Features
 
-- Support for version 0.92.6, 0.92.4, 0.91.6, 0.90.12 and 0.63.7 of sync protocol + database schema
-- Sync with other Trilium instance (push + pull)
-- Displaying/editing/sharing note content
-- Displaying/editing note attributes (labels and relations)
-- Attribute inheritance and templating
-- Displaying/modifying note icon
-- Displaying/modifying note paths
-- Displaying/collapsing/expanding note tree
-- Navigating using internal links
-- Encrypted notes
-- Browsing external links
-- Jump to note dialog
-- Local/global note map view
-- Basic Scripting
-- Upgrading to newer database versions / Trilium versions
-- Receive shared content to save as new note
-- Support for Android 7.0+
-- Translated UI
+- Synchronisation with sync server / desktop app
+- Notes can be arranged into arbitrarily deep tree, where single notes can be placed into multiple places in the tree
+- WYSIWYG note editor based on [AztecEditor](https://github.com/wordpress-mobile/AztecEditor-Android/)
+- Fast and easy navigation between notes
+- Automatic note versioning
+- Note attributes and relations for organization, querying and advanced scripting
+- Note encryption with per-note granularity
+- Canvas notes powered by [Excalidraw](https://excalidraw.com/)
+- Note map view (context-based / all notes)
+- Scripting API to automate tasks or send notifications
+
+More features are planned, see the [issue tracker](https://github.com/FliegendeWurst/TriliumDroid/issues?q=sort%3Aupdated-desc%20is%3Aissue%20is%3Aopen%20label%3Aenhancement) for a full list.
+
+### Android integration
+
+- Note content can be shared to other apps
+- Received shared content is saved as new note
+- Translated UI: English, German, Turkish, Chinese (Simplified Han script)
 - Light/Dark Theme following system preference
 
-## Usage
+### Requirements
 
-1. Download the app from [IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/eu.fliegendewurst.triliumdroid).
+- Sync server running TriliumNext/Trilium (any version from 0.92.7 to 0.63.7)
+- Android 7.0+
+
+For using the app without a sync server, follow [this issue](https://github.com/FliegendeWurst/TriliumDroid/issues/75).
+If you're still using Android 6.0 or older, see [this issue](https://github.com/FliegendeWurst/TriliumDroid/issues/72).
+
+## Installation
+
+If you already have [F-Droid](https://f-droid.org/) installed, you can add [IzzyOnDroid's F-Droid repository](https://apt.izzysoft.de/fdroid/) in F-Droid's settings. Then install the app like any other.
+
+Or if you prefer to install the app directly:
+
+1. Download the APK from [IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/eu.fliegendewurst.triliumdroid).
 2. Install the APK. You need to enable installing apps from unknown sources.
 3. Open the app and configure your sync server (hostname, port, password).
 4. Go back, wait until sync is finished.
 
-Then, you can:
-
-- inspect and navigate the note tree by opening the left side bar
-- view and modify note attributes by opening the right side bar
-- jump to notes using the floating action button in the bottom right corner
-- edit notes using the edit button in the top action bar
-
-There is also some preliminary support for scripting, but it doesn't work exactly like the Trilium API at the moment.
-
-## TODO
-- #sorted attribute
-- Search
-- Folder view of child nodes
-- Jump to note dialog: smart sort
-- Advanced Scripting
-- Included notes
-- Undeleting content
-- Erasing notes
-- Support for Android <= 6.0 (very low priority)
-- Special layout for tablet screens
-- F-Droid compatible gradle repositories (AztecEditor is not in Maven Central)
-- Encrypted local database (maybe): https://github.com/sqlcipher/android-database-sqlcipher
+Several parts of the user interface are configurable, check the app settings for more details.
+To edit notes, use the edit button in the toolbar.
 
 ## Contribute
 
-Please report bugs and missing features.
+Please report bugs and missing features. Translations are done via [Weblate](https://hosted.weblate.org/projects/triliumdroid/app/).
 
-Translations are done via [Weblate](https://hosted.weblate.org/projects/triliumdroid/app/).
+If you're any good at Android app development using Kotlin, feel free to contribute code :)
 
 ### Testing
 
@@ -92,4 +84,5 @@ Parts of this program are derived from Elian Doran's [TriliumNext Notes](https:/
 The MIT License applies to the [boxicons](https://boxicons.com/) included in the project (see `boxicons_LICENSE.txt`).  
 The GPL-3.0 license applies to the styles derived from [Simple-Commons](https://github.com/SimpleMobileTools/Simple-Commons).  
 The MPL-2.0 license applies to the included [AztecEditor-Android](https://github.com/wordpress-mobile/AztecEditor-Android/).  
+The MIT license applies to the bundled [excalidraw](https://github.com/excalidraw/excalidraw) (see license notices in `app/src/main/assets/web.zip`).  
 For other included libraries, their respective license applies.  

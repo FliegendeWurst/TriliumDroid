@@ -28,6 +28,7 @@ import eu.fliegendewurst.triliumdroid.database.Attributes
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteBinding
+import eu.fliegendewurst.triliumdroid.util.Assets
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -69,8 +70,12 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		)
 		binding.webview.webChromeClient = object : WebChromeClient() {
 			override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+				if (consoleMessage == null) {
+					return true /* handled */
+				}
+				Log.d(TAG, "console.log ${consoleMessage.message()}")
 				(this@NoteFragment.activity as MainActivity).enableConsoleLogAction()
-				this@NoteFragment.console.add(consoleMessage ?: return true)
+				this@NoteFragment.console.add(consoleMessage)
 				return true
 			}
 		}
@@ -113,11 +118,31 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 				view: WebView,
 				request: WebResourceRequest
 			): WebResourceResponse? {
-				Log.d(
-					TAG,
-					"intercept: ${request.url.host} ${request.url.query} ${request.url} ${request.url.pathSegments.size}"
-				)
-				if (request.url.host == WEBVIEW_HOST && (request.url.pathSegments.size <= 1 || request.url.pathSegments.size == 5)) {
+				Log.d(TAG, "intercept: ${request.url.host} ${request.url}")
+				if (request.url.host == "esm.sh") {
+					val effectiveUrl = request.url.toString()
+					val asset = Assets.webAsset(view.context, effectiveUrl)
+					val mime = if (effectiveUrl.endsWith(".css")) {
+						"text/css"
+					} else if (effectiveUrl.endsWith(".woff2")) {
+						"font/woff2"
+					} else {
+						"application/javascript"
+					}
+					return if (asset != null) {
+						val resp = WebResourceResponse(mime, "utf-8", asset)
+						resp.responseHeaders = mapOf(Pair("Access-Control-Allow-Origin", "*"))
+						resp
+					} else {
+						Log.e(TAG, "intercept missing: ${request.url} !")
+						// catch-all blocker
+						WebResourceResponse(
+							mime,
+							null,
+							"esm.sh req. @ $effectiveUrl not cached, please report to TriliumDroid issue tracker".byteInputStream()
+						)
+					}
+				} else if (request.url.host == WEBVIEW_HOST && (request.url.pathSegments.size <= 2 || request.url.pathSegments.size == 5)) {
 					// /api/attachments/note_id/image/Trilium%20Demo_trilium-icon.png
 					var id = when (request.url.pathSegments.size) {
 						0 -> {
@@ -126,6 +151,11 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 
 						1 -> {
 							request.url.lastPathSegment!!
+						}
+
+						// request of /excalidraw-data/${noteId}
+						2 -> {
+							request.url.pathSegments[1]
 						}
 
 						else -> {
@@ -138,12 +168,30 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 					if (id == "favicon.ico") {
 						return null // TODO: catch all invalid IDs
 					}
+					if (id == "excalidraw_loader.js") {
+						return WebResourceResponse(
+							"text/javascript",
+							null,
+							Assets.excalidrawLoaderJS(view.context).byteInputStream()
+						)
+					}
 					val note = runBlocking { Notes.getNoteWithContent(id) }
 					// viewing revision: override response for main note
 					var content = if (blob != null && id == this@NoteFragment.note?.id) {
 						blob!!.content
 					} else {
 						note?.content()
+					}
+					if (request.url.pathSegments.getOrNull(0) == "excalidraw-data") {
+						if (content == null) {
+							Log.w(TAG, "canvas note without content")
+							return WebResourceResponse(
+								"application/json",
+								null,
+								"{}".byteInputStream()
+							)
+						}
+						return WebResourceResponse("application/json", null, content.inputStream())
 					}
 					var mime = note?.mime
 					if (note == null) {
@@ -152,37 +200,49 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 						content = attachment?.content
 						mime = attachment?.mime
 					}
-					return if (content != null) {
-						var data: ByteArray = content
-						if (mime == "text/html") {
-							// fixup useless nested divs
-							while (true) {
-								val contentFixed = FIXER.matchEntire(data.decodeToString())
-								if (contentFixed != null) {
-									data = contentFixed.groups[2]!!.value.encodeToByteArray()
-								} else {
-									break
-								}
-							}
-						}
-						if (note != null && note.id == this@NoteFragment.note?.id && subCodeNotes != null) {
-							// append <script> tags to load children
-							if (data.isEmpty()) {
-								data += "<!DOCTYPE html>".encodeToByteArray()
-							}
-							for (n in subCodeNotes!!) {
-								data += "<script src='/${n.id}'></script>".encodeToByteArray()
-							}
-						}
-						if (mime == "text/html") {
-							data += "<style>@media (prefers-color-scheme: dark) { * { color: white; background-color: black; } }</style>".encodeToByteArray()
-						}
-						WebResourceResponse(mime, null, data.inputStream())
-					} else {
-						null
+					if (content == null) {
+						return null
 					}
+					var data: ByteArray = content
+					// Excalidraw/Canvas notes: use generic wrapper note
+					if (note?.type == "canvas") {
+						Log.d(TAG, "canvas note, returning excalidraw template!")
+						return WebResourceResponse(
+							"text/html",
+							"utf-8",
+							Assets.excalidrawTemplateHTML(view.context).byteInputStream()
+						)
+					}
+					if (mime == "text/html") {
+						// fixup useless nested divs
+						while (true) {
+							val contentFixed = FIXER.matchEntire(data.decodeToString())
+							if (contentFixed != null) {
+								data = contentFixed.groups[2]!!.value.encodeToByteArray()
+							} else {
+								break
+							}
+						}
+					}
+					if (note != null && note.id == this@NoteFragment.note?.id && subCodeNotes != null) {
+						// append <script> tags to load children
+						if (data.isEmpty()) {
+							data += "<!DOCTYPE html>".encodeToByteArray()
+						}
+						for (n in subCodeNotes!!) {
+							data += "<script src='/${n.id}'></script>".encodeToByteArray()
+						}
+					}
+					if (mime == "text/html") {
+						data += "<style>@media (prefers-color-scheme: dark) { * { color: white; background-color: black; } }</style>".encodeToByteArray()
+					}
+					return WebResourceResponse(mime, null, data.inputStream())
 				}
-				return null
+				return WebResourceResponse(
+					"text/plain",
+					null,
+					"arbitrary internet access not allowed in TriliumDroid sandbox".byteInputStream()
+				)
 			}
 		}
 
@@ -254,7 +314,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 				subCodeNotes =
 					note.children.orEmpty().map { Notes.getNote(it.note)!! }
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
-			} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg")) {
+			} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg") || note.type == "canvas") {
 				binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
 			} else {
 				binding.webview.settings.builtInZoomControls = true
@@ -269,6 +329,10 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			}
 
 			val main = (this@NoteFragment.activity ?: return@launch) as MainActivity
+			// FABs obscure excalidraw menu items
+			if (note.type == "canvas") {
+				main.fixVisibilityFABs(true)
+			}
 			main.setupActions(
 				consoleLog,
 				execute,

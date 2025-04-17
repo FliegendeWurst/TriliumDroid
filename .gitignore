@@ -21,3 +21,6 @@ local.properties
 /gradlew*
 /*.apk
 /*.idsig
+/intercepts.txt
+/app/src/web/https*
+/app/src/web/web.zip

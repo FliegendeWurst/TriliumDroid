@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Excalidraw / canvas note</title>
+    <meta charset="UTF-8" />
+    <link
+            rel="stylesheet"
+            href="https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/dev/index.css"
+    />
+    <style>
+        body {
+            padding: 0px;
+            margin: 0px;
+        }
+        :root {
+            --theme-style: light;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme-style: dark;
+                background-color: black;
+            }
+        }
+    </style>
+    <script>
+        window.EXCALIDRAW_ASSET_PATH = "https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/prod/";
+    </script>
+    <script type="importmap">
+        {
+          "imports": {
+            "excalidraw": "https://esm.sh/@excalidraw/excalidraw@0.18.0/dist/dev/index.js?external=react,react-dom&standalone",
+            "react": "https://esm.sh/react@19.0.0",
+            "react/jsx-runtime": "https://esm.sh/react@19.0.0/jsx-runtime",
+            "react-dom": "https://esm.sh/react-dom@19.0.0",
+            "react-dom-client": "https://esm.sh/react-dom@19.0.0/client"
+          }
+        }
+    </script>
+</head>
+
+<body>
+<div id="app"></div>
+<script type="module" src="/excalidraw_loader.js"></script>
+</body>
+</html>

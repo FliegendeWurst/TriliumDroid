@@ -24,6 +24,7 @@ object Preferences {
 	private const val SYNC_VERSION = "syncVersion"
 	private const val DB_MIGRATION = "dbMigration"
 	private const val DATABASE_VERSION = "databaseVersion"
+	private const val WEB_ASSETS_VERSION = "webAssetsVersion"
 
 	fun init(applicationContext: Context) {
 		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
@@ -61,6 +62,8 @@ object Preferences {
 		null
 	}
 
+	fun webAssetsVersion(): Int = prefs.getInt(WEB_ASSETS_VERSION, 0)
+
 	fun widgetAction(appWidgetId: Int): HistoryItem? =
 		parseWidgetAction(prefs.getString("widget_$appWidgetId", null))
 
@@ -82,6 +85,8 @@ object Preferences {
 	fun setDatabaseMigration(newValue: Int) = prefs.edit { putInt(DB_MIGRATION, newValue) }
 	fun setWidgetAction(appWidgetId: Int, action: String) =
 		prefs.edit { putString("widget_$appWidgetId", action) }
+
+	fun setWebAssetsVersion(version: Int) = prefs.edit { putInt(WEB_ASSETS_VERSION, version) }
 
 	fun clearMTLS() = prefs.edit { remove(MTLS_CERT) }
 	fun clearSyncSSID() = prefs.edit { remove(SYNC_SSID) }

@@ -433,7 +433,7 @@ class MainActivity : AppCompatActivity() {
 		binding.drawerLayout.openDrawer(GravityCompat.START)
 	}
 
-	fun showFragment(frag: Fragment, hideFabs: Boolean) {
+	fun fixVisibilityFABs(hideFabs: Boolean) {
 		if (hideFabs) {
 			binding.fabTree.hide()
 			binding.fab.hide()
@@ -445,6 +445,10 @@ class MainActivity : AppCompatActivity() {
 				binding.fab.show()
 			}
 		}
+	}
+
+	fun showFragment(frag: Fragment, hideFabs: Boolean) {
+		fixVisibilityFABs(hideFabs)
 		val item = binding.toolbar.menu.findItem(R.id.action_edit)
 		if (frag is NoteEditFragment) {
 			item?.setIcon(R.drawable.bx_save)

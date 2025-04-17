@@ -667,6 +667,14 @@ class FrontendBackendApi(
 
 	// TODO __private.becca
 
+	// --- internal API functions ---
+	@JavascriptInterface
+	fun updateExcalidrawNote(noteId: String, newContent: String) {
+		runBlocking {
+			Notes.setNoteContent(noteId, newContent)
+		}
+	}
+
 	private fun encodeNote(note: Note?): JSONObject? {
 		if (note == null) {
 			return null
