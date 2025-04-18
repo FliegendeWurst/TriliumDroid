@@ -1,1 +1,3 @@
+- New note type: canvas notes using Excalidraw for free-form diagrams and sketches
 - APK is optimized using ProGuard for smaller size and better performance
+- Fixed crash when last viewed note was deleted during sync

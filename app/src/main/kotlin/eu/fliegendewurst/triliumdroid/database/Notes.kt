@@ -91,6 +91,15 @@ object Notes {
 			return@withContext createChildNote(getNote(parentNote[1].note)!!, newNoteTitle)
 		}
 
+	suspend fun getRootNote(): Note {
+		val root = getNote("root")
+		if (root == null) {
+			Log.e(TAG, "fatal: root note not found")
+			throw IllegalStateException("fatal: root note not found")
+		}
+		return root
+	}
+
 	suspend fun getNote(id: String): Note? {
 		val note = notes[id]
 		if (note != null && !note.invalid()) {

@@ -23,6 +23,7 @@ object Branches {
 
 	/**
 	 * Get one possible note path for the provided note id.
+	 * For deleted notes, this path is probably empty.
 	 */
 	suspend fun getNotePath(id: String): List<Branch> = withContext(Dispatchers.IO) {
 		val l = mutableListOf<Branch>()

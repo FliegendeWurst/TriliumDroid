@@ -756,7 +756,16 @@ class MainActivity : AppCompatActivity() {
 				refreshTree()
 			}
 			tree!!.select(note.id)
-			val noteContent = Notes.getNoteWithContent(note.id)!!
+			val noteContent = Notes.getNoteWithContent(note.id)
+			if (noteContent == null) {
+				if (note.id == "root") {
+					Log.e(TAG, "fatal error, missing content for root note")
+					return@launch
+				}
+				Log.w(TAG, "attempted to load deleted note, loading root instead")
+				load(Notes.getRootNote(), null)
+				return@launch
+			}
 			if (noteContent.isProtected && !ProtectedSession.isActive()) {
 				showFragment(EncryptedNoteFragment(), true)
 			} else {
