@@ -1,4 +1,4 @@
-package eu.fliegendewurst.triliumdroid.fragment
+package eu.fliegendewurst.triliumdroid.fragment.note
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -28,6 +28,7 @@ import eu.fliegendewurst.triliumdroid.database.Attributes
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteBinding
+import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import eu.fliegendewurst.triliumdroid.util.Assets
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking

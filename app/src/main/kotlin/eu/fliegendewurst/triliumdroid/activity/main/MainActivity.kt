@@ -65,7 +65,7 @@ import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.fragment.EncryptedNoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.NavigationFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
-import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
+import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment

@@ -51,7 +51,7 @@ import eu.fliegendewurst.triliumdroid.dialog.SelectNoteDialog
 import eu.fliegendewurst.triliumdroid.dialog.YesNoDialog
 import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
-import eu.fliegendewurst.triliumdroid.fragment.NoteFragment
+import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.SyncErrorFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
