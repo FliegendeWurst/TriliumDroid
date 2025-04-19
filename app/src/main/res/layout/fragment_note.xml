@@ -18,7 +18,7 @@
             android:id="@+id/note_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/background2">
+            android:background="@color/background3">
 
             <androidx.constraintlayout.helper.widget.Flow
                 android:id="@+id/note_header_attributes"

@@ -14,6 +14,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="background">@color/white</color>
     <color name="background2">#FFEEEEEE</color>
+    <color name="background3">#eeeeee</color>
     <color name="foreground">@color/black</color>
     <color name="tree_selected">#FFffe44c</color>
     <color name="tree_normal">#FFeeeeee</color>

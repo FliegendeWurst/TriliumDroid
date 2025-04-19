@@ -16,7 +16,7 @@ jobs:
         id: cache-build
         with:
           path: app/build
-          key: ${{ runner.os }}-build-${{ hashFiles('app/build.gradle') }}
+          key: ${{ runner.os }}-build-${{ hashFiles('**/build.gradle') }}
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v16
       - name: Install Trilium Server and ImageMagick
