@@ -67,17 +67,21 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 					return true /* handled */
 				}
 				Log.d(TAG, "console.log ${consoleMessage.message()}")
-				(this@NoteFragment.activity as MainActivity).enableConsoleLogAction()
+				val main = (this@NoteFragment.activity as MainActivity?) ?: return true
+				main.enableConsoleLogAction()
 				this@NoteFragment.console.add(consoleMessage)
 				return true
 			}
 		}
-		binding.webview.webViewClient = NoteWebViewClient(
+		val wvc = NoteWebViewClient(
 			{ return@NoteWebViewClient note },
 			{ return@NoteWebViewClient blob },
 			{ return@NoteWebViewClient subCodeNotes },
 			{ return@NoteWebViewClient activity as MainActivity? },
 			{ startActivity(it) })
+
+		binding.webview.webViewClient = wvc
+		binding.webviewChildrenNotes.webViewClient = wvc
 
 		if (load) {
 			viewLifecycleOwner.lifecycleScope.launch {
@@ -171,6 +175,16 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			share,
 			note.id == "root"
 		)
+
+		// set up children view
+		val children = note.children.orEmpty()
+		if (children.isNotEmpty()) {
+			binding.webviewChildrenNotes.loadUrl("${WEBVIEW_DOMAIN}note-children/${note.id}")
+			binding.webviewChildrenNotes.visibility = View.VISIBLE
+		} else {
+			binding.webviewChildrenNotes.loadUrl("about:blank")
+			binding.webviewChildrenNotes.visibility = View.GONE
+		}
 
 		if (note.content() == null || note.content()?.size == 0 || (
 					note.content()?.size == 15 && note.content()

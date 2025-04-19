@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<style>
+    /* Styling based on TriliumNext theme */
+    body {
+        background-color: white;
+    }
+    :root {
+        --card-border-color: #eaeaea;
+        --card-shadow-color: rgba(0,0,0,0.1);
+        --card-background-color: #f5f5f5;
+    }
+    @media (prefers-color-scheme: dark) {
+        body {
+            background-color: black;
+            color: white;
+        }
+        :root {
+            --card-border-color: #222222;
+            --card-background-color: #ffffff12;
+        }
+        a {
+            color: rgba(57, 186, 230, .7);
+        }
+        a:visited {
+            color: rgba(67, 186, 230, .7);
+        }
+    }
+    .note-list-container {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .note-book-card {
+        max-height: 10em;
+        border: 1px solid var(--card-border-color);
+        box-shadow: 2px 3px 4px var(--card-shadow-color);
+        border-radius: 12px;
+        background-color: var(--card-background-color);
+        overflow: hidden;
+    }
+    .note-book-header {
+        font-size: 1em;
+        font-weight: bold;
+        padding: 0.5em 1rem;
+        margin: 0px;
+        line-height: 1.5em;
+        height: 1.5em;
+        border-bottom: 1px solid var(--card-border-color);
+    }
+    .note-book-content {
+        margin: 0.5em 1rem;
+    }
+</style>

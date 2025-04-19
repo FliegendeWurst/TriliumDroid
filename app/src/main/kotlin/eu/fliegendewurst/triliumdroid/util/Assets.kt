@@ -4,14 +4,9 @@ import android.content.Context
 import android.util.Log
 import java.io.InputStream
 import java.util.zip.ZipFile
-import java.util.zip.ZipInputStream
-import kotlin.io.path.bufferedWriter
-import kotlin.io.path.createFile
 import kotlin.io.path.deleteIfExists
-import kotlin.io.path.exists
 import kotlin.io.path.notExists
 import kotlin.io.path.outputStream
-import kotlin.io.path.writer
 
 object Assets {
 	private const val TAG: String = "Assets"
@@ -19,6 +14,7 @@ object Assets {
 
 	private var excalidraw_TPL: String? = null
 	private var excalidraw_loader: String? = null
+	private var noteChildren_TPL: String? = null
 
 	fun excalidrawTemplateHTML(context: Context): String {
 		if (excalidraw_TPL != null) {
@@ -43,6 +39,18 @@ object Assets {
 			}
 		}
 		return excalidraw_loader!!
+	}
+
+	fun noteChildrenTemplateHTML(context: Context): String {
+		if (noteChildren_TPL != null) {
+			return noteChildren_TPL!!
+		}
+		context.resources.assets.open("noteChildren_TPL.html").use { fileInput ->
+			fileInput.bufferedReader().use {
+				noteChildren_TPL = it.readText()
+			}
+		}
+		return noteChildren_TPL!!
 	}
 
 	fun webAsset(context: Context, url: String): InputStream? = synchronized(this) {

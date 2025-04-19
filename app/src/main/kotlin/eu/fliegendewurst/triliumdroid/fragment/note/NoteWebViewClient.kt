@@ -1,6 +1,7 @@
 package eu.fliegendewurst.triliumdroid.fragment.note
 
 import android.content.Intent
+import android.text.Html.escapeHtml
 import android.util.Log
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -105,6 +106,7 @@ class NoteWebViewClient(
 				}
 
 				// request of /excalidraw-data/${noteId}
+				// or /note-children/${noteId}
 				2 -> {
 					request.url.pathSegments[1]
 				}
@@ -134,7 +136,8 @@ class NoteWebViewClient(
 			} else {
 				note?.content()
 			}
-			if (request.url.pathSegments.getOrNull(0) == "excalidraw-data") {
+			val firstSegment = request.url.pathSegments.getOrNull(0)
+			if (firstSegment == "excalidraw-data") {
 				if (content == null) {
 					Log.w(TAG, "canvas note without content")
 					return WebResourceResponse(
@@ -144,6 +147,34 @@ class NoteWebViewClient(
 					)
 				}
 				return WebResourceResponse("application/json", null, content.inputStream())
+			} else if (firstSegment == "note-children") {
+				return runBlocking {
+					val children = note!!.computeChildren()
+					var html = Assets.noteChildrenTemplateHTML(view.context)
+					html += "<div class='note-list-container'>"
+					for (child in children) {
+						val contentNote = Notes.getNoteWithContent(child.note) ?: continue
+						val contentDecoded = if (contentNote.type != "text") {
+							"${contentNote.type} note"
+						} else {
+							contentNote.content()?.decodeToString() ?: ""
+						}
+						html += "<div class='note-book-card'>"
+						html += "<h5 class='note-book-header'><a href='#${child.note}'>"
+						html += escapeHtml(contentNote.title())
+						html += "</a></h5>"
+						html += "<div class='note-book-content type-text'>"
+						html += contentDecoded
+						html += "</div>"
+						html += "</div>"
+					}
+					html += "</div>"
+					return@runBlocking WebResourceResponse(
+						"text/html",
+						"utf-8",
+						html.byteInputStream()
+					)
+				}
 			}
 			var mime = note?.mime
 			if (note == null) {
