@@ -14,11 +14,10 @@ import android.database.sqlite.SQLiteQuery
 import android.icu.text.SimpleDateFormat
 import android.os.Build
 import android.util.Log
-import androidx.core.database.getBlobOrNull
 import androidx.core.database.getStringOrNull
 import androidx.core.database.sqlite.transaction
 import eu.fliegendewurst.triliumdroid.R
-import eu.fliegendewurst.triliumdroid.data.Attachment
+import eu.fliegendewurst.triliumdroid.data.BlobId
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
@@ -54,24 +53,30 @@ object Cache {
 	suspend fun registerEntityChange(
 		table: String,
 		id: String,
-		toHash: Array<String>,
+		toHash: Array<String?>,
 		isErased: Boolean = false
 	) {
-		registerEntityChange(table, id, toHash.map { it.encodeToByteArray() }, isErased)
+		registerEntityChange(table, id, toHash.map { it?.encodeToByteArray() }, isErased)
 	}
 
 	suspend fun registerEntityChange(
 		table: String,
 		id: String,
-		toHash: List<ByteArray>,
+		toHash: List<ByteArray?>,
 		isErased: Boolean = false
 	) = withContext(Dispatchers.IO) {
 		val utc = utcDateModified()
+		// https://github.com/TriliumNext/Notes/blob/v0.93.0/src/becca/entities/abstract_becca_entity.ts#L63-L76
 		val md = MessageDigest.getInstance("SHA-1")
 		for (h in toHash) {
 			md.update('|'.code.toByte())
-			md.update(h, 0, h.size)
+			if (h != null) {
+				md.update(h)
+			} else {
+				md.update("null".encodeToByteArray())
+			}
 		}
+		// TODO if isDeleted, add |deleted
 		val sha1hash = md.digest()
 		val hash = Base64.encode(sha1hash).substring(0 until 10)
 		// TODO: correct hash for blobs?
@@ -114,34 +119,6 @@ object Cache {
 			}
 		}
 
-	suspend fun getAttachmentWithContent(id: String): Attachment? {
-		return getAttachmentInternal(id)
-	}
-
-	private suspend fun getAttachmentInternal(id: String): Attachment? =
-		withContext(Dispatchers.IO) {
-			var note: Attachment? = null
-			CursorFactory.selectionArgs = arrayOf(id)
-			db!!.rawQueryWithFactory(
-				CursorFactory,
-				"SELECT content," + // 0
-						"mime " + // 1
-						"FROM attachments LEFT JOIN blobs USING (blobId) " +
-						"WHERE attachments.attachmentId = ? AND attachments.isDeleted = 0",
-				arrayOf(id),
-				"notes"
-			).use {
-				if (it.moveToFirst()) {
-					note = Attachment(
-						id,
-						it.getString(1),
-					)
-					note!!.content = it.getBlobOrNull(0)
-				}
-			}
-			return@withContext note
-		}
-
 	suspend fun getJumpToResults(input: String): List<Note> = withContext(Dispatchers.IO) {
 		val notes = mutableListOf<Note>()
 		db!!.rawQuery(
@@ -154,12 +131,14 @@ object Cache {
 					it.getString(1),
 					it.getString(2),
 					it.getString(3),
+					false,
+					null,
 					"INVALID",
 					"INVALID",
 					"INVALID",
 					"INVALID",
 					false,
-					"INVALID"
+					BlobId("INVALID")
 				)
 				notes.add(note)
 			}
@@ -211,7 +190,7 @@ object Cache {
 				val isProtected = it.getInt(11) != 0
 				val utcDateCreated = it.getString(12)
 				val utcDateModified = it.getString(13)
-				val blobId = it.getString(14)
+				val blobId = BlobId(it.getString(14))
 				val b = Branch(
 					branchId,
 					noteId,
@@ -227,6 +206,8 @@ object Cache {
 						mime,
 						title,
 						type,
+						false,
+						null,
 						dateCreated,
 						dateModified,
 						utcDateCreated,
@@ -343,8 +324,8 @@ object Cache {
 		}
 		// perform migrations as needed
 		val migrationLevel = Preferences.databaseMigration()
-		val decoded = mutableListOf<Pair<String, ByteArray>>()
 		if (migrationLevel < 1) {
+			val decoded = mutableListOf<Pair<String, ByteArray>>()
 			// base64-decode all blobs.content values
 			CursorFactory.selectionArgs = arrayOf()
 			db!!.rawQueryWithFactory(
@@ -367,7 +348,10 @@ object Cache {
 				db!!.update("blobs", cv, "blobId = ?", arrayOf(p.first))
 			}
 		}
-		Preferences.setDatabaseMigration(1)
+		if (migrationLevel < 2) {
+			Blobs.fixupBrokenBlobIDs()
+		}
+		Preferences.setDatabaseMigration(2)
 	}
 
 	fun nukeDatabase(context: Context) {
@@ -383,7 +367,7 @@ object Cache {
 		branches.clear()
 		lastSync = null
 		// DB migrations are only for fixups
-		Preferences.setDatabaseMigration(1)
+		Preferences.setDatabaseMigration(2)
 	}
 
 	fun closeDatabase() {
@@ -427,7 +411,20 @@ object Cache {
 					if (currentNote != null) {
 						list.add(currentNote)
 					}
-					currentNote = Note(id, "", title, "", "", "", "", "", false, "")
+					currentNote = Note(
+						id,
+						"",
+						title,
+						"",
+						false,
+						null,
+						"",
+						"",
+						"",
+						"",
+						false,
+						BlobId("INVALID")
+					)
 				}
 				if (attrValue != null && !attrValue.startsWith('_') && !attrName.startsWith(
 						"child:"
@@ -511,7 +508,7 @@ object Cache {
 					}
 				}
 				// DB migrations are only for fixups
-				Preferences.setDatabaseMigration(1)
+				Preferences.setDatabaseMigration(2)
 			} catch (t: Throwable) {
 				Log.e(TAG, "fatal error creating database", t)
 			}
@@ -790,6 +787,8 @@ fun Boolean.boolToIntString(): String = if (this) {
 } else {
 	"0"
 }
+
+fun Int.intValueToBool(): Boolean = this == 1
 
 fun String.parseUtcDate(): OffsetDateTime =
 	OffsetDateTime.parse(this.replace(' ', 'T'))

@@ -150,7 +150,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			subCodeNotes =
 				note.children.orEmpty().map { Notes.getNote(it.note)!! }
 			binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
-		} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg") || note.type == "canvas") {
+		} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg") || note.type == "canvas" || note.type == "book") {
 			binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
 		} else {
 			binding.webview.settings.builtInZoomControls = true
@@ -179,6 +179,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		// set up children view
 		val children = note.children.orEmpty()
 		if (children.isNotEmpty()) {
+			// TODO: fully support book notes
 			binding.webviewChildrenNotes.loadUrl("${WEBVIEW_DOMAIN}note-children/${note.id}")
 			binding.webviewChildrenNotes.visibility = View.VISIBLE
 		} else {

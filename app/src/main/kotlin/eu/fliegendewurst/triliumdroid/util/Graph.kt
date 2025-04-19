@@ -1,6 +1,6 @@
 package eu.fliegendewurst.triliumdroid.util
 
-import java.util.TreeSet
+import java.util.*
 
 class Graph<V, E> {
 	val nodes: TreeSet<V> = TreeSet()

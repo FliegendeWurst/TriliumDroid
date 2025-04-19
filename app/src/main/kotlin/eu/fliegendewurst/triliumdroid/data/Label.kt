@@ -16,12 +16,30 @@ class Label(
 
 	fun makeInherited(): Label {
 		// TODO: check if this ID still makes sense?
-		return Label(id, name, value, inheritable, promoted, multi, inherited = true, templated = false)
+		return Label(
+			id,
+			name,
+			value,
+			inheritable,
+			promoted,
+			multi,
+			inherited = true,
+			templated = false
+		)
 	}
 
 	fun makeTemplated(): Label {
 		// TODO: check if this ID still makes sense?
-		return Label(id, name, value, inheritable, promoted, multi, inherited = false, templated = true)
+		return Label(
+			id,
+			name,
+			value,
+			inheritable,
+			promoted,
+			multi,
+			inherited = false,
+			templated = true
+		)
 	}
 
 }

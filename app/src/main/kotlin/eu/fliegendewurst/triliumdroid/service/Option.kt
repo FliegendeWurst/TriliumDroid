@@ -2,7 +2,6 @@ package eu.fliegendewurst.triliumdroid.service
 
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
-import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Cache.db
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import kotlinx.coroutines.Dispatchers

@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import androidx.core.database.getStringOrNull
+import eu.fliegendewurst.triliumdroid.data.BlobId
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteRevision
 import eu.fliegendewurst.triliumdroid.database.Cache.db
@@ -23,7 +24,7 @@ object NoteRevisions {
 		cv.put("mime", note.mime)
 		cv.put("title", note.rawTitle())
 		cv.put("isProtected", note.isProtected.boolToIntValue())
-		cv.put("blobId", note.blobId)
+		cv.put("blobId", note.blobId.id)
 		cv.put("utcDateLastEdited", note.utcModified)
 		// FIXME: this should be the date of previous revision
 		// if that makes sense..
@@ -106,7 +107,7 @@ object NoteRevisions {
 						mime,
 						title,
 						isProtected,
-						blobId,
+						BlobId(blobId),
 						utcDateLastEdited,
 						utcDateCreated,
 						utcDateModified,
@@ -117,6 +118,71 @@ object NoteRevisions {
 			}
 		}
 		return@withContext revs
+	}
+
+	suspend fun load(revisionId: String): NoteRevision? = withContext(Dispatchers.IO) {
+		db!!.query(
+			"revisions",
+			arrayOf(
+				"noteId",
+				"type",
+				"mime",
+				"title",
+				"isProtected",
+				"blobId",
+				"utcDateLastEdited",
+				"utcDateCreated",
+				"utcDateModified",
+				"dateLastEdited",
+				"dateCreated"
+			),
+			"revisionId = ?",
+			arrayOf(revisionId),
+			null, null, null
+		).use {
+			if (it.moveToNext()) {
+				val noteId = it.getString(0)
+				val type = it.getString(1)
+				val mime = it.getString(2)
+				val title = it.getString(3)
+				val isProtected = it.getInt(4).intValueToBool()
+				val blobId = it.getStringOrNull(5)
+				val utcDateLastEdited = it.getString(6)
+				val utcDateCreated = it.getString(7)
+				val utcDateModified = it.getString(8)
+				val dateLastEdited = it.getString(9)
+				val dateCreated = it.getString(10)
+
+				if (blobId == null) {
+					// Technically the field is nullable, but I've never had this happen.
+					Log.w(TAG, "ignoring revision $revisionId without blobId")
+					return@withContext null
+				}
+
+				return@withContext NoteRevision(
+					Notes.getNote(noteId) ?: Notes.invalidNote(noteId, blobId),
+					revisionId,
+					type,
+					mime,
+					title,
+					isProtected,
+					BlobId(blobId),
+					utcDateLastEdited,
+					utcDateCreated,
+					utcDateModified,
+					dateLastEdited,
+					dateCreated
+				)
+			}
+		}
+		return@withContext null
+	}
+
+	suspend fun setBlobId(id: String, blobId: BlobId) = withContext(Dispatchers.IO) {
+		val cv = ContentValues()
+		cv.put("blobId", blobId.id)
+		db!!.update("revisions", cv, "revisionId = ?", arrayOf(id))
+		registerEntityChangeNoteRevision(load(id)!!)
 	}
 
 	/**
@@ -147,7 +213,7 @@ private suspend fun registerEntityChangeNoteRevision(r: NoteRevision, deleted: B
 			r.utcDateLastEdited,
 			r.utcDateCreated,
 			r.utcDateModified,
-			r.blobId
+			r.blobId.id
 		),
 		deleted
 	)

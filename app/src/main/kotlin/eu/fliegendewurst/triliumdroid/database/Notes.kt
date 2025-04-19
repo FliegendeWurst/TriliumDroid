@@ -3,7 +3,9 @@ package eu.fliegendewurst.triliumdroid.database
 import android.content.ContentValues
 import android.util.Log
 import androidx.core.database.getBlobOrNull
+import androidx.core.database.getStringOrNull
 import eu.fliegendewurst.triliumdroid.data.Blob
+import eu.fliegendewurst.triliumdroid.data.BlobId
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
@@ -52,7 +54,7 @@ object Notes {
 					"0", // isProtected
 					"text", // type
 					"text/html", // mime
-					blob.blobId, // blobId
+					blob.id.id, // blobId
 					"0", // isDeleted
 					null, // deleteId
 					dateModified, // dateCreated
@@ -68,12 +70,14 @@ object Notes {
 					"text/html",
 					newNoteTitle ?: "",
 					"text",
+					false,
+					null,
 					dateModified,
 					dateModified,
 					utcDateModified,
 					utcDateModified,
 					false,
-					blob.blobId
+					blob.id
 				)
 			)
 			Branches.cloneNote(parentNote.id, newId)
@@ -142,24 +146,30 @@ object Notes {
 					"blobs.dateModified, " + // 14
 					"blobs.utcDateModified, " + // 15
 					"notes.utcDateCreated, " + // 16
-					"notes.utcDateModified " + // 17
+					"notes.utcDateModified, " + // 17
+					"notes.isDeleted, " + // 18
+					"notes.deleteId " + // 19
 					"FROM notes LEFT JOIN blobs USING (blobId) " +
 					"LEFT JOIN attributes USING(noteId)" +
-					"WHERE notes.noteId = ? AND notes.isDeleted = 0 AND (attributes.isDeleted = 0 OR attributes.isDeleted IS NULL)",
+					"WHERE notes.noteId = ? AND (attributes.isDeleted = 0 OR attributes.isDeleted IS NULL)",
 			arrayOf(id),
 			"notes"
 		).use {
 			if (it.moveToFirst()) {
-				val blobId = it.getString(12)
+				val blobId = BlobId(it.getString(12))
 				val blobDateModified = it.getString(14)
 				val blobUtcDateModified = it.getString(15)
 				val utcDateCreated = it.getString(16)
 				val utcDateModified = it.getString(17)
+				val isDeleted = it.getInt(18).intValueToBool()
+				val deleteId = it.getStringOrNull(19)
 				note = Note(
 					id,
 					it.getString(1),
 					it.getString(2),
 					it.getString(6),
+					isDeleted,
+					deleteId,
 					it.getString(7),
 					it.getString(8),
 					utcDateCreated,
@@ -197,19 +207,7 @@ object Notes {
 							// value = note ID
 							val value = it.getString(5)
 							if (!notes.containsKey(value)) {
-								notes[value] =
-									Note(
-										value,
-										"INVALID",
-										"INVALID",
-										"INVALID",
-										"INVALID",
-										"INVALID",
-										"INVALID",
-										"INVALID",
-										false,
-										"INVALID"
-									)
+								notes[value] = invalidNote(value)
 							}
 							relations.add(
 								Relation(
@@ -237,6 +235,20 @@ object Notes {
 		return@withContext note
 	}
 
+	fun invalidNote(id: String, blobId: String = "INVALID") = Note(
+		id,
+		"INVALID",
+		"INVALID",
+		"INVALID",
+		true,
+		"INVALID",
+		"INVALID",
+		"INVALID",
+		"INVALID",
+		"INVALID",
+		false,
+		BlobId(blobId)
+	)
 
 	suspend fun setNoteContent(id: String, content: String) = withContext(Dispatchers.IO) {
 		if (!notes.containsKey(id)) {
@@ -251,11 +263,18 @@ object Notes {
 		cv.put("dateModified", date)
 		cv.put("utcDateModified", utc)
 		cv.put("isProtected", notes[id]!!.isProtected.boolToIntValue())
-		cv.put("blobId", notes[id]!!.blobId)
+		cv.put("blobId", notes[id]!!.blobId.id)
 		db!!.update("notes", cv, "noteId = ?", arrayOf(id))
 		notes[id]!!.modified = date
 		notes[id]!!.utcModified = utc
 		registerEntityChangeNote(notes[id]!!)
+	}
+
+	suspend fun setBlobId(id: String, blobId: BlobId) = withContext(Dispatchers.IO) {
+		val cv = ContentValues()
+		cv.put("blobId", blobId.id)
+		db!!.update("notes", cv, "noteId = ?", arrayOf(id))
+		registerEntityChangeNote(getNote(id)!!)
 	}
 
 	/**
@@ -268,7 +287,7 @@ object Notes {
 		cv.put("dateModified", date)
 		cv.put("utcDateModified", utc)
 		cv.put("isProtected", note.isProtected.boolToIntValue())
-		cv.put("blobId", note.blobId)
+		cv.put("blobId", note.blobId.id)
 		db!!.update("notes", cv, "noteId = ?", arrayOf(note.id))
 		note.modified = date
 		note.utcModified = utc
@@ -354,7 +373,7 @@ private suspend fun registerEntityChangeNote(note: Note) {
 			note.isProtected.boolToIntString(),
 			note.type,
 			note.mime,
-			note.blobId
+			note.blobId.id
 		)
 	)
 }

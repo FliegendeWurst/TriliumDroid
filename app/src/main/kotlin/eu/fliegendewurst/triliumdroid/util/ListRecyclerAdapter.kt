@@ -11,7 +11,7 @@ import androidx.viewbinding.ViewBinding
 /**
  * Use [ListAdapter.submitList] to display items
  */
-class ListRecyclerAdapter<T, V: ViewBinding>(
+class ListRecyclerAdapter<T, V : ViewBinding>(
 	private val onBind: (V, T) -> Unit,
 	private val inflate: (ViewGroup) -> V
 ) :

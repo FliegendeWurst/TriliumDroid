@@ -9,9 +9,11 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
+import eu.fliegendewurst.triliumdroid.data.AttachmentId
 import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Note
-import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.data.load
+import eu.fliegendewurst.triliumdroid.database.Attachments
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment.Companion.WEBVIEW_DOMAIN
 import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment.Companion.WEBVIEW_HOST
@@ -94,8 +96,8 @@ class NoteWebViewClient(
 					"esm.sh req. @ ${request.url} not cached, please report to TriliumDroid issue tracker".byteInputStream()
 				)
 			}
-		} else if (request.url.host == WEBVIEW_HOST && (request.url.pathSegments.size <= 2 || request.url.pathSegments.size == 5)) {
-			// /api/attachments/note_id/image/Trilium%20Demo_trilium-icon.png
+		} else if (request.url.host == WEBVIEW_HOST && (request.url.pathSegments.size <= 2 || request.url.pathSegments.size == 5 || request.url.pathSegments.size == 6)) {
+			val fetchingAttachment = request.url.pathSegments.size >= 5
 			var id = when (request.url.pathSegments.size) {
 				0 -> {
 					request.url.fragment.orEmpty()
@@ -111,8 +113,18 @@ class NoteWebViewClient(
 					request.url.pathSegments[1]
 				}
 
-				else -> {
+				// /api/attachments/note_id/image/Trilium%20Demo_trilium-icon.png
+				5 -> {
 					request.url.pathSegments[2]
+				}
+
+				6 -> {
+					// /note-children/api/attachments/ID
+					request.url.pathSegments[3]
+				}
+
+				else -> {
+					throw IllegalStateException("wrong number of path segments")
 				}
 			}
 			if (id == "") {
@@ -137,7 +149,7 @@ class NoteWebViewClient(
 				note?.content()
 			}
 			val firstSegment = request.url.pathSegments.getOrNull(0)
-			if (firstSegment == "excalidraw-data") {
+			if (firstSegment == "excalidraw-data" && !fetchingAttachment) {
 				if (content == null) {
 					Log.w(TAG, "canvas note without content")
 					return WebResourceResponse(
@@ -147,7 +159,7 @@ class NoteWebViewClient(
 					)
 				}
 				return WebResourceResponse("application/json", null, content.inputStream())
-			} else if (firstSegment == "note-children") {
+			} else if (firstSegment == "note-children" && !fetchingAttachment) {
 				return runBlocking {
 					val children = note!!.computeChildren()
 					var html = Assets.noteChildrenTemplateHTML(view.context)
@@ -179,8 +191,8 @@ class NoteWebViewClient(
 			var mime = note?.mime
 			if (note == null) {
 				// try attachment
-				val attachment = runBlocking { Cache.getAttachmentWithContent(id) }
-				content = attachment?.content
+				val attachment = runBlocking { Attachments.load(AttachmentId(id)) }
+				content = runBlocking { attachment?.blobId?.load()?.content }
 				mime = attachment?.mime
 			}
 			if (content == null) {

@@ -4,7 +4,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 
-class ListAdapter<T>(private val values: List<T>, private val getView: (T, View?) -> View) : BaseAdapter() {
+class ListAdapter<T>(private val values: List<T>, private val getView: (T, View?) -> View) :
+	BaseAdapter() {
 	override fun getCount(): Int {
 		return values.size
 	}

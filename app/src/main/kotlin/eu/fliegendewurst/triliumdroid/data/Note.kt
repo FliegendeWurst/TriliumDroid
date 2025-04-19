@@ -19,18 +19,20 @@ class Note(
 	val mime: String,
 	private var title: String,
 	var type: String,
+	val deleted: Boolean,
+	val deleteId: String?,
 	val created: String,
 	var modified: String,
 	var utcCreated: String,
 	var utcModified: String,
 	var isProtected: Boolean,
-	blobId: String
+	blobId: BlobId
 ) : Comparable<Note>, ProtectedSession.NotifyProtectedSessionEnd {
 	companion object {
 		private const val TAG = "Note"
 	}
 
-	var blobId: String = blobId
+	var blobId: BlobId = blobId
 		private set
 	private var blob: Blob? = null
 	private var contentDecrypted: ByteArray? = null
@@ -275,7 +277,6 @@ class Note(
 
 	fun rawTitle() = title
 
-	@OptIn(ExperimentalEncodingApi::class)
 	fun content() = if (blob == null) {
 		null
 	} else if (isProtected && !ProtectedSession.isActive()) {
@@ -285,7 +286,7 @@ class Note(
 			contentDecrypted
 		} else {
 			contentDecrypted = try {
-				ProtectedSession.decrypt(Base64.decode(blob!!.content))
+				blob!!.decrypt()
 			} catch (e: InvalidCipherTextException) {
 				"[data corrupted, please report to the developer]".encodeToByteArray()
 			}
@@ -318,15 +319,15 @@ class Note(
 				NoteRevisions.create(this)
 				this.blob =
 					Blobs.new(Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!))
-				this.blobId = blob!!.blobId
+				this.blobId = blob!!.id
 				Notes.refreshDatabaseRow(this)
 			} else {
-				val oldBlobId = this.blob?.blobId
+				val oldBlobId = this.blob?.id
 				this.blob = Blobs.new(
 					Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!),
 					contentDecrypted
 				)
-				this.blobId = blob!!.blobId
+				this.blobId = blob!!.id
 				Notes.refreshDatabaseRow(this)
 				if (oldBlobId != null) {
 					Blobs.delete(oldBlobId)
@@ -337,12 +338,12 @@ class Note(
 			if (newBlob) {
 				NoteRevisions.create(this)
 				this.blob = Blobs.new(new)
-				this.blobId = blob!!.blobId
+				this.blobId = blob!!.id
 				Notes.refreshDatabaseRow(this)
 			} else {
-				val oldBlobId = this.blob?.blobId
+				val oldBlobId = this.blob?.id
 				this.blob = Blobs.new(new)
-				this.blobId = this.blob!!.blobId
+				this.blobId = this.blob!!.id
 				Notes.refreshDatabaseRow(this)
 				if (oldBlobId != null) {
 					Blobs.delete(oldBlobId)
@@ -352,7 +353,7 @@ class Note(
 	}
 
 	fun updateContentRaw(new: Blob) {
-		if (this.blobId != new.blobId) {
+		if (this.blobId != new.id) {
 			error("tried to load wrong blob into note")
 		}
 		this.blob = new
@@ -401,3 +402,5 @@ class Note(
 		return "Note($id)"
 	}
 }
+
+data class NoteId(val id: String)
