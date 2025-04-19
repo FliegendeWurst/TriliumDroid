@@ -34,8 +34,7 @@ import java.security.MessageDigest
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Calendar
-import java.util.TreeSet
+import java.util.*
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -74,7 +73,8 @@ object Cache {
 			md.update(h, 0, h.size)
 		}
 		val sha1hash = md.digest()
-		val hash = Base64.encode(sha1hash)
+		val hash = Base64.encode(sha1hash).substring(0 until 10)
+		// TODO: correct hash for blobs?
 		db!!.execSQL(
 			"INSERT OR REPLACE INTO entity_changes (entityName, entityId, hash, isErased, changeId, componentId, instanceId, isSynced, utcDateChanged) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 			arrayOf(

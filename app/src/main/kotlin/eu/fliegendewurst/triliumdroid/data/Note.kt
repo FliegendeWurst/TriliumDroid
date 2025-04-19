@@ -10,8 +10,7 @@ import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.bouncycastle.crypto.InvalidCipherTextException
-import java.util.SortedSet
-import java.util.TreeSet
+import java.util.*
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -322,10 +321,16 @@ class Note(
 				this.blobId = blob!!.blobId
 				Notes.refreshDatabaseRow(this)
 			} else {
-				this.blob = Blobs.update(
-					blobId,
-					Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!)
+				val oldBlobId = this.blob?.blobId
+				this.blob = Blobs.new(
+					Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!),
+					contentDecrypted
 				)
+				this.blobId = blob!!.blobId
+				Notes.refreshDatabaseRow(this)
+				if (oldBlobId != null) {
+					Blobs.delete(oldBlobId)
+				}
 			}
 			this.contentDecrypted = new
 		} else {
@@ -335,7 +340,13 @@ class Note(
 				this.blobId = blob!!.blobId
 				Notes.refreshDatabaseRow(this)
 			} else {
-				this.blob = Blobs.update(blobId, new)
+				val oldBlobId = this.blob?.blobId
+				this.blob = Blobs.new(new)
+				this.blobId = this.blob!!.blobId
+				Notes.refreshDatabaseRow(this)
+				if (oldBlobId != null) {
+					Blobs.delete(oldBlobId)
+				}
 			}
 		}
 	}

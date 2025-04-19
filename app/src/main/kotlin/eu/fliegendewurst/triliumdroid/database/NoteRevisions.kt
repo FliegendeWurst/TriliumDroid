@@ -123,9 +123,9 @@ object NoteRevisions {
 	 * Delete a Revision along with its Blob.
 	 */
 	suspend fun delete(noteRevision: NoteRevision) = withContext(Dispatchers.IO) {
-		Blobs.delete(noteRevision.blobId)
 		db!!.delete("revisions", "revisionId = ?", arrayOf(noteRevision.revisionId))
 		registerEntityChangeNoteRevision(noteRevision, true)
+		Blobs.delete(noteRevision.blobId)
 		noteRevision.note.revisionsInvalidate()
 	}
 }
