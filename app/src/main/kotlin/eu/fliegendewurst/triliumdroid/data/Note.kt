@@ -6,6 +6,8 @@ import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.NoteRevisions
 import eu.fliegendewurst.triliumdroid.database.Notes
+import eu.fliegendewurst.triliumdroid.database.parseUtcDate
+import eu.fliegendewurst.triliumdroid.service.Option
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -306,27 +308,40 @@ class Note(
 	/**
 	 * Set user-facing note content.
 	 *
-	 * @param newBlob whether to store the previous content as revision
+	 * @param newBlob whether to store the previous content as revision (otherwise: automatic revision)
+	 * @return whether content was changed
 	 */
 	@OptIn(ExperimentalEncodingApi::class)
-	suspend fun updateContent(new: ByteArray, newBlob: Boolean = false) {
+	suspend fun updateContent(new: ByteArray, newBlob: Boolean = false): Boolean {
 		if (isProtected && !ProtectedSession.isActive()) {
 			Log.e(TAG, "tried to update protected note without session")
-			return
+			return false
+		}
+		if (!newBlob) {
+			// only do automatic revision
+			val revisionInterval = Option.revisionInterval()!!
+			val revisions = revisions()
+			val utcThen = revisions.lastOrNull()?.utcDateModified ?: utcCreated
+			val utcNow = Cache.utcDateModified()
+			val delta = utcNow.parseUtcDate().toEpochSecond() -
+					utcThen.parseUtcDate().toEpochSecond()
+			if (delta > revisionInterval) {
+				NoteRevisions.create(this)
+			}
 		}
 		if (isProtected && ProtectedSession.isActive()) {
+			val theNewBlob = Blobs.new(Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!))
+			if (theNewBlob.id == blob?.id) {
+				return false
+			}
 			if (newBlob) {
 				NoteRevisions.create(this)
-				this.blob =
-					Blobs.new(Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!))
+				this.blob = theNewBlob
 				this.blobId = blob!!.id
 				Notes.refreshDatabaseRow(this)
 			} else {
 				val oldBlobId = this.blob?.id
-				this.blob = Blobs.new(
-					Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!),
-					contentDecrypted
-				)
+				this.blob = theNewBlob
 				this.blobId = blob!!.id
 				Notes.refreshDatabaseRow(this)
 				if (oldBlobId != null) {
@@ -335,14 +350,18 @@ class Note(
 			}
 			this.contentDecrypted = new
 		} else {
+			val theNewBlob = Blobs.new(new)
+			if (theNewBlob.id == blob?.id) {
+				return false
+			}
 			if (newBlob) {
 				NoteRevisions.create(this)
-				this.blob = Blobs.new(new)
+				this.blob = theNewBlob
 				this.blobId = blob!!.id
 				Notes.refreshDatabaseRow(this)
 			} else {
 				val oldBlobId = this.blob?.id
-				this.blob = Blobs.new(new)
+				this.blob = theNewBlob
 				this.blobId = this.blob!!.id
 				Notes.refreshDatabaseRow(this)
 				if (oldBlobId != null) {
@@ -350,6 +369,7 @@ class Note(
 				}
 			}
 		}
+		return true
 	}
 
 	fun updateContentRaw(new: Blob) {

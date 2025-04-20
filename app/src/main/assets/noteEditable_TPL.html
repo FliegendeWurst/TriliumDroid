@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!-- reference: https://github.com/TriliumNext/Notes/blob/v0.93.0/src/public/app/widgets/type_widgets/editable_text.ts -->
+<style>
+    .note-detail-editable-text {
+        font-family: var(--detail-font-family);
+        padding-left: 14px;
+        padding-top: 10px;
+        height: 100%;
+    }
+
+    /* Workaround for #1327 */
+    body.desktop.electron .note-detail-editable-text {
+        letter-spacing: -0.01px;
+    }
+
+    body.mobile .note-detail-editable-text {
+        padding-left: 4px;
+    }
+
+    .note-detail-editable-text a:hover {
+        cursor: pointer;
+    }
+
+    .note-detail-editable-text a[href^="http://"], .note-detail-editable-text a[href^="https://"] {
+        cursor: text !important;
+    }
+
+    .note-detail-editable-text *:not(figure, .include-note, hr):first-child {
+        margin-top: 0 !important;
+    }
+
+    .note-detail-editable-text h2 { font-size: 1.6em; }
+    .note-detail-editable-text h3 { font-size: 1.4em; }
+    .note-detail-editable-text h4 { font-size: 1.2em; }
+    .note-detail-editable-text h5 { font-size: 1.1em; }
+    .note-detail-editable-text h6 { font-size: 1.0em; }
+
+    body.heading-style-markdown .note-detail-editable-text h2::before { content: "##\\2004"; color: var(--muted-text-color); }
+    body.heading-style-markdown .note-detail-editable-text h3::before { content: "###\\2004"; color: var(--muted-text-color); }
+    body.heading-style-markdown .note-detail-editable-text h4:not(.include-note-title)::before { content: "####\\2004"; color: var(--muted-text-color); }
+    body.heading-style-markdown .note-detail-editable-text h5::before { content: "#####\\2004"; color: var(--muted-text-color); }
+    body.heading-style-markdown .note-detail-editable-text h6::before { content: "######\\2004"; color: var(--muted-text-color); }
+
+    body.heading-style-underline .note-detail-editable-text h2 { border-bottom: 1px solid var(--main-border-color); }
+    body.heading-style-underline .note-detail-editable-text h3 { border-bottom: 1px solid var(--main-border-color); }
+    body.heading-style-underline .note-detail-editable-text h4:not(.include-note-title) { border-bottom: 1px solid var(--main-border-color); }
+    body.heading-style-underline .note-detail-editable-text h5 { border-bottom: 1px solid var(--main-border-color); }
+    body.heading-style-underline .note-detail-editable-text h6 { border-bottom: 1px solid var(--main-border-color); }
+
+    .note-detail-editable-text-editor {
+        padding-top: 10px;
+        border: 0 !important;
+        box-shadow: none !important;
+        min-height: 50px;
+        height: 100%;
+    }
+
+    .classic-toolbar-widget {
+        position: sticky;
+        top: 0px;
+        left: 0px;
+        z-index: 999;
+    }
+</style>
+<div class="classic-toolbar-widget"></div>
+<div class="note-detail-editable-text note-detail-printable">
+    <div class="note-detail-editable-text-editor use-tn-links" tabindex="300"></div>
+</div>
+<script>
+var oldConsoleLog = console.log;
+function newLog(...items) {
+    oldConsoleLog(...items);
+    for (const item of items) {
+        if (""+item === "[object Object]") {
+            oldConsoleLog(JSON.stringify(item));
+        }
+        if (item !== undefined && item !== null && item.stack !== null && item.stack !== undefined) {
+            oldConsoleLog(item.stack);
+        }
+    }
+};
+console.log = newLog;
+console.info = newLog;
+console.warn = newLog;
+console.error = newLog;
+window.console = console;
+</script>
+<script src="/ckeditor.js"></script>
+<script src="/noteEditable.js"></script>

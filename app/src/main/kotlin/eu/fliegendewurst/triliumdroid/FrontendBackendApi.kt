@@ -15,13 +15,13 @@ import android.webkit.JavascriptInterface
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.os.bundleOf
+import androidx.fragment.app.Fragment
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Attribute
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
-import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.util.Preferences
@@ -55,7 +55,7 @@ import java.time.format.DateTimeFormatter
  * - implement remaining methods
  */
 class FrontendBackendApi(
-	private val noteFragment: NoteFragment,
+	private val noteFragment: Fragment,
 	private val context: Context,
 	private val handler: Handler
 ) {

@@ -3,6 +3,7 @@ package eu.fliegendewurst.triliumdroid.activity.main
 import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.fragment.NavigationFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
@@ -60,7 +61,7 @@ class NoteEditItem(val note: Note) : HistoryItem() {
 			return false
 		}
 		val frag = NoteEditFragment()
-		frag.loadLater(note.id)
+		frag.loadLater(NoteId(note.id))
 		activity.showFragment(frag, true)
 		activity.refreshTitle(note)
 		return true

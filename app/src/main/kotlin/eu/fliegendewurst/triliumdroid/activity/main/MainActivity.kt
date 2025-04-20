@@ -464,7 +464,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	@SuppressLint("SetJavaScriptEnabled")
-	fun runScript(noteFrag: NoteFragment, script: String) {
+	fun runScript(noteFrag: Fragment, script: String) {
 		val webview = WebView(this)
 		webview.settings.javaScriptEnabled = true
 		webview.addJavascriptInterface(FrontendBackendApi(noteFrag, this, handler), "api")
@@ -472,7 +472,9 @@ class MainActivity : AppCompatActivity() {
 			override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
 				Log.i(TAG, "console message ${consoleMessage?.message()}")
 				enableConsoleLogAction()
-				noteFrag.console.add(consoleMessage ?: return true)
+				if (noteFrag is NoteFragment) {
+					noteFrag.console.add(consoleMessage ?: return true)
+				}
 				return true
 			}
 		}

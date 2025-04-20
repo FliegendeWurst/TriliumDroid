@@ -83,6 +83,6 @@ Parts of this program are derived from zadam's [Trilium Notes](https://github.co
 Parts of this program are derived from Elian Doran's [TriliumNext Notes](https://github.com/TriliumNext/Notes), the AGPL-3.0 applies.  
 The MIT License applies to the [boxicons](https://boxicons.com/) included in the project (see `boxicons_LICENSE.txt`).  
 The GPL-3.0 license applies to the styles derived from [Simple-Commons](https://github.com/SimpleMobileTools/Simple-Commons).  
-The MPL-2.0 license applies to the included [AztecEditor-Android](https://github.com/wordpress-mobile/AztecEditor-Android/).  
 The MIT license applies to the bundled [excalidraw](https://github.com/excalidraw/excalidraw) (see license notices in `app/src/main/assets/web.zip`).  
+The GPL-2.0 (or later) license applies to the included [CKEditor](https://github.com/ckeditor/ckeditor5) (`app/src/main/assets/ckeditor.js`).  
 For other included libraries, their respective license applies.  

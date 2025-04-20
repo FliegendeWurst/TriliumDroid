@@ -30,13 +30,11 @@ class NoteWebViewClient(
 ) : WebViewClient() {
 	companion object {
 		private const val TAG = "NoteWebViewClient"
-		private val FIXER: Regex =
-			"\\s*(<div>|<div class=\"[^\"]+\">)(.*)</div>\\s*".toRegex(RegexOption.DOT_MATCHES_ALL)
 	}
 
 	override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
 		// called when an internal link is used
-		if (url.startsWith(WEBVIEW_DOMAIN) && url.contains('#')) {
+		if (url.startsWith(WEBVIEW_DOMAIN) && url.contains('#') && !url.contains("/note-editable#")) {
 			val parts = url.split('/')
 			val lastPart = parts.last()
 			if (lastPart == note()?.id) {
@@ -71,7 +69,7 @@ class NoteWebViewClient(
 	override fun shouldInterceptRequest(
 		view: WebView,
 		request: WebResourceRequest
-	): WebResourceResponse? {
+	): WebResourceResponse {
 		Log.d(TAG, "intercept: ${request.url.host} ${request.url}")
 		if (request.url.host == "esm.sh") {
 			val effectiveUrl = request.url.toString()
@@ -103,12 +101,14 @@ class NoteWebViewClient(
 					request.url.fragment.orEmpty()
 				}
 
+				// or /note-editable#${noteId}
 				1 -> {
 					request.url.lastPathSegment!!
 				}
 
 				// request of /excalidraw-data/${noteId}
 				// or /note-children/${noteId}
+				// or /note-raw/${noteId}
 				2 -> {
 					request.url.pathSegments[1]
 				}
@@ -131,13 +131,36 @@ class NoteWebViewClient(
 				id = "root"
 			}
 			if (id == "favicon.ico") {
-				return null // TODO: catch all invalid IDs
+				return notFound("image/x-icon")
+			}
+			if (id == "ckeditor.js") {
+				return WebResourceResponse(
+					"text/javascript",
+					"utf-8",
+					Assets.ckeditorJS(view.context).byteInputStream()
+				)
 			}
 			if (id == "excalidraw_loader.js") {
 				return WebResourceResponse(
 					"text/javascript",
-					null,
+					"utf-8",
 					Assets.excalidrawLoaderJS(view.context).byteInputStream()
+				)
+			}
+			if (id == "note-editable") {
+				Log.d(TAG, "returning note editable template")
+				return WebResourceResponse(
+					"text/html",
+					"utf-8",
+					Assets.noteEditableTemplateHTML(view.context).byteInputStream()
+				)
+			}
+			if (id == "noteEditable.js") {
+				Log.d(TAG, "returning note editable js")
+				return WebResourceResponse(
+					"text/javascript",
+					"utf-8",
+					Assets.noteEditableJS(view.context).byteInputStream()
 				)
 			}
 			val note = runBlocking { Notes.getNoteWithContent(id) }
@@ -154,11 +177,11 @@ class NoteWebViewClient(
 					Log.w(TAG, "canvas note without content")
 					return WebResourceResponse(
 						"application/json",
-						null,
+						"utf-8",
 						"{}".byteInputStream()
 					)
 				}
-				return WebResourceResponse("application/json", null, content.inputStream())
+				return WebResourceResponse("application/json", "utf-8", content.inputStream())
 			} else if (firstSegment == "note-children" && !fetchingAttachment) {
 				return runBlocking {
 					val children = note!!.computeChildren()
@@ -187,6 +210,11 @@ class NoteWebViewClient(
 						html.byteInputStream()
 					)
 				}
+			} else if (firstSegment == "note-raw") {
+				if (note == null || content == null) {
+					return notFound(note?.mime ?: "text/html")
+				}
+				return WebResourceResponse(note.mime, "utf-8", content.inputStream())
 			}
 			var mime = note?.mime
 			if (note == null) {
@@ -196,7 +224,7 @@ class NoteWebViewClient(
 				mime = attachment?.mime
 			}
 			if (content == null) {
-				return null
+				return notFound(mime ?: "text/html")
 			}
 			var data: ByteArray = content
 			// Excalidraw/Canvas notes: use generic wrapper note
@@ -207,17 +235,6 @@ class NoteWebViewClient(
 					"utf-8",
 					Assets.excalidrawTemplateHTML(view.context).byteInputStream()
 				)
-			}
-			if (mime == "text/html") {
-				// fixup useless nested divs
-				while (true) {
-					val contentFixed = FIXER.matchEntire(data.decodeToString())
-					if (contentFixed != null) {
-						data = contentFixed.groups[2]!!.value.encodeToByteArray()
-					} else {
-						break
-					}
-				}
 			}
 			val subCodeNotesToRun = subCodeNotes()
 			if (note != null && note.id == note()?.id && subCodeNotesToRun != null) {
@@ -232,12 +249,21 @@ class NoteWebViewClient(
 			if (mime == "text/html") {
 				data += "<style>@media (prefers-color-scheme: dark) { * { color: white; background-color: black; } }</style>".encodeToByteArray()
 			}
-			return WebResourceResponse(mime, null, data.inputStream())
+			return WebResourceResponse(mime, "utf-8", data.inputStream())
 		}
 		return WebResourceResponse(
 			"text/plain",
-			null,
+			"utf-8",
 			"arbitrary internet access not allowed in TriliumDroid sandbox".byteInputStream()
 		)
 	}
+
+	private fun notFound(mime: String) = WebResourceResponse(
+		mime,
+		"utf-8",
+		404,
+		"not found",
+		mapOf(),
+		"".byteInputStream()
+	)
 }

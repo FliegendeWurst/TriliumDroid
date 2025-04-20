@@ -255,7 +255,9 @@ object Notes {
 			getNoteInternal(id)
 		}
 		val data = content.encodeToByteArray()
-		notes[id]!!.updateContent(data)
+		if (!notes[id]!!.updateContent(data)) {
+			return@withContext
+		}
 
 		val date = dateModified()
 		val utc = utcDateModified()

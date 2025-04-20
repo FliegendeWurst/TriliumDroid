@@ -8,7 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.ConsoleMessage
-import android.webkit.WebChromeClient
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.iterator
@@ -24,6 +23,7 @@ import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteBinding
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
+import eu.fliegendewurst.triliumdroid.util.MyWebChromeClient
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -61,18 +61,9 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			FrontendBackendApi(this, this.requireContext(), handler!!),
 			"api"
 		)
-		binding.webview.webChromeClient = object : WebChromeClient() {
-			override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-				if (consoleMessage == null) {
-					return true /* handled */
-				}
-				Log.d(TAG, "console.log ${consoleMessage.message()}")
-				val main = (this@NoteFragment.activity as MainActivity?) ?: return true
-				main.enableConsoleLogAction()
-				this@NoteFragment.console.add(consoleMessage)
-				return true
-			}
-		}
+		binding.webview.webChromeClient = MyWebChromeClient(
+			{ (this@NoteFragment.activity as MainActivity?) },
+			{ this@NoteFragment.console.add(it) })
 		val wvc = NoteWebViewClient(
 			{ return@NoteWebViewClient note },
 			{ return@NoteWebViewClient blob },
