@@ -1,3 +1,11 @@
+- New note editor based on CKEditor
 - New note type: canvas notes using Excalidraw for free-form diagrams and sketches
+- New child note list at the end of each note (similar to desktop app)
 - APK is optimized using ProGuard for smaller size and better performance
+
+Important bugfixes:
+- Fixed rare blob ID corruption, when modifying a note too quickly
 - Fixed crash when last viewed note was deleted during sync
+
+Known issues:
+- New note editor does not respect dark theme, can't create inline links
