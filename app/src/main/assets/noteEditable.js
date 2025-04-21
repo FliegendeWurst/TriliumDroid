@@ -1,9 +1,37 @@
 "use strict";
 
+var $ = (x) => x;
 var glob = {
     getComponentByEl: (x) => {
         console.log("getComponentByEl?", x["tagName"], x["className"]);
-        return null;
+        return {
+            loadReferenceLinkTitle: (el, href) => {
+                console.log("loadReferenceLinkTitle", el, href);
+                const a = href.lastIndexOf("/");
+                let title;
+                if (a === -1) {
+                    title = "root";
+                } else {
+                    title = JSON.parse(api.getNoteInternal(href.substring(a+1))).title
+                }
+                if (el) {
+                    el.innerText = title;
+                }
+            },
+            getData: (...x) => {
+                console.log(x);
+                return "FIXME: put data here";
+            }
+        };
+    },
+    getReferenceLinkTitleSync: (href) => {
+        console.log("getReferencLinkTitleSync", href);
+        const a = href.lastIndexOf("/");
+        if (a === -1) {
+            return "root";
+        } else {
+            return JSON.parse(api.getNoteInternal(href.substring(a+1))).title
+        }
     }
 };
 var noteId = window.location.href.substring("https://trilium-notes.invalid/note-editable#".length);
@@ -317,7 +345,7 @@ watchdog.setCreator(async (elementOrData, editorConfig) => {
 async function initialize() {
 console.log("in initialize");
 await watchdog.create(editor, {
-    placeholder: "editable_text.placeholder", // TODO
+    placeholder: "Tap to start editing...", // "editable_text.placeholder", // TODO
     /*
     mention: {}, // TODO: mentionSetup,
     codeBlock: {

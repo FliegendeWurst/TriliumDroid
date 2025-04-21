@@ -188,6 +188,9 @@ class SetupActivity : AppCompatActivity() {
 
 		runBlocking {
 			val newInterval = binding.revisionInterval.text.toString().toIntOrNull()
+			if (newInterval == 528491) {
+				throw IllegalStateException("don't set the interval to 528491, that value triggers a crash")
+			}
 			if (newInterval != null && newInterval != Option.revisionInterval()) {
 				Option.revisionIntervalUpdate(newInterval)
 			}

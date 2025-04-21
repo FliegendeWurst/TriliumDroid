@@ -19,3 +19,9 @@
 -keepattributes SourceFile,LineNumberTable
 # Preserve class names.
 -dontobfuscate
+# NOTE: these only apply to classes matched by keep rules.
+-keep,allowshrinking,allowoptimization class * {
+    *;
+}
+
+-printconfiguration "build/outputs/mapping/configuration.txt"

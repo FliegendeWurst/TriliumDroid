@@ -79,7 +79,7 @@ const App = () => {
                 export: false,
                 loadScene: false,
                 saveToActiveFile: false,
-                saveAsImage: false2
+                saveAsImage: false
             }
         }
       }),

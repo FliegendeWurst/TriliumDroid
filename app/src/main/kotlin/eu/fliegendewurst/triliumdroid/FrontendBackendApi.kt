@@ -270,16 +270,17 @@ class FrontendBackendApi(
 	 * Get a note by its ID.
 	 */
 	fun getNote(noteId: String): Note? {
-		return runBlocking { Notes.getNoteWithContent(noteId) }
+		return runBlocking { Notes.getNote(noteId) }
 	}
 
 	/**
 	 * @suppress
 	 */
 	@JavascriptInterface
-	fun getNoteInternal(noteId: String): JSONObject? {
+	fun getNoteInternal(noteId: String): String? {
 		val note = getNote(noteId) ?: return null
-		return encodeNote(note)
+		val json = encodeNote(note)?.toString()
+		return json
 	}
 
 	@JavascriptInterface

@@ -69,6 +69,7 @@ import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteTreeFragment
 import eu.fliegendewurst.triliumdroid.fragment.SyncErrorFragment
+import eu.fliegendewurst.triliumdroid.fragment.note.CanvasNoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
@@ -770,6 +771,8 @@ class MainActivity : AppCompatActivity() {
 			}
 			if (noteContent.isProtected && !ProtectedSession.isActive()) {
 				showFragment(EncryptedNoteFragment(), true)
+			} else if (noteContent.type == "canvas") {
+				getCanvasNoteFragment().load(noteContent, content)
 			} else {
 				getNoteFragment().load(noteContent, content)
 			}
@@ -795,7 +798,7 @@ class MainActivity : AppCompatActivity() {
 		val hostFragment =
 			supportFragmentManager.findFragmentById(R.id.fragment_container)
 		return when (hostFragment) {
-			is NoteFragment, is NoteEditFragment, is EmptyFragment, is NoteMapFragment, is NavigationFragment, is SyncErrorFragment, is EncryptedNoteFragment -> {
+			is NoteFragment, is CanvasNoteFragment, is NoteEditFragment, is EmptyFragment, is NoteMapFragment, is NavigationFragment, is SyncErrorFragment, is EncryptedNoteFragment -> {
 				hostFragment
 			}
 
@@ -808,6 +811,17 @@ class MainActivity : AppCompatActivity() {
 				return hostFragment!!
 			}
 		}
+	}
+
+	fun getCanvasNoteFragment(): CanvasNoteFragment {
+		var frag = getFragment()
+		if (frag is CanvasNoteFragment) {
+			return frag
+		}
+		// replace fragment
+		frag = CanvasNoteFragment()
+		showFragment(frag, false)
+		return frag
 	}
 
 	fun getNoteFragment(): NoteFragment {
