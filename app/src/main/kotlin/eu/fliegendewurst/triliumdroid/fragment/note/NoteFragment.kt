@@ -19,7 +19,6 @@ import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.database.Attributes
-import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteBinding
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
@@ -43,9 +42,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 	private var subCodeNotes: List<Note>? = null
 	var console: MutableList<ConsoleMessage> = mutableListOf()
 
-	override fun getNoteId(): String? {
-		return note?.id
-	}
+	override fun getNoteId() = note?.id
 
 	@SuppressLint("SetJavaScriptEnabled")
 	override fun onCreateView(
@@ -102,13 +99,12 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		this.note = note
 		this.blob = blobToDisplay
 		this.load = true
-		Log.i(TAG, "loading ${note?.id}")
+		Log.i(TAG, "loading ${note?.id?.rawId()}")
 		if (note == null) {
 			return
 		}
-		binding.textId.text = note.id
+		binding.textId.text = note.id.rawId()
 		if (note.content() == null && blob == null) {
-			Cache.initializeDatabase(requireContext())
 			note = Notes.getNoteWithContent(note.id)
 		}
 		if (note == null) {
@@ -164,7 +160,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			consoleLog,
 			execute,
 			share,
-			note.id == "root"
+			note.id == Notes.ROOT
 		)
 
 		// set up children view

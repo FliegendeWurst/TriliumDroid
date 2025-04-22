@@ -4,11 +4,10 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
+import eu.fliegendewurst.triliumdroid.data.BranchId
 import eu.fliegendewurst.triliumdroid.database.Cache.Versions
-import eu.fliegendewurst.triliumdroid.database.Cache.db
-import eu.fliegendewurst.triliumdroid.database.Cache.lastSync
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
-import eu.fliegendewurst.triliumdroid.database.Notes.notes
+import eu.fliegendewurst.triliumdroid.database.DB
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -30,7 +29,7 @@ object Sync {
 		val instanceId = Preferences.instanceId()
 
 		var lastSyncedPush = 0
-		db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPush"))
+		DB.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPush"))
 			.use {
 				if (it.moveToFirst()) {
 					lastSyncedPush = it.getInt(0)
@@ -44,7 +43,7 @@ object Sync {
 		data.put("instanceId", instanceId)
 		val entities = JSONArray()
 		var largestId = lastSyncedPush
-		db!!.rawQuery(
+		DB.rawQuery(
 			"SELECT * FROM entity_changes WHERE isSynced = 1 AND id > ?",
 			arrayOf(lastSyncedPush.toString())
 		).use {
@@ -98,7 +97,7 @@ object Sync {
 			val utc =
 				DateTimeFormatter.ISO_INSTANT.format(OffsetDateTime.now(ZoneOffset.UTC))
 					.replace('T', ' ')
-			db!!.execSQL(
+			DB.internalGetDatabase()!!.execSQL(
 				"INSERT OR REPLACE INTO options (name, value, isSynced, utcDateModified) VALUES (?, ?, 0, ?)",
 				arrayOf("lastSyncedPush", largestId.toString(), utc)
 			)
@@ -113,7 +112,7 @@ object Sync {
 		withContext(Dispatchers.IO) {
 			val primaryKey = primaryKeyForTable(entityName)
 			val obj = JSONObject()
-			db!!.rawQuery("SELECT * FROM $entityName WHERE $primaryKey = ?", arrayOf(entityId))
+			DB.rawQuery("SELECT * FROM $entityName WHERE $primaryKey = ?", arrayOf(entityId))
 				.use {
 					if (it.moveToNext()) {
 						for (i in (0 until it.columnCount)) {
@@ -174,7 +173,7 @@ object Sync {
 		callbackError: (Exception) -> Unit,
 		callbackDone: (Pair<Int, Int>) -> Unit
 	) {
-		lastSync = System.currentTimeMillis()
+		DB.lastSync = System.currentTimeMillis()
 		// first, verify correct sync version
 		ConnectionUtil.getAppInfo {
 			Log.d(TAG, "app info: $it")
@@ -206,7 +205,7 @@ object Sync {
 			val totalPushed = syncPush()
 			var totalSynced = alreadySynced
 			var lastSyncedPull = 0
-			db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPull"))
+			DB.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPull"))
 				.use {
 					if (it.moveToFirst()) {
 						lastSyncedPull = it.getInt(0)
@@ -217,111 +216,110 @@ object Sync {
 				"/api/sync/changed?instanceId=${Preferences.instanceId()}&lastEntityChangeId=${lastSyncedPull}&logMarkerId=${logMarkerId}"
 
 			ConnectionUtil.doSyncRequest(changesUri, { resp ->
-				val outstandingPullCount = resp.getInt("outstandingPullCount")
-				val entityChangeId = resp.getInt("lastEntityChangeId")
-				Log.i(TAG, "sync outstanding $outstandingPullCount")
-				val changes = resp.getJSONArray("entityChanges")
-				totalSynced += changes.length()
-				for (i in 0 until changes.length()) {
-					val change = changes.get(i) as JSONObject
-					val entityChange = change.optJSONObject("entityChange")!!
-					val entityName = entityChange.getString("entityName")
-					val changeId = entityChange.getString("changeId")
-					val entity = change.optJSONObject("entity")
-					if (entity == null) {
-						val primaryKey = primaryKeyForTable(entityName)
-						val entityId = entityChange.getString("entityId")
-						// deleted entity
-						db!!.delete(entityName, "$primaryKey = ?", arrayOf(entityId))
-						continue
-					}
-					db!!.rawQuery(
-						"SELECT 1 FROM entity_changes WHERE changeId = ?",
-						arrayOf(changeId)
-					).use {
-						if (it.count != 0) {
-							// already applied
-							return@use
+				runBlocking {
+					val outstandingPullCount = resp.getInt("outstandingPullCount")
+					val entityChangeId = resp.getInt("lastEntityChangeId")
+					Log.i(TAG, "sync outstanding $outstandingPullCount")
+					val changes = resp.getJSONArray("entityChanges")
+					totalSynced += changes.length()
+					for (i in 0 until changes.length()) {
+						val change = changes.get(i) as JSONObject
+						val entityChange = change.optJSONObject("entityChange")!!
+						val entityName = entityChange.getString("entityName")
+						val changeId = entityChange.getString("changeId")
+						val entity = change.optJSONObject("entity")
+						if (entity == null) {
+							val primaryKey = primaryKeyForTable(entityName)
+							val entityId = entityChange.getString("entityId")
+							// deleted entity
+							DB.delete(entityName, "$primaryKey = ?", arrayOf(entityId))
+							continue
 						}
-						if (entityName == "note_reordering") {
-							for (key in entity.keys()) {
-								db!!.execSQL(
-									"UPDATE branches SET notePosition = ? WHERE branchId = ?",
-									arrayOf(entity[key], key)
+						DB.rawQuery(
+							"SELECT 1 FROM entity_changes WHERE changeId = ?",
+							arrayOf(changeId)
+						).use {
+							if (it.count != 0) {
+								// already applied
+								return@use
+							}
+							if (entityName == "note_reordering") {
+								for (key in entity.keys()) {
+									DB.update(BranchId(key), Pair("notePosition", entity[key]))
+								}
+								return@use
+							}
+							if (arrayOf("note_contents", "note_revision_contents").contains(
+									entityName
 								)
+							) {
+								entity.put("content", Base64.decode(entity.getString("content")))
 							}
-							return@use
-						}
-						if (arrayOf("note_contents", "note_revision_contents").contains(
-								entityName
+							val keys = entity.keys().asSequence().toList()
+
+							// TODO: invalidate existing cache
+							// TODO: lookup notes related to blob!
+
+							val cv = ContentValues(entity.length())
+							keys.map { fieldName ->
+								var x = entity.get(fieldName)
+								if (x == JSONObject.NULL) {
+									cv.putNull(fieldName)
+								} else {
+									if (fieldName == "content") {
+										x = (x as String).decodeBase64()!!.toByteArray()
+									}
+									when (x) {
+										is String -> {
+											cv.put(fieldName, x)
+										}
+
+										is Int -> {
+											cv.put(fieldName, x)
+										}
+
+										is Double -> {
+											cv.put(fieldName, x)
+										}
+
+										is ByteArray -> {
+											cv.put(fieldName, x)
+										}
+
+										else -> {
+											Log.e(
+												TAG,
+												"failed to recognize sync entity value $x of type ${x.javaClass}"
+											)
+										}
+									}
+								}
+							}
+							DB.internalGetDatabase()!!.insertWithOnConflict(
+								entityName,
+								null,
+								cv,
+								SQLiteDatabase.CONFLICT_REPLACE
 							)
-						) {
-							entity.put("content", Base64.decode(entity.getString("content")))
 						}
-						val keys = entity.keys().asSequence().toList()
-
-						// TODO: lookup notes related to blob!
-						if (entityName == "notes") {
-							notes[entityName]?.makeInvalid()
-							notes.remove(entityName)
-						}
-
-						val cv = ContentValues(entity.length())
-						keys.map { fieldName ->
-							var x = entity.get(fieldName)
-							if (x == JSONObject.NULL) {
-								cv.putNull(fieldName)
-							} else {
-								if (fieldName == "content") {
-									x = (x as String).decodeBase64()!!.toByteArray()
-								}
-								when (x) {
-									is String -> {
-										cv.put(fieldName, x)
-									}
-
-									is Int -> {
-										cv.put(fieldName, x)
-									}
-
-									is Double -> {
-										cv.put(fieldName, x)
-									}
-
-									is ByteArray -> {
-										cv.put(fieldName, x)
-									}
-
-									else -> {
-										Log.e(
-											TAG,
-											"failed to recognize sync entity value $x of type ${x.javaClass}"
-										)
-									}
-								}
-							}
-						}
-						db!!.insertWithOnConflict(
-							entityName,
-							null,
-							cv,
-							SQLiteDatabase.CONFLICT_REPLACE
-						)
 					}
-				}
-				Log.i(TAG, "last entity change id: $entityChangeId")
-				val utc = utcDateModified()
-				db!!.execSQL(
-					"INSERT OR REPLACE INTO options (name, value, utcDateModified) VALUES (?, ?, ?)",
-					arrayOf("lastSyncedPull", entityChangeId, utc)
-				)
-				if (outstandingPullCount > 0) {
-					callbackOutstanding(outstandingPullCount)
-					runBlocking {
-						sync(totalSynced, callbackOutstanding, callbackError, callbackDone)
+					Log.i(TAG, "last entity change id: $entityChangeId")
+					val utc = utcDateModified()
+					DB.insertWithConflict(
+						"options",
+						SQLiteDatabase.CONFLICT_REPLACE,
+						Pair("name", "lastSyncedPull"),
+						Pair("value", entityChangeId),
+						Pair("utcDateModified", utc)
+					)
+					if (outstandingPullCount > 0) {
+						callbackOutstanding(outstandingPullCount)
+						runBlocking {
+							sync(totalSynced, callbackOutstanding, callbackError, callbackDone)
+						}
+					} else {
+						callbackDone(Pair(totalSynced, totalPushed))
 					}
-				} else {
-					callbackDone(Pair(totalSynced, totalPushed))
 				}
 			}, callbackError)
 		} catch (e: Exception) {

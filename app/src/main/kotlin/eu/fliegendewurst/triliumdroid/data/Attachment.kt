@@ -1,5 +1,7 @@
 package eu.fliegendewurst.triliumdroid.data
 
+import eu.fliegendewurst.triliumdroid.database.IdLike
+
 class Attachment(
 	var id: AttachmentId,
 	val ownerId: NoteId,
@@ -17,7 +19,11 @@ class Attachment(
 ) {
 }
 
-data class AttachmentId(val id: String)
+data class AttachmentId(val id: String) : IdLike {
+	override fun rawId() = id
+	override fun columnName() = "attachmentId"
+	override fun tableName() = "attachments"
+}
 
 enum class AttachmentRole {
 	File,

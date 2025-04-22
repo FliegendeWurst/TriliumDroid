@@ -24,7 +24,8 @@ import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.activity.main.NoteEditItem
 import eu.fliegendewurst.triliumdroid.activity.main.NoteItem
 import eu.fliegendewurst.triliumdroid.activity.main.StartItem
-import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.data.NoteId
+import eu.fliegendewurst.triliumdroid.database.DB
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.util.Preferences
@@ -46,9 +47,8 @@ class NoteWidget : AppWidgetProvider() {
 		appWidgetIds: IntArray
 	) {
 		Preferences.init(context.applicationContext)
-		if (Cache.haveDatabase(context)) {
+		if (DB.haveDatabase(context)) {
 			runBlocking {
-				Cache.initializeDatabase(context)
 				// There may be multiple widgets active, so update all of them
 				for (appWidgetId in appWidgetIds) {
 					updateAppWidget(context, appWidgetManager, appWidgetId, null)
@@ -64,9 +64,8 @@ class NoteWidget : AppWidgetProvider() {
 		newOptions: Bundle?
 	) {
 		Preferences.init(context.applicationContext)
-		if (Cache.haveDatabase(context)) {
+		if (DB.haveDatabase(context)) {
 			runBlocking {
-				Cache.initializeDatabase(context)
 				updateAppWidget(context, appWidgetManager, appWidgetId, newOptions)
 			}
 		}
@@ -74,9 +73,9 @@ class NoteWidget : AppWidgetProvider() {
 
 	override fun onEnabled(context: Context) {
 		Preferences.init(context.applicationContext)
-		if (Cache.haveDatabase(context)) {
+		if (DB.haveDatabase(context)) {
 			runBlocking {
-				Cache.initializeDatabase(context)
+				DB.initializeDatabase(context)
 			}
 		}
 	}
@@ -99,7 +98,7 @@ fun parseWidgetAction(action: String?): HistoryItem? {
 		"open" -> {
 			if (parts.size >= 2) {
 				val note = runBlocking {
-					Notes.getNoteWithContent(parts[1])
+					Notes.getNoteWithContent(NoteId(parts[1]))
 				}
 				NoteItem(note!!, null)
 			} else {
@@ -110,7 +109,7 @@ fun parseWidgetAction(action: String?): HistoryItem? {
 		"edit" -> {
 			if (parts.size >= 2) {
 				val note = runBlocking {
-					Notes.getNoteWithContent(parts[1])
+					Notes.getNoteWithContent(NoteId(parts[1]))
 				}
 				NoteEditItem(note!!)
 			} else {

@@ -20,6 +20,7 @@ import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Attribute
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.service.DateNotes
@@ -269,7 +270,7 @@ class FrontendBackendApi(
 	/**
 	 * Get a note by its ID.
 	 */
-	fun getNote(noteId: String): Note? {
+	fun getNote(noteId: NoteId): Note? {
 		return runBlocking { Notes.getNote(noteId) }
 	}
 
@@ -278,7 +279,7 @@ class FrontendBackendApi(
 	 */
 	@JavascriptInterface
 	fun getNoteInternal(noteId: String): String? {
-		val note = getNote(noteId) ?: return null
+		val note = getNote(NoteId(noteId)) ?: return null
 		val json = encodeNote(note)?.toString()
 		return json
 	}
@@ -287,7 +288,7 @@ class FrontendBackendApi(
 	fun getNotes(noteIds: List<String>, silentNotFoundError: Boolean = false): List<FrontendNote> {
 		// TODO: honor silentNotFoundError
 		return noteIds.map {
-			FrontendNote(runBlocking { Notes.getNoteWithContent(it) } ?: return@map null)
+			FrontendNote(runBlocking { Notes.getNoteWithContent(NoteId(it)) } ?: return@map null)
 		}
 			.filterNotNull().toList()
 	}
@@ -672,7 +673,7 @@ class FrontendBackendApi(
 	@JavascriptInterface
 	fun updateExcalidrawNote(noteId: String, newContent: String) {
 		runBlocking {
-			Notes.setNoteContent(noteId, newContent)
+			Notes.setNoteContent(NoteId(noteId), newContent)
 		}
 	}
 

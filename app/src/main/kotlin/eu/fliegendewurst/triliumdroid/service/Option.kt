@@ -1,9 +1,8 @@
 package eu.fliegendewurst.triliumdroid.service
 
-import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
-import eu.fliegendewurst.triliumdroid.database.Cache.db
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
+import eu.fliegendewurst.triliumdroid.database.DB
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.io.encoding.Base64
@@ -24,7 +23,7 @@ object Option {
 	suspend fun revisionIntervalUpdate(new: Int) = putInt("revisionSnapshotTimeInterval", new)
 
 	private suspend fun getString(name: String): String? = withContext(Dispatchers.IO) {
-		db!!.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf(name))
+		DB.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf(name))
 			.use {
 				if (it.moveToFirst()) {
 					return@withContext it.getString(0)
@@ -36,12 +35,13 @@ object Option {
 	private suspend fun getInt(name: String): Int? = getString(name)?.toInt()
 
 	private suspend fun putString(name: String, value: String) = withContext(Dispatchers.IO) {
-		val cv = ContentValues()
-		cv.put("name", name)
-		cv.put("value", value)
-		cv.put("utcDateModified", utcDateModified())
 		// TODO: consider syncing?
-		db!!.insertWithOnConflict("options", null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+		DB.insertWithConflict(
+			"options", SQLiteDatabase.CONFLICT_REPLACE,
+			Pair("name", name),
+			Pair("value", value),
+			Pair("utcDateModified", utcDateModified())
+		)
 	}
 
 	private suspend fun putInt(name: String, value: Int) = putString(name, value.toString())

@@ -4,17 +4,18 @@ import android.content.ContentValues
 import android.util.Log
 import androidx.core.database.getBlobOrNull
 import androidx.core.database.getStringOrNull
+import eu.fliegendewurst.triliumdroid.data.AttributeId
 import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.BlobId
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.Relation
-import eu.fliegendewurst.triliumdroid.database.Cache.CursorFactory
 import eu.fliegendewurst.triliumdroid.database.Cache.dateModified
-import eu.fliegendewurst.triliumdroid.database.Cache.db
 import eu.fliegendewurst.triliumdroid.database.Cache.getTreeData
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
+import eu.fliegendewurst.triliumdroid.database.DB.CursorFactory
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import eu.fliegendewurst.triliumdroid.service.Util
 import kotlinx.coroutines.Dispatchers
@@ -24,66 +25,72 @@ import java.util.concurrent.ConcurrentHashMap
 object Notes {
 	private const val TAG = "Notes"
 
-	val notes: MutableMap<String, Note> = ConcurrentHashMap()
+	/**
+	 * Unique root note of the note tree.
+	 */
+	val ROOT = NoteId("root")
 
-	suspend fun createChildNote(parentNote: Note, newNoteTitle: String?): Note =
-		withContext(Dispatchers.IO) {
-			// create entries in notes, blobs, branches
-			var newId = Util.newNoteId()
-			do {
-				var exists = true
-				db!!.rawQuery("SELECT noteId FROM notes WHERE noteId = ?", arrayOf(newId)).use {
-					if (!it.moveToNext()) {
-						exists = false
-					}
-				}
-				if (!exists) {
-					break
-				}
-				newId = Util.newNoteId()
-			} while (true)
-			val dateModified = dateModified()
-			val utcDateModified = utcDateModified()
+	/**
+	 * "Parent note" of the root note. Does not exist in the database!
+	 * When used for [Branch.parentNote], indicates a note without parents.
+	 */
+	val NONE = NoteId("none")
 
-			val blob = Blobs.new(null)
-			db!!.execSQL(
-				"INSERT INTO notes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				arrayOf(
-					newId,
-					newNoteTitle,
-					"0", // isProtected
-					"text", // type
-					"text/html", // mime
-					blob.id.id, // blobId
-					"0", // isDeleted
-					null, // deleteId
-					dateModified, // dateCreated
-					dateModified,
-					utcDateModified, // utcDateCreated
-					utcDateModified,
-				)
+	/**
+	 * Root note of the Trilium-provided hidden notes.
+	 */
+	val HIDDEN = NoteId("_hidden")
+
+	/**
+	 * Root note of the user-provided hidden notes.
+	 */
+	val USER_HIDDEN = NoteId("_userHidden")
+
+	val notes: MutableMap<NoteId, Note> = ConcurrentHashMap()
+
+	suspend fun createChildNote(parentNote: Note, newNoteTitle: String?): Note {
+		// create entries in notes, blobs, branches
+		var newId = NoteId(DB.newId("notes", "noteId ") { Util.newNoteId() })
+		val dateModified = dateModified()
+		val utcDateModified = utcDateModified()
+
+		val blob = Blobs.new(null)
+		DB.insert(
+			"notes",
+			Pair("noteId", newId),
+			Pair("title", newNoteTitle),
+			Pair("isProtected", false),
+			Pair("type", "text"),
+			Pair("mime", "text/html"),
+			Pair("isDeleted", false),
+			Pair("deleteId", null),
+			Pair("dateCreated", dateModified),
+			Pair("dateModified", dateModified),
+			Pair("utcDateCreated", utcDateModified),
+			Pair("utcDateModified", utcDateModified),
+			Pair("blobId", blob.id)
+		)
+		// hash ["noteId", "title", "isProtected", "type", "mime", "blobId"]
+		registerEntityChangeNote(
+			Note(
+				newId,
+				"text/html",
+				newNoteTitle ?: "",
+				"text",
+				false,
+				null,
+				dateModified,
+				dateModified,
+				utcDateModified,
+				utcDateModified,
+				false,
+				blob.id
 			)
-			// hash ["noteId", "title", "isProtected", "type", "mime", "blobId"]
-			registerEntityChangeNote(
-				Note(
-					newId,
-					"text/html",
-					newNoteTitle ?: "",
-					"text",
-					false,
-					null,
-					dateModified,
-					dateModified,
-					utcDateModified,
-					utcDateModified,
-					false,
-					blob.id
-				)
-			)
-			Branches.cloneNote(parentNote.id, newId)
-			getTreeData("AND noteId = '$newId'")
-			return@withContext getNote(newId)!!
-		}
+		)
+		Branches.cloneNote(parentNote.id, newId)
+		getTreeData("AND noteId = '$newId'")
+		return getNote(newId)!!
+	}
 
 	suspend fun createSiblingNote(siblingNote: Note, newNoteTitle: String?): Note =
 		withContext(Dispatchers.IO) {
@@ -96,7 +103,7 @@ object Notes {
 		}
 
 	suspend fun getRootNote(): Note {
-		val root = getNote("root")
+		val root = getNote(ROOT)
 		if (root == null) {
 			Log.e(TAG, "fatal: root note not found")
 			throw IllegalStateException("fatal: root note not found")
@@ -104,7 +111,7 @@ object Notes {
 		return root
 	}
 
-	suspend fun getNote(id: String): Note? {
+	suspend fun getNote(id: NoteId): Note? {
 		val note = notes[id]
 		if (note != null && !note.invalid()) {
 			return note
@@ -112,7 +119,7 @@ object Notes {
 		return getNoteInternal(id)
 	}
 
-	suspend fun getNoteWithContent(id: String): Note? {
+	suspend fun getNoteWithContent(id: NoteId): Note? {
 		val note = notes[id]
 		if (note != null && !note.invalid() && note.content() != null) {
 			return note
@@ -121,13 +128,13 @@ object Notes {
 	}
 
 
-	private suspend fun getNoteInternal(id: String): Note? = withContext(Dispatchers.IO) {
+	private suspend fun getNoteInternal(id: NoteId): Note? = withContext(Dispatchers.IO) {
 		Log.d(TAG, "fetching note $id")
 		var note: Note? = null
-		CursorFactory.selectionArgs = arrayOf(id)
+		CursorFactory.selectionArgs = arrayOf(id.id)
 		val labels = mutableListOf<Label>()
 		val relations = mutableListOf<Relation>()
-		db!!.rawQueryWithFactory(
+		DB.rawQueryWithFactory(
 			CursorFactory,
 			"SELECT content," + // 0
 					"mime," + // 1
@@ -152,7 +159,7 @@ object Notes {
 					"FROM notes LEFT JOIN blobs USING (blobId) " +
 					"LEFT JOIN attributes USING(noteId)" +
 					"WHERE notes.noteId = ? AND (attributes.isDeleted = 0 OR attributes.isDeleted IS NULL)",
-			arrayOf(id),
+			arrayOf(id.id),
 			"notes"
 		).use {
 			if (it.moveToFirst()) {
@@ -189,7 +196,7 @@ object Notes {
 					val type = it.getString(3)
 					val inheritable = it.getInt(9) == 1
 					val deleted = it.getInt(10) == 1
-					val attributeId = it.getString(13)
+					val attributeId = AttributeId(it.getString(13))
 					if (!deleted) {
 						if (type == "label") {
 							val name = it.getString(4)
@@ -205,7 +212,7 @@ object Notes {
 						} else if (type == "relation") {
 							val name = it.getString(4)
 							// value = note ID
-							val value = it.getString(5)
+							val value = NoteId(it.getString(5))
 							if (!notes.containsKey(value)) {
 								notes[value] = invalidNote(value)
 							}
@@ -235,7 +242,7 @@ object Notes {
 		return@withContext note
 	}
 
-	fun invalidNote(id: String, blobId: String = "INVALID") = Note(
+	fun invalidNote(id: NoteId, blobId: BlobId = BlobId("INVALID")) = Note(
 		id,
 		"INVALID",
 		"INVALID",
@@ -247,10 +254,10 @@ object Notes {
 		"INVALID",
 		"INVALID",
 		false,
-		BlobId(blobId)
+		blobId
 	)
 
-	suspend fun setNoteContent(id: String, content: String) = withContext(Dispatchers.IO) {
+	suspend fun setNoteContent(id: NoteId, content: String) = withContext(Dispatchers.IO) {
 		if (!notes.containsKey(id)) {
 			getNoteInternal(id)
 		}
@@ -261,21 +268,22 @@ object Notes {
 
 		val date = dateModified()
 		val utc = utcDateModified()
-		val cv = ContentValues()
-		cv.put("dateModified", date)
-		cv.put("utcDateModified", utc)
-		cv.put("isProtected", notes[id]!!.isProtected.boolToIntValue())
-		cv.put("blobId", notes[id]!!.blobId.id)
-		db!!.update("notes", cv, "noteId = ?", arrayOf(id))
+		DB.update(
+			id,
+			Pair("dateModified", date),
+			Pair("utcDateModified", utc),
+			Pair("isProtected", notes[id]!!.isProtected.boolToIntValue()),
+			Pair("blobId", notes[id]!!.blobId.id)
+		)
 		notes[id]!!.modified = date
 		notes[id]!!.utcModified = utc
 		registerEntityChangeNote(notes[id]!!)
 	}
 
-	suspend fun setBlobId(id: String, blobId: BlobId) = withContext(Dispatchers.IO) {
+	suspend fun setBlobId(id: NoteId, blobId: BlobId) = withContext(Dispatchers.IO) {
 		val cv = ContentValues()
 		cv.put("blobId", blobId.id)
-		db!!.update("notes", cv, "noteId = ?", arrayOf(id))
+		DB.update(id, Pair("blobId", blobId))
 		registerEntityChangeNote(getNote(id)!!)
 	}
 
@@ -290,13 +298,19 @@ object Notes {
 		cv.put("utcDateModified", utc)
 		cv.put("isProtected", note.isProtected.boolToIntValue())
 		cv.put("blobId", note.blobId.id)
-		db!!.update("notes", cv, "noteId = ?", arrayOf(note.id))
+		DB.update(
+			note.id,
+			Pair("dateModified", date),
+			Pair("utcDateModified", utc),
+			Pair("isProtected", note.isProtected),
+			Pair("blobId", note.blobId)
+		)
 		note.modified = date
 		note.utcModified = utc
 		registerEntityChangeNote(note)
 	}
 
-	suspend fun changeNoteProtection(id: String, protection: Boolean) {
+	suspend fun changeNoteProtection(id: NoteId, protection: Boolean) {
 		if (!ProtectedSession.isActive()) {
 			return
 		}
@@ -309,14 +323,11 @@ object Notes {
 
 	suspend fun renameNote(note: Note, title: String) = withContext(Dispatchers.IO) {
 		note.updateTitle(title)
-		db!!.execSQL(
-			"UPDATE notes SET title = ? WHERE noteId = ?",
-			arrayOf(note.rawTitle(), note.id)
-		)
+		DB.update(note.id, Pair("title", note.rawTitle()))
 		registerEntityChangeNote(note)
 	}
 
-	suspend fun addInternalLink(note: Note, target: String) {
+	suspend fun addInternalLink(note: Note, target: NoteId) {
 		val relations = note.getRelations()
 		if (relations.any { x -> x.target?.id == target && x.name == "internalLink" }) {
 			return
@@ -331,7 +342,7 @@ object Notes {
 	}
 
 	suspend fun deleteNote(branch: Branch): Boolean = withContext(Dispatchers.IO) {
-		if (branch.note == "root") {
+		if (branch.note == ROOT) {
 			return@withContext false
 		}
 		val note = getNote(branch.note) ?: return@withContext false
@@ -348,8 +359,9 @@ object Notes {
 				}
 			}
 			notes.remove(branch.note)
-			note.id = "DELETED"
-			db!!.execSQL("UPDATE notes SET isDeleted=1 WHERE noteId = ?", arrayOf(branch.note))
+			note.id = NoteId("DELETED")
+			// TODO: deleteId?
+			DB.update(branch.note, Pair("isDeleted", true), Pair("deleteId", Util.randomString(10)))
 			registerEntityChangeNote(note)
 		}
 		// remove branches
@@ -368,9 +380,9 @@ private suspend fun registerEntityChangeNote(note: Note) {
 	// hash ["noteId", "title", "isProtected", "type", "mime", "blobId"]
 	Cache.registerEntityChange(
 		"notes",
-		note.id,
+		note.id.id,
 		arrayOf(
-			note.id,
+			note.id.id,
 			note.rawTitle(),
 			note.isProtected.boolToIntString(),
 			note.type,

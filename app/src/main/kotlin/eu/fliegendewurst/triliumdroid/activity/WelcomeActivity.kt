@@ -3,7 +3,7 @@ package eu.fliegendewurst.triliumdroid.activity
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.DB
 import eu.fliegendewurst.triliumdroid.databinding.ActivityWelcomeBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureSyncDialog
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
@@ -30,7 +30,7 @@ class WelcomeActivity : AppCompatActivity() {
 		super.onStart()
 		if (Preferences.hostname() != null) {
 			lifecycleScope.launch {
-				Cache.initializeDatabase(this@WelcomeActivity)
+				DB.initializeDatabase(this@WelcomeActivity)
 				finish()
 			}
 		}

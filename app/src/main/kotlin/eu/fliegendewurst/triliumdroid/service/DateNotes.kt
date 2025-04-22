@@ -60,7 +60,7 @@ object DateNotes {
 		return@withContext if (inboxNotes.isNotEmpty()) {
 			inboxNotes[0]
 		} else {
-			getTodayNote() ?: Notes.getNote("root")!!
+			getTodayNote() ?: Notes.getNote(Notes.ROOT)!!
 		}
 	}
 

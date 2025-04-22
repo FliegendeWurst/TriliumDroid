@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
@@ -20,7 +21,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 class NoteMapFragment : Fragment(R.layout.fragment_note_map), NoteRelatedFragment {
-	private var noteId: String? = null
+	private var noteId: NoteId? = null
 
 	override fun onCreateView(
 		inflater: LayoutInflater,
@@ -29,7 +30,7 @@ class NoteMapFragment : Fragment(R.layout.fragment_note_map), NoteRelatedFragmen
 	): View {
 		val binding = FragmentNoteMapBinding.inflate(inflater, container, false)
 		if (noteId != null) {
-			if (noteId == "GLOBAL") {
+			if (noteId!!.rawId() == "GLOBAL") {
 				binding.viewNoteMap.g = createGraphGlobal()
 			} else {
 				binding.viewNoteMap.g = runBlocking { createGraph(Notes.getNote(noteId!!)!!) }
@@ -38,12 +39,12 @@ class NoteMapFragment : Fragment(R.layout.fragment_note_map), NoteRelatedFragmen
 		return binding.root
 	}
 
-	fun loadLater(id: String) {
+	fun loadLater(id: NoteId) {
 		noteId = id
 	}
 
 	fun loadLaterGlobal() {
-		noteId = "GLOBAL"
+		noteId = NoteId("GLOBAL")
 	}
 
 	private suspend fun createGraph(note: Note): Graph<Note, Relation> {
@@ -109,7 +110,5 @@ class NoteMapFragment : Fragment(R.layout.fragment_note_map), NoteRelatedFragmen
 		}
 	}
 
-	override fun getNoteId(): String? {
-		return noteId
-	}
+	override fun getNoteId() = noteId
 }

@@ -1,7 +1,7 @@
 package eu.fliegendewurst.triliumdroid.data
 
 class Relation(
-	id: String,
+	id: AttributeId,
 	val target: Note?,
 	name: String,
 	val inheritable: Boolean,
@@ -11,7 +11,7 @@ class Relation(
 	templated: Boolean = false
 ) : Attribute(id, name, promoted, inherited, templated) {
 	override fun value(): String {
-		return target?.id!!
+		return target?.id!!.id
 	}
 
 	fun makeInherited(): Relation {

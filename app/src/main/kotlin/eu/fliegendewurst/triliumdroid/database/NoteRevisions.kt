@@ -1,13 +1,12 @@
 package eu.fliegendewurst.triliumdroid.database
 
-import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import androidx.core.database.getStringOrNull
 import eu.fliegendewurst.triliumdroid.data.BlobId
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.NoteRevision
-import eu.fliegendewurst.triliumdroid.database.Cache.db
+import eu.fliegendewurst.triliumdroid.data.RevisionId
 import eu.fliegendewurst.triliumdroid.service.Util
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,22 +15,7 @@ object NoteRevisions {
 	private const val TAG = "NoteRevisions"
 
 	suspend fun create(note: Note): Unit = withContext(Dispatchers.IO) {
-		val cv = ContentValues()
-		val revisionId = Util.newNoteId()
-		cv.put("revisionId", revisionId)
-		cv.put("noteId", note.id)
-		cv.put("type", note.type)
-		cv.put("mime", note.mime)
-		cv.put("title", note.rawTitle())
-		cv.put("isProtected", note.isProtected.boolToIntValue())
-		cv.put("blobId", note.blobId.id)
-		cv.put("utcDateLastEdited", note.utcModified)
-		// FIXME: this should be the date of previous revision
-		// if that makes sense..
-		cv.put("utcDateCreated", note.utcModified)
-		cv.put("utcDateModified", note.utcModified)
-		cv.put("dateLastEdited", note.modified)
-		cv.put("dateCreated", note.modified)
+		val revisionId = RevisionId(DB.newId("revisions", "revisionId") { Util.newNoteId() })
 		val r = NoteRevision(
 			note,
 			revisionId,
@@ -46,10 +30,23 @@ object NoteRevisions {
 			note.modified,
 			note.modified
 		)
-		if (db!!.insertWithOnConflict("revisions", null, cv, SQLiteDatabase.CONFLICT_FAIL) == -1L) {
-			create(note)
-			return@withContext
-		}
+		DB.insert(
+			"revisions",
+			Pair("revisionId", revisionId),
+			Pair("noteId", note.id),
+			Pair("type", note.type),
+			Pair("mime", note.mime),
+			Pair("title", note.rawTitle()),
+			Pair("isProtected", note.isProtected),
+			Pair("blobId", note.blobId.id),
+			Pair("utcDateLastEdited", note.utcModified),
+			// FIXME: this should be the date of previous revision
+			// if that makes sense..
+			Pair("utcDateCreated", note.utcModified),
+			Pair("utcDateModified", note.utcModified),
+			Pair("dateLastEdited", note.modified),
+			Pair("dateCreated", note.modified)
+		)
 		registerEntityChangeNoteRevision(r)
 		note.revisionsInvalidate()
 	}
@@ -61,7 +58,7 @@ object NoteRevisions {
 	 */
 	suspend fun list(note: Note): List<NoteRevision> = withContext(Dispatchers.IO) {
 		val revs = mutableListOf<NoteRevision>()
-		db!!.query(
+		DB.internalGetDatabase()!!.query(
 			"revisions",
 			arrayOf(
 				"revisionId",
@@ -77,11 +74,11 @@ object NoteRevisions {
 				"dateCreated"
 			),
 			"noteId = ?",
-			arrayOf(note.id),
+			arrayOf(note.id.rawId()),
 			null, null, null
 		).use {
 			while (it.moveToNext()) {
-				val revisionId = it.getString(0)
+				val revisionId = RevisionId(it.getString(0))
 				val type = it.getString(1)
 				val mime = it.getString(2)
 				val title = it.getString(3)
@@ -120,8 +117,8 @@ object NoteRevisions {
 		return@withContext revs
 	}
 
-	suspend fun load(revisionId: String): NoteRevision? = withContext(Dispatchers.IO) {
-		db!!.query(
+	suspend fun load(revisionId: RevisionId): NoteRevision? = withContext(Dispatchers.IO) {
+		DB.internalGetDatabase()!!.query(
 			"revisions",
 			arrayOf(
 				"noteId",
@@ -137,16 +134,21 @@ object NoteRevisions {
 				"dateCreated"
 			),
 			"revisionId = ?",
-			arrayOf(revisionId),
+			arrayOf(revisionId.rawId()),
 			null, null, null
 		).use {
 			if (it.moveToNext()) {
-				val noteId = it.getString(0)
+				val noteId = NoteId(it.getString(0))
 				val type = it.getString(1)
 				val mime = it.getString(2)
 				val title = it.getString(3)
 				val isProtected = it.getInt(4).intValueToBool()
-				val blobId = it.getStringOrNull(5)
+				val blobIdRaw = it.getStringOrNull(5)
+				val blobId = if (blobIdRaw != null) {
+					BlobId(blobIdRaw)
+				} else {
+					null
+				}
 				val utcDateLastEdited = it.getString(6)
 				val utcDateCreated = it.getString(7)
 				val utcDateModified = it.getString(8)
@@ -166,7 +168,7 @@ object NoteRevisions {
 					mime,
 					title,
 					isProtected,
-					BlobId(blobId),
+					blobId,
 					utcDateLastEdited,
 					utcDateCreated,
 					utcDateModified,
@@ -178,10 +180,8 @@ object NoteRevisions {
 		return@withContext null
 	}
 
-	suspend fun setBlobId(id: String, blobId: BlobId) = withContext(Dispatchers.IO) {
-		val cv = ContentValues()
-		cv.put("blobId", blobId.id)
-		db!!.update("revisions", cv, "revisionId = ?", arrayOf(id))
+	suspend fun setBlobId(id: RevisionId, blobId: BlobId) = withContext(Dispatchers.IO) {
+		DB.update(id, Pair("blobId", blobId))
 		registerEntityChangeNoteRevision(load(id)!!)
 	}
 
@@ -189,7 +189,7 @@ object NoteRevisions {
 	 * Delete a Revision along with its Blob.
 	 */
 	suspend fun delete(noteRevision: NoteRevision) = withContext(Dispatchers.IO) {
-		db!!.delete("revisions", "revisionId = ?", arrayOf(noteRevision.revisionId))
+		DB.delete("revisions", "revisionId", arrayOf(noteRevision.revisionId.rawId()))
 		registerEntityChangeNoteRevision(noteRevision, true)
 		Blobs.delete(noteRevision.blobId)
 		noteRevision.note.revisionsInvalidate()
@@ -202,10 +202,10 @@ private suspend fun registerEntityChangeNoteRevision(r: NoteRevision, deleted: B
 	// source: https://github.com/TriliumNext/Notes/blob/develop/src/becca/entities/brevision.ts
 	Cache.registerEntityChange(
 		"revisions",
-		r.revisionId,
+		r.revisionId.rawId(),
 		arrayOf(
-			r.revisionId,
-			r.note.id,
+			r.revisionId.rawId(),
+			r.note.id.rawId(),
 			r.title,
 			r.isProtected.boolToIntString(),
 			r.dateLastEdited,

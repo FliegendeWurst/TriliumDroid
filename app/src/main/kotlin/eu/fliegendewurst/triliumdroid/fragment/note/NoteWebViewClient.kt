@@ -12,6 +12,7 @@ import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.AttachmentId
 import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.load
 import eu.fliegendewurst.triliumdroid.database.Attachments
 import eu.fliegendewurst.triliumdroid.database.Notes
@@ -37,7 +38,7 @@ class NoteWebViewClient(
 		if (url.startsWith(WEBVIEW_DOMAIN) && url.contains('#') && !url.contains("/note-editable#")) {
 			val parts = url.split('/')
 			val lastPart = parts.last()
-			if (lastPart == note()?.id) {
+			if (lastPart == note()?.id?.rawId()) {
 				return
 			}
 			var id = parts.last().trimStart('#')
@@ -47,7 +48,7 @@ class NoteWebViewClient(
 			Log.i(TAG, "navigating to note $id")
 			val main = getActivity() ?: return
 			main.lifecycleScope.launch {
-				main.navigateTo(Notes.getNote(id) ?: return@launch)
+				main.navigateTo(Notes.getNote(NoteId(id)) ?: return@launch)
 			}
 		}
 	}
@@ -163,10 +164,10 @@ class NoteWebViewClient(
 					Assets.noteEditableJS(view.context).byteInputStream()
 				)
 			}
-			val note = runBlocking { Notes.getNoteWithContent(id) }
+			val note = runBlocking { Notes.getNoteWithContent(NoteId(id)) }
 			// viewing revision: override response for main note
 			val blobToShow = blob()
-			var content = if (blobToShow != null && id == note()?.id) {
+			var content = if (blobToShow != null && id == note()?.id?.rawId()) {
 				blobToShow.content
 			} else {
 				note?.content()

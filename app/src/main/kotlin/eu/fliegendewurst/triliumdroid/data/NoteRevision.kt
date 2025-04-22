@@ -1,10 +1,11 @@
 package eu.fliegendewurst.triliumdroid.data
 
 import eu.fliegendewurst.triliumdroid.database.Blobs
+import eu.fliegendewurst.triliumdroid.database.IdLike
 
 class NoteRevision(
 	val note: Note,
-	val revisionId: String,
+	val revisionId: RevisionId,
 	val type: String,
 	val mime: String,
 	val title: String,
@@ -30,4 +31,10 @@ class NoteRevision(
 			return content!!
 		}
 	}
+}
+
+data class RevisionId(val id: String) : IdLike {
+	override fun rawId() = id
+	override fun columnName() = "revisionId"
+	override fun tableName() = "revisions"
 }

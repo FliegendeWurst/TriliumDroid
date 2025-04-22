@@ -6,8 +6,9 @@ import android.util.Log
 import eu.fliegendewurst.triliumdroid.data.AttachmentId
 import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.BlobId
+import eu.fliegendewurst.triliumdroid.data.NoteId
+import eu.fliegendewurst.triliumdroid.data.RevisionId
 import eu.fliegendewurst.triliumdroid.database.Cache.dateModified
-import eu.fliegendewurst.triliumdroid.database.Cache.db
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +61,15 @@ object Blobs {
 			cv.put("dateModified", dateModified)
 			cv.put("utcDateModified", utcDateModified)
 
-			if (db!!.insertWithOnConflict("blobs", null, cv, CONFLICT_FAIL) == -1L) {
+			if (DB.insertWithConflict(
+					"blobs",
+					CONFLICT_FAIL,
+					Pair("blobId", blobId),
+					Pair("content", content ?: ByteArray(0)),
+					Pair("dateModified", dateModified),
+					Pair("utcDateModified", utcDateModified)
+				) == -1L
+			) {
 				Log.w(TAG, "failed to insert new blobId = ${blobId.id}")
 				return@withContext new(content)
 			}
@@ -74,7 +83,7 @@ object Blobs {
 		if (it != null) {
 			return@withContext it
 		}
-		db!!.query(
+		DB.internalGetDatabase()!!.query(
 			"blobs",
 			arrayOf(
 				"content", "dateModified", "utcDateModified"
@@ -113,18 +122,20 @@ object Blobs {
 		) {
 			return@withContext false
 		}
-		db!!.delete("blobs", "blobId = ?", arrayOf(id.id))
-		db!!.delete("entity_changes", "entityName = 'blobs' AND entityId = ?", arrayOf(id.id))
+		DB.delete("blobs", "blobId", arrayOf(id.rawId()))
+		DB.internalGetDatabase()!!
+			.delete("entity_changes", "entityName = 'blobs' AND entityId = ?", arrayOf(id.id))
 		blobCache.remove(id.id)
 		return@withContext true
 	}
 
-	suspend fun notesWithBlob(id: BlobId): List<String> = withContext(Dispatchers.IO) {
-		val l = mutableListOf<String>()
-		db!!.query("notes", arrayOf("noteId"), "blobId = ?", arrayOf(id.id), null, null, null)
+	suspend fun notesWithBlob(id: BlobId): List<NoteId> = withContext(Dispatchers.IO) {
+		val l = mutableListOf<NoteId>()
+		DB.internalGetDatabase()!!
+			.query("notes", arrayOf("noteId"), "blobId = ?", arrayOf(id.id), null, null, null)
 			.use {
 				while (it.moveToNext()) {
-					l.add(it.getString(0))
+					l.add(NoteId(it.getString(0)))
 				}
 			}
 		return@withContext l
@@ -133,7 +144,7 @@ object Blobs {
 	suspend fun attachmentsWithBlob(id: BlobId): List<AttachmentId> =
 		withContext(Dispatchers.IO) {
 			val l = mutableListOf<AttachmentId>()
-			db!!.query(
+			DB.internalGetDatabase()!!.query(
 				"attachments",
 				arrayOf("attachmentId"),
 				"blobId = ?",
@@ -150,14 +161,14 @@ object Blobs {
 			return@withContext l
 		}
 
-	suspend fun revisionsWithBlob(id: BlobId): List<String> = withContext(Dispatchers.IO) {
-		val l = mutableListOf<String>()
-		db!!.query(
+	suspend fun revisionsWithBlob(id: BlobId): List<RevisionId> = withContext(Dispatchers.IO) {
+		val l = mutableListOf<RevisionId>()
+		DB.internalGetDatabase()!!.query(
 			"revisions", arrayOf("revisionId"), "blobId = ?", arrayOf(id.id), null, null, null
 		)
 			.use {
 				while (it.moveToNext()) {
-					l.add(it.getString(0))
+					l.add(RevisionId(it.getString(0)))
 				}
 			}
 		return@withContext l
@@ -169,8 +180,8 @@ object Blobs {
 		if (error != null) {
 			Log.e(TAG, "failed to enter protected session for database migration: $error")
 		}
-		val affected = mutableListOf<String>()
-		db!!.query(
+		val affected = mutableListOf<BlobId>()
+		DB.internalGetDatabase()!!.query(
 			"entity_changes",
 			arrayOf("entityId"),
 			"entityName = 'blobs'",
@@ -180,11 +191,10 @@ object Blobs {
 			null
 		).use { cursor ->
 			while (cursor.moveToNext()) {
-				affected.add(cursor.getString(0))
+				affected.add(BlobId(cursor.getString(0)))
 			}
 		}
-		for (id in affected) {
-			val blobId = BlobId(id)
+		for (blobId in affected) {
 			val blob = load(blobId) ?: continue
 			// check if blob is still used
 			if (delete(blobId)) {

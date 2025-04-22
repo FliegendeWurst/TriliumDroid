@@ -4,6 +4,7 @@ import android.util.Log
 import eu.fliegendewurst.triliumdroid.database.Blobs
 import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.IdLike
 import eu.fliegendewurst.triliumdroid.database.NoteRevisions
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.database.parseUtcDate
@@ -17,7 +18,7 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 class Note(
-	var id: String,
+	var id: NoteId,
 	val mime: String,
 	private var title: String,
 	var type: String,
@@ -103,7 +104,7 @@ class Note(
 	}
 
 	private suspend fun cacheInheritableAttributes(): Unit = withContext(Dispatchers.IO) {
-		if (id == "none" || inheritableCached) {
+		if (id == Notes.NONE || inheritableCached) {
 			return@withContext
 		}
 		val paths = Branches.getNotePaths(id) ?: return@withContext
@@ -112,7 +113,7 @@ class Note(
 		for (path in paths) {
 			val parent = path[0].parentNote
 			// inheritable attrs on root are typically not intended to be applied to hidden subtree #3537
-			if (parent == "none" || id == "root" || id == "_hidden") {
+			if (parent == Notes.NONE || id == Notes.ROOT || id == Notes.HIDDEN) {
 				continue
 			}
 			val parentNote = Notes.getNoteWithContent(parent) ?: continue
@@ -269,6 +270,7 @@ class Note(
 		titleDecrypted = try {
 			ProtectedSession.decrypt(Base64.decode(this.title))!!.decodeToString()
 		} catch (e: InvalidCipherTextException) {
+			Log.w(TAG, "processing note ${id.rawId()} ", e)
 			"[data corrupted]"
 		}
 		ProtectedSession.addListener(this)
@@ -411,7 +413,7 @@ class Note(
 	}
 
 	override fun compareTo(other: Note): Int {
-		return id.compareTo(other.id)
+		return id.id.compareTo(other.id.id)
 	}
 
 	override fun sessionExpired() {
@@ -423,4 +425,8 @@ class Note(
 	}
 }
 
-data class NoteId(val id: String)
+data class NoteId(val id: String) : IdLike {
+	override fun rawId() = id
+	override fun columnName() = "noteId"
+	override fun tableName() = "notes"
+}

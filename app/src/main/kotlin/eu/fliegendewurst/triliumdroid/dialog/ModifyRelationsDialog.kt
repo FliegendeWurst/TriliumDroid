@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
+import eu.fliegendewurst.triliumdroid.data.AttributeId
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Attributes
@@ -28,7 +29,7 @@ object ModifyRelationsDialog {
 		dialog.show()
 
 		// list: attribute name, ID (null if new), target note id (null if deleted)
-		val changes = mutableListOf<Triple<String, String?, Note?>>()
+		val changes = mutableListOf<Triple<String, AttributeId?, Note?>>()
 
 		val ownedAttributesList = dialog.findViewById<ListView>(R.id.list_relations)!!
 		val ownedAttributes =
@@ -44,7 +45,7 @@ object ModifyRelationsDialog {
 					changes.add(Triple(it.trim(), null, note))
 					ownedAttributes.add(
 						Relation(
-							Util.randomString(12),
+							AttributeId(Util.randomString(12)), // TODO: collisions?
 							note,
 							it.trim(),
 							inheritable = false,
@@ -69,7 +70,7 @@ object ModifyRelationsDialog {
 			val settings = template.value.split(',')
 			ownedAttributes.add(
 				Relation(
-					Util.randomString(12),
+					AttributeId(Util.randomString(12)), // TODO: collisions?
 					null,
 					labelName,
 					inheritable,
@@ -148,7 +149,7 @@ object ModifyRelationsDialog {
 	private fun done(
 		activity: MainActivity,
 		dialog: AlertDialog,
-		changes: List<Triple<String, String?, Note?>>,
+		changes: List<Triple<String, AttributeId?, Note?>>,
 		currentNote: Note
 	) {
 		activity.lifecycleScope.launch {

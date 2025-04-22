@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity.Companion.tree
 import eu.fliegendewurst.triliumdroid.data.Branch
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.ItemTreeNoteBinding
 import eu.fliegendewurst.triliumdroid.service.Icon
@@ -28,11 +29,11 @@ class TreeItemAdapter(
 	private val onLongClick: (Branch) -> Unit,
 ) :
 	ListAdapter<Pair<Branch, Int>, TreeItemAdapter.TreeItemViewHolder>(TreeItemDiffCallback) {
-	private var selectedNote: String? = null
+	private var selectedNote: NoteId? = null
 
-	private val branchPosition: MutableMap<String, Int> = ConcurrentHashMap()
+	private val branchPosition: MutableMap<NoteId, Int> = ConcurrentHashMap()
 
-	fun getBranchPosition(branchId: String): Int? = branchPosition[branchId]
+	fun getBranchPosition(noteId: NoteId): Int? = branchPosition[noteId]
 
 	override fun submitList(list: List<Pair<Branch, Int>>?) {
 		for ((i, pair) in list.orEmpty().withIndex()) {
@@ -42,7 +43,7 @@ class TreeItemAdapter(
 		super.submitList(list)
 	}
 
-	fun select(noteId: String) {
+	fun select(noteId: NoteId) {
 		val prev = selectedNote
 		selectedNote = noteId
 		if (prev != null) {
@@ -71,7 +72,7 @@ class TreeItemAdapter(
 			} else {
 				binding.noteIcon.text = ""
 			}
-			binding.label.text = note?.title() ?: item.first.note
+			binding.label.text = note?.title() ?: item.first.note.rawId()
 			val params = binding.label.layoutParams
 			val params2 = binding.noteIcon.layoutParams
 			if (params is ViewGroup.MarginLayoutParams && params2 is ViewGroup.MarginLayoutParams) {
@@ -104,7 +105,7 @@ class TreeItemAdapter(
 		holder.bind(item)
 		val button = holder.itemView.findViewById<Button>(R.id.label)
 		// make sure entries in the "jump to note" dialog are wide
-		if (item.first.id == MainActivity.JUMP_TO_NOTE_ENTRY) {
+		if (item.first.id.rawId() == MainActivity.JUMP_TO_NOTE_ENTRY) {
 			button.layoutParams = FrameLayout.LayoutParams(
 				FrameLayout.LayoutParams.MATCH_PARENT,
 				FrameLayout.LayoutParams.WRAP_CONTENT

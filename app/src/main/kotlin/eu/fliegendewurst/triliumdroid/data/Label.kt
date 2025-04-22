@@ -1,7 +1,7 @@
 package eu.fliegendewurst.triliumdroid.data
 
 class Label(
-	id: String,
+	id: AttributeId,
 	name: String,
 	val value: String,
 	val inheritable: Boolean,

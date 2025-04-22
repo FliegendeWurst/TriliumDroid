@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.DB
 import eu.fliegendewurst.triliumdroid.util.CookieJar
 import eu.fliegendewurst.triliumdroid.util.GetSSID
 import eu.fliegendewurst.triliumdroid.util.Preferences
@@ -494,7 +495,7 @@ object ConnectionUtil {
 	}
 
 	fun status(): SyncStatus {
-		return SyncStatus(dbMismatch, loginSuccess, connectSuccess, Cache.lastSync)
+		return SyncStatus(dbMismatch, loginSuccess, connectSuccess, DB.lastSync)
 	}
 
 	data class AppInfo(

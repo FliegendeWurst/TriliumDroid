@@ -6,7 +6,7 @@ import eu.fliegendewurst.triliumdroid.data.Note
 class FrontendNote(private val note: Note) {
 	@JavascriptInterface
 	fun noteId(): String {
-		return note.id
+		return note.id.rawId()
 	}
 
 	/**

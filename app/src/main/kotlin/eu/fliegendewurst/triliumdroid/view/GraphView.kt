@@ -19,6 +19,7 @@ import androidx.core.graphics.withTranslation
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.util.Graph
 import eu.fliegendewurst.triliumdroid.util.Position
@@ -144,7 +145,7 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 		attached = false
 	}
 
-	private val count: MutableMap<String, Int> = mutableMapOf()
+	private val count: MutableMap<NoteId, Int> = mutableMapOf()
 	private val bias: MutableMap<Pair<Note, Note>, Float> = mutableMapOf()
 
 	private fun updatePositions() {
@@ -236,7 +237,7 @@ class GraphView(context: Context, attributes: AttributeSet?) : View(context, att
 		// crappy charge simulation
 		for (nodeA in g.nodes) {
 			for (nodeB in g.nodes) {
-				if (nodeA.id >= nodeB.id) {
+				if (nodeA.id.rawId() >= nodeB.id.rawId()) {
 					continue
 				}
 				val posA = g.vertexPositions[nodeA]!!

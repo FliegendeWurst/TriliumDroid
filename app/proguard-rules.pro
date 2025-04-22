@@ -4,6 +4,7 @@
 #
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
+#   https://r8.googlesource.com/r8/+/refs/heads/main/compatibility-faq.md
 
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface

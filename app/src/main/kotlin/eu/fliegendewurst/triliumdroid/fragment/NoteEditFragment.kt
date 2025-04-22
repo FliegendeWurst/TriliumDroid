@@ -59,7 +59,7 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit), NoteRelatedFragm
 		binding.webviewEditable.webViewClient = NoteWebViewClient({
 			runBlocking {
 				if (id != null) {
-					Notes.getNote(id!!.id)
+					Notes.getNote(id!!)
 				} else {
 					null
 				}
@@ -155,7 +155,5 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit), NoteRelatedFragm
 		outState.putString("NOTE_ID", id?.id)
 	}
 
-	override fun getNoteId(): String? {
-		return id?.id
-	}
+	override fun getNoteId() = id
 }

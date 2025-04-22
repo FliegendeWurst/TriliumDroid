@@ -1,6 +1,5 @@
 package eu.fliegendewurst.triliumdroid.database
 
-import android.content.ContentValues
 import android.util.Log
 import androidx.core.database.getStringOrNull
 import eu.fliegendewurst.triliumdroid.data.Attachment
@@ -9,7 +8,6 @@ import eu.fliegendewurst.triliumdroid.data.BlobId
 import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.asAttachmentRole
 import eu.fliegendewurst.triliumdroid.data.asString
-import eu.fliegendewurst.triliumdroid.database.Cache.db
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -17,7 +15,7 @@ object Attachments {
 	private const val TAG = "Attachments"
 
 	suspend fun load(id: AttachmentId): Attachment? = withContext(Dispatchers.IO) {
-		db!!.query(
+		DB.internalGetDatabase()!!.query(
 			"attachments",
 			arrayOf(
 				"ownerId",
@@ -82,9 +80,7 @@ object Attachments {
 	}
 
 	suspend fun setBlobId(id: AttachmentId, blobId: BlobId) = withContext(Dispatchers.IO) {
-		val cv = ContentValues()
-		cv.put("blobId", blobId.id)
-		db!!.update("attachments", cv, "attachmentId = ?", arrayOf(id.id))
+		DB.update(id, Pair("blobId", blobId))
 		registerEntityChangeAttachment(load(id)!!)
 	}
 }

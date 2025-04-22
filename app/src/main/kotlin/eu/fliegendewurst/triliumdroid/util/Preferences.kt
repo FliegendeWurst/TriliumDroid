@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.activity.main.HistoryItem
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.widget.parseWidgetAction
 
@@ -45,7 +46,14 @@ object Preferences {
 	fun syncSSID(): String? = prefs.getString(SYNC_SSID, null)
 	fun mTLS(): String? = prefs.getString(MTLS_CERT, null)
 	fun lastReport(): String? = prefs.getString(LAST_REPORT, null)
-	fun lastNote(): String? = prefs.getString(LAST_NOTE, null)
+	fun lastNote(): NoteId? = prefs.getString(LAST_NOTE, null).let {
+		if (it != null) {
+			NoteId(it)
+		} else {
+			null
+		}
+	}
+
 	fun databaseMigration(): Int = prefs.getInt(DB_MIGRATION, 0)
 	fun syncVersion(): Int? = if (prefs.contains(SYNC_VERSION)) {
 		prefs.getInt(SYNC_VERSION, 0)
@@ -76,7 +84,7 @@ object Preferences {
 	fun setSyncVersion(newValue: Int) = prefs.edit { putInt(SYNC_VERSION, newValue) }
 	fun setDatabaseVersion(newValue: Int) = prefs.edit { putInt(DATABASE_VERSION, newValue) }
 	fun setLastReport(newValue: String) = prefs.edit { putString(LAST_REPORT, newValue) }
-	fun setLastNote(noteId: String) = prefs.edit { putString(LAST_NOTE, noteId) }
+	fun setLastNote(noteId: NoteId) = prefs.edit { putString(LAST_NOTE, noteId.rawId()) }
 	fun setSyncSSID(ssid: String) = prefs.edit { putString(SYNC_SSID, ssid) }
 	fun setMTLS(alias: String) = prefs.edit { putString(MTLS_CERT, alias) }
 	fun setDocumentSecret(newValue: String) =

@@ -89,7 +89,7 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 			view.root.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
 
 			view.navigationButtonFiller.layoutParams.width = LinearLayout.LayoutParams.WRAP_CONTENT
-			if (x.note.id != "root") {
+			if (x.note.id != Notes.ROOT) {
 				view.navigationButtonFiller.text = ">"
 			}
 			(view.navigationButtonFiller.layoutParams as LinearLayout.LayoutParams).weight = 0f

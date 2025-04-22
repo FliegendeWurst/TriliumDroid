@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.R
-import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.DB
 import eu.fliegendewurst.triliumdroid.databinding.ActivitySetupBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureSyncDialog
@@ -177,7 +177,7 @@ class SetupActivity : AppCompatActivity() {
 
 		binding.buttonNukeDatabase.setOnClickListener {
 			YesNoDialog.show(this, R.string.title_delete_database, R.string.text_nuke_database) {
-				Cache.nukeDatabase(this)
+				DB.nukeDatabase(this)
 				binding.status.setText(R.string.status_unknown)
 			}
 		}

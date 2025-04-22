@@ -11,6 +11,7 @@ import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.TreeItemAdapter
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Branch
+import eu.fliegendewurst.triliumdroid.data.BranchId
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
 import kotlinx.coroutines.launch
@@ -54,7 +55,14 @@ object JumpToNoteDialog {
 				val results = Cache.getJumpToResults(searchString)
 				val stuff = results.map {
 					Pair(
-						Branch(MainActivity.JUMP_TO_NOTE_ENTRY, it.id, it.id, 0, null, false),
+						Branch(
+							BranchId(MainActivity.JUMP_TO_NOTE_ENTRY),
+							it.id,
+							it.id,
+							0,
+							null,
+							false
+						),
 						0
 					)
 				}.toList()

@@ -34,11 +34,13 @@ import eu.fliegendewurst.triliumdroid.activity.main.NoteItem
 import eu.fliegendewurst.triliumdroid.activity.main.NoteMapItem
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.NoteRevision
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Attributes
 import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.DB
 import eu.fliegendewurst.triliumdroid.database.NoteRevisions
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
@@ -88,7 +90,7 @@ class MainController {
 	private var firstAction: HistoryItem? = null
 
 	// initial note to show
-	private var firstNote: String? = null
+	private var firstNote: NoteId? = null
 
 	/**
 	 * Whether to show the next sync error as a full [SyncErrorFragment]
@@ -103,7 +105,7 @@ class MainController {
 	/**
 	 * When unloading the note on screen leave, the note ID that was loaded.
 	 */
-	private var loadedNoteId: String? = null
+	private var loadedNoteId: NoteId? = null
 
 	/**
 	 * Called when the app is created, possibly in the background.
@@ -112,13 +114,17 @@ class MainController {
 		oneTimeSetup(activity)
 
 		Preferences.init(activity.applicationContext)
+		DB.applicationContext = activity.applicationContext
 		ConfigureFabsDialog.init()
 
-		if (Cache.haveDatabase(activity)) {
-			runBlocking { Cache.initializeDatabase(activity.applicationContext) }
+		if (DB.haveDatabase(activity)) {
+			runBlocking { DB.initializeDatabase(activity.applicationContext) }
 		}
 
-		firstNote = intent.extras?.getString("note")
+		val firstNoteRaw = intent.extras?.getString("note")
+		if (firstNoteRaw != null) {
+			firstNote = NoteId(firstNoteRaw)
+		}
 
 		val appWidgetId = intent.extras?.getInt("appWidgetId")
 		if (appWidgetId != null) {
@@ -150,17 +156,17 @@ class MainController {
 		CrashReport.showPendingReports(activity)
 
 		if (firstAction != null) {
-			if (Cache.haveDatabase(activity)) {
-				runBlocking { Cache.initializeDatabase(activity.applicationContext) }
+			if (DB.haveDatabase(activity)) {
+				runBlocking { DB.initializeDatabase(activity.applicationContext) }
 			}
 			return
 		}
-		if (Cache.haveDatabase(activity)) {
+		if (DB.haveDatabase(activity)) {
 			if (Preferences.hostname() == null) {
 				Log.i(TAG, "starting setup!")
 				val intent = Intent(activity, SetupActivity::class.java)
 				activity.startActivity(intent)
-			} else if (Cache.lastSync == null && noteHistory.isEmpty()) {
+			} else if (DB.lastSync == null && noteHistory.isEmpty()) {
 				activity.lifecycleScope.launch {
 					ConnectionUtil.setup(activity, {
 						activity.handler.post {
@@ -176,7 +182,7 @@ class MainController {
 					showInitialNote(activity, true)
 				}
 			} else if (noteHistory.isEmpty()) {
-				Log.d(TAG, "last sync is ${Cache.lastSync}, showing initial note")
+				Log.d(TAG, "last sync is ${DB.lastSync}, showing initial note")
 				showInitialNote(activity, true)
 			}
 		} else {
@@ -198,7 +204,7 @@ class MainController {
 			return
 		}
 		// if the user deleted the database, nuke the history too
-		if (!Preferences.hasSyncContext() || !Cache.haveDatabase(activity)) {
+		if (!Preferences.hasSyncContext() || !DB.haveDatabase(activity)) {
 			noteHistory.reset()
 			loadedNoteId = null
 			tree?.submitList(emptyList())
@@ -358,7 +364,7 @@ class MainController {
 
 		R.id.action_delete -> {
 			val note = activity.getNoteLoaded()
-			if (note == null || note.id == "root") {
+			if (note == null || note.id == Notes.ROOT) {
 				Toast.makeText(
 					activity, activity.getString(R.string.toast_cannot_delete_root),
 					Toast.LENGTH_SHORT
@@ -493,8 +499,8 @@ class MainController {
 	 * App received text from another app (share target).
 	 */
 	private suspend fun textShared(context: Context, text: String) {
-		if (Cache.haveDatabase(context)) {
-			Cache.initializeDatabase(context.applicationContext)
+		if (DB.haveDatabase(context)) {
+			DB.initializeDatabase(context.applicationContext)
 			val inbox = DateNotes.getInboxNote()
 			val note = Notes.createChildNote(
 				inbox,
@@ -726,13 +732,13 @@ class MainController {
 			if (resetView) {
 				val lastNote = Preferences.lastNote()
 				// first use: open the drawer
-				if (lastNote == null && Cache.lastSync != null) {
+				if (lastNote == null && DB.lastSync != null) {
 					activity.openDrawerTree()
 					return@launch
 				}
 				var n = firstNote ?: lastNote
 				if (n == null || Notes.getNote(n) == null) {
-					n = "root" // may happen in case of new database or note deleted
+					n = Notes.ROOT // may happen in case of new database or note deleted
 				}
 				val note = Notes.getNote(n) ?: return@launch
 				navigateTo(activity, note, note.branches.firstOrNull())
@@ -824,7 +830,7 @@ class MainController {
 	private fun startSync(activity: MainActivity, resetView: Boolean = true) {
 		activity.indicateSyncStart()
 		activity.lifecycleScope.launch {
-			Cache.initializeDatabase(activity.applicationContext)
+			DB.initializeDatabase(activity.applicationContext)
 			ConnectionUtil.setup(activity, {
 				activity.lifecycleScope.launch {
 					Sync.syncStart({
@@ -863,7 +869,7 @@ class MainController {
 	}
 
 	fun onDestroy() {
-		Cache.closeDatabase()
+		DB.closeDatabase()
 		// TODO: check if the activity is about to be re-created
 		noteHistory.reset()
 		firstAction = null

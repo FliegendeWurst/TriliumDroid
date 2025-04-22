@@ -45,6 +45,7 @@ import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Cache
@@ -329,7 +330,7 @@ class MainActivity : AppCompatActivity() {
 			Log.w(TAG, "tried to refresh tree without tree")
 			return
 		}
-		val items = Cache.getTreeList("none_root", 0)
+		val items = Cache.getTreeList(Branches.NONE_ROOT, 0)
 		Log.d(TAG, "about to show ${items.size} tree items")
 		tree!!.submitList(items)
 	}
@@ -494,7 +495,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 
-	private fun scrollTreeTo(noteId: String) {
+	private fun scrollTreeTo(noteId: NoteId) {
 		tree!!.select(noteId)
 		val frag = supportFragmentManager.findFragmentByTag("f0") ?: return
 		val pos = tree!!.getBranchPosition(noteId) ?: return
@@ -518,8 +519,11 @@ class MainActivity : AppCompatActivity() {
 		)
 	}
 
+	/**
+	 * @param notePath must end with "/${noteId}"
+	 */
 	fun navigateToPath(notePath: String) = lifecycleScope.launch {
-		navigateTo(Notes.getNote(notePath.split("/").last())!!)
+		navigateTo(Notes.getNote(NoteId(notePath.split("/").last()))!!)
 	}
 
 	fun refreshTitle(note: Note?) {
@@ -722,7 +726,7 @@ class MainActivity : AppCompatActivity() {
 
 		// metadata
 		val noteId = findViewById<TextView>(R.id.widget_note_info_id_content)
-		noteId.text = noteContent.id
+		noteId.text = noteContent.id.rawId()
 		val noteType = findViewById<TextView>(R.id.widget_note_info_type_content)
 		noteType.text = noteContent.type
 		val encrypted = findViewById<CheckBox>(R.id.widget_basic_properties_encrypt_content)
@@ -761,7 +765,7 @@ class MainActivity : AppCompatActivity() {
 			tree!!.select(note.id)
 			val noteContent = Notes.getNoteWithContent(note.id)
 			if (noteContent == null) {
-				if (note.id == "root") {
+				if (note.id == Notes.ROOT) {
 					Log.e(TAG, "fatal error, missing content for root note")
 					return@launch
 				}

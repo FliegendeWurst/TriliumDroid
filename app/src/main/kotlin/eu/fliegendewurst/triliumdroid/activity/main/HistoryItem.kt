@@ -4,6 +4,7 @@ import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteId
+import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.fragment.NavigationFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
@@ -17,7 +18,7 @@ abstract class HistoryItem {
 	 */
 	abstract fun restore(activity: MainActivity): Boolean
 
-	abstract fun noteId(): String
+	abstract fun noteId(): NoteId
 	abstract fun branch(): Branch?
 
 	abstract fun setBranch(branch: Branch)
@@ -26,7 +27,7 @@ abstract class HistoryItem {
 class StartItem : HistoryItem() {
 	override fun restore(activity: MainActivity): Boolean = true
 
-	override fun noteId(): String = "root"
+	override fun noteId() = Notes.ROOT
 
 	override fun branch(): Branch? = null
 
@@ -35,16 +36,14 @@ class StartItem : HistoryItem() {
 
 class NoteItem(private val note: Note, private var branch: Branch?) : HistoryItem() {
 	override fun restore(activity: MainActivity): Boolean {
-		if (note.id == "DELETED") {
+		if (note.id.rawId() == "DELETED") {
 			return false
 		}
 		activity.load(note, branch)
 		return true
 	}
 
-	override fun noteId(): String {
-		return note.id
-	}
+	override fun noteId() = note.id
 
 	override fun branch(): Branch? {
 		return branch
@@ -57,19 +56,17 @@ class NoteItem(private val note: Note, private var branch: Branch?) : HistoryIte
 
 class NoteEditItem(val note: Note) : HistoryItem() {
 	override fun restore(activity: MainActivity): Boolean {
-		if (note.id == "DELETED") {
+		if (note.id.rawId() == "DELETED") {
 			return false
 		}
 		val frag = NoteEditFragment()
-		frag.loadLater(NoteId(note.id))
+		frag.loadLater(note.id)
 		activity.showFragment(frag, true)
 		activity.refreshTitle(note)
 		return true
 	}
 
-	override fun noteId(): String {
-		return note.id
-	}
+	override fun noteId() = note.id
 
 	override fun branch(): Branch? {
 		return null
@@ -86,7 +83,7 @@ class NoteMapItem(val note: Note?) : HistoryItem() {
 			fragMap.loadLaterGlobal()
 			activity.showFragment(fragMap, true)
 			return true
-		} else if (note.id == "DELETED") {
+		} else if (note.id.rawId() == "DELETED") {
 			return false
 		} else {
 			val frag = NoteMapFragment()
@@ -96,9 +93,7 @@ class NoteMapItem(val note: Note?) : HistoryItem() {
 		}
 	}
 
-	override fun noteId(): String {
-		return note?.id ?: "root"
-	}
+	override fun noteId() = note?.id ?: Notes.ROOT
 
 	override fun branch(): Branch? {
 		return null
@@ -116,9 +111,7 @@ class NavigationItem(private val note: Note, private var branchStart: Branch) : 
 		return true
 	}
 
-	override fun noteId(): String {
-		return note.id
-	}
+	override fun noteId() = note.id
 
 	override fun branch(): Branch {
 		return branchStart
@@ -136,7 +129,7 @@ class BlobItem(private val note: Note, val blob: Blob) : HistoryItem() {
 		return true
 	}
 
-	override fun noteId(): String = note.id
+	override fun noteId() = note.id
 
 	override fun branch(): Branch? = null
 

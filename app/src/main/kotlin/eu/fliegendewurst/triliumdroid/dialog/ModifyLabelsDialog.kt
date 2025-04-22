@@ -17,6 +17,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
+import eu.fliegendewurst.triliumdroid.data.AttributeId
 import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.database.Attributes
@@ -49,7 +50,7 @@ object ModifyLabelsDialog {
 				val name = it.trim()
 				ownedAttributes.add(
 					Label(
-						Util.randomString(12),
+						AttributeId(Util.randomString(12)), // TODO: collisions?
 						name,
 						"",
 						inheritable = false,
@@ -73,7 +74,7 @@ object ModifyLabelsDialog {
 			val settings = template.value.split(',')
 			ownedAttributes.add(
 				Label(
-					Util.randomString(12),
+					AttributeId(Util.randomString(12)), // TODO: collisions?
 					labelName,
 					"",
 					inheritable,

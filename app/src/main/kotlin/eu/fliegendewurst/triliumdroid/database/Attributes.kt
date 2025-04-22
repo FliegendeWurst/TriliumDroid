@@ -1,8 +1,9 @@
 package eu.fliegendewurst.triliumdroid.database
 
 import android.util.Log
+import eu.fliegendewurst.triliumdroid.data.AttributeId
 import eu.fliegendewurst.triliumdroid.data.Note
-import eu.fliegendewurst.triliumdroid.database.Cache.db
+import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.service.Util
 import kotlinx.coroutines.Dispatchers
@@ -36,53 +37,35 @@ object Attributes {
 
 	suspend fun updateLabel(note: Note, name: String, value: String, inheritable: Boolean) =
 		withContext(Dispatchers.IO) {
-			var previousId: String? = null
+			var previousId: AttributeId? = null
 			// TODO: multi labels
-			db!!.rawQuery(
+			DB.rawQuery(
 				"SELECT attributeId FROM attributes WHERE noteId = ? AND type = 'label' AND name = ? AND isDeleted = 0",
-				arrayOf(note.id, name)
+				arrayOf(note.id.rawId(), name)
 			).use {
 				if (it.moveToNext()) {
-					previousId = it.getString(0)
+					previousId = AttributeId(it.getString(0))
 				}
 			}
 			val utc = utcDateModified()
 			if (previousId != null) {
 				Log.i(TAG, "updating label $note / $name = ${value.length} characters")
-				db!!.execSQL(
-					"UPDATE attributes SET value = ?, utcDateModified = ? " +
-							"WHERE attributeId = ?",
-					arrayOf(value, utc, previousId)
-				)
+				DB.update(previousId!!, Pair("value", value), Pair("utcDateModified", utc))
 			} else {
-				var fresh = false
-				while (!fresh) {
-					previousId = Util.newNoteId()
-					// check if it is used
-					db!!.rawQuery(
-						"SELECT 1 FROM attributes WHERE attributeId = ?",
-						arrayOf(previousId)
-					)
-						.use {
-							fresh = !it.moveToNext()
-						}
-				}
+				previousId = AttributeId(DB.newId("attributes", "attributeId") { Util.newNoteId() })
 				// TODO: proper position
-				db!!.execSQL(
-					"INSERT INTO attributes (attributeId, noteId, type, name, value, position, utcDateModified, isDeleted, deleteId, isInheritable) " +
-							"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-					arrayOf(
-						previousId,
-						note.id,
-						"label",
-						name,
-						value,
-						10,
-						utc,
-						0,
-						null,
-						inheritable
-					)
+				DB.insert(
+					"attributes",
+					Pair("attributeId", previousId),
+					Pair("noteId", note.id),
+					Pair("type", "label"),
+					Pair("name", name),
+					Pair("value", value),
+					Pair("position", 10),
+					Pair("utcDateModified", utc),
+					Pair("isDeleted", false),
+					Pair("deleteId", null),
+					Pair("isInheritable", false)
 				)
 			}
 			registerEntityChangeAttribute(
@@ -105,45 +88,30 @@ object Attributes {
 	 */
 	suspend fun updateRelation(
 		note: Note,
-		attributeId: String?,
+		attributeId: AttributeId?,
 		name: String,
 		value: Note,
 		inheritable: Boolean
 	) = withContext(Dispatchers.IO) {
-		var previousId: String? = attributeId
+		var previousId: AttributeId? = attributeId
 		val utc = utcDateModified()
 		if (previousId != null) {
-			db!!.execSQL(
-				"UPDATE attributes SET value = ?, utcDateModified = ? " +
-						"WHERE attributeId = ?",
-				arrayOf(value, utc, previousId)
-			)
+			DB.update(previousId, Pair("value", value), Pair("utcDateModified", utc))
 		} else {
-			var fresh = false
-			while (!fresh) {
-				previousId = Util.newNoteId()
-				// check if it is used
-				db!!.rawQuery("SELECT 1 FROM attributes WHERE attributeId = ?", arrayOf(previousId))
-					.use {
-						fresh = !it.moveToNext()
-					}
-			}
+			previousId = AttributeId(DB.newId("attributes", "attributeId") { Util.newNoteId() })
 			// TODO: proper position
-			db!!.execSQL(
-				"INSERT INTO attributes (attributeId, noteId, type, name, value, position, utcDateModified, isDeleted, deleteId, isInheritable) " +
-						"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-				arrayOf(
-					previousId,
-					note.id,
-					"relation",
-					name,
-					value.id,
-					10,
-					utc,
-					0,
-					null,
-					inheritable
-				)
+			DB.insert(
+				"attributes",
+				Pair("attributeId", previousId),
+				Pair("noteId", note.id),
+				Pair("type", "relation"),
+				Pair("name", name),
+				Pair("value", value.id),
+				Pair("position", 10),
+				Pair("utcDateModified", utc),
+				Pair("isDeleted", false),
+				Pair("deleteId", null),
+				Pair("isInheritable", inheritable)
 			)
 		}
 		registerEntityChangeAttribute(
@@ -151,7 +119,7 @@ object Attributes {
 			note.id,
 			"relation",
 			name,
-			value.id,
+			value.id.rawId(),
 			inheritable
 		)
 		note.clearAttributeCache()
@@ -160,15 +128,15 @@ object Attributes {
 	}
 
 	suspend fun deleteLabel(note: Note, name: String) = withContext(Dispatchers.IO) {
-		Log.d(TAG, "deleting label $name in ${note.id}")
-		var previousId: String? = null
+		Log.d(TAG, "deleting label $name in ${note.id.rawId()}")
+		var previousId: AttributeId? = null
 		var inheritable = false
-		db!!.rawQuery(
+		DB.rawQuery(
 			"SELECT attributeId, isInheritable FROM attributes WHERE noteId = ? AND type = 'label' AND name = ? AND isDeleted = 0",
-			arrayOf(note.id, name)
+			arrayOf(note.id.rawId(), name)
 		).use {
 			if (it.moveToNext()) {
-				previousId = it.getString(0)
+				previousId = AttributeId(it.getString(0))
 				inheritable = it.getInt(1) == 1
 			}
 		}
@@ -177,10 +145,12 @@ object Attributes {
 			return@withContext
 		}
 		val utc = utcDateModified()
-		db!!.execSQL(
-			"UPDATE attributes SET value = '', isDeleted = ?, utcDateModified = ? " +
-					"WHERE attributeId = ?",
-			arrayOf(1, utc, previousId)
+		DB.update(
+			previousId!!,
+			Pair("value", ""),
+			Pair("isDeleted", true),
+			Pair("deleteId", Util.newDeleteId()),
+			Pair("utcDateModified", utc)
 		)
 		registerEntityChangeAttribute(previousId!!, note.id, "label", name, "", inheritable)
 		note.clearAttributeCache()
@@ -188,17 +158,17 @@ object Attributes {
 		Notes.getNoteWithContent(note.id)
 	}
 
-	suspend fun deleteRelation(note: Note, name: String, attributeId: String) =
+	suspend fun deleteRelation(note: Note, name: String, attributeId: AttributeId) =
 		withContext(Dispatchers.IO) {
 			Log.d(TAG, "deleting relation $name in ${note.id}")
-			var previousId: String? = null
+			var previousId: AttributeId? = null
 			var inheritable = false
-			db!!.rawQuery(
+			DB.rawQuery(
 				"SELECT attributeId, isInheritable FROM attributes WHERE attributeId = ? AND type = 'relation' AND isDeleted = 0",
-				arrayOf(attributeId)
+				arrayOf(attributeId.rawId())
 			).use {
 				if (it.moveToNext()) {
-					previousId = it.getString(0)
+					previousId = AttributeId(it.getString(0))
 					inheritable = it.getInt(1) == 1
 				}
 			}
@@ -207,10 +177,12 @@ object Attributes {
 				return@withContext
 			}
 			val utc = utcDateModified()
-			db!!.execSQL(
-				"UPDATE attributes SET value = '', isDeleted = ?, utcDateModified = ? " +
-						"WHERE attributeId = ?",
-				arrayOf(1, utc, previousId)
+			DB.update(
+				previousId!!,
+				Pair("value", ""),
+				Pair("isDeleted", true),
+				Pair("deleteId", Util.newDeleteId()),
+				Pair("utcDateModified", utc)
 			)
 			registerEntityChangeAttribute(
 				previousId!!,
@@ -227,8 +199,8 @@ object Attributes {
 }
 
 private suspend fun registerEntityChangeAttribute(
-	attributeId: String,
-	noteId: String,
+	attributeId: AttributeId,
+	noteId: NoteId,
 	type: String,
 	name: String,
 	value: String,
@@ -238,9 +210,9 @@ private suspend fun registerEntityChangeAttribute(
 	// source: https://github.com/TriliumNext/Notes/blob/develop/src/becca/entities/battribute.ts
 	Cache.registerEntityChange(
 		"attributes",
-		attributeId,
+		attributeId.rawId(),
 		arrayOf(
-			attributeId, noteId, type, name, value, if (isInheritable) {
+			attributeId.rawId(), noteId.rawId(), type, name, value, if (isInheritable) {
 				"1"
 			} else {
 				"0"
