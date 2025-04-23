@@ -185,7 +185,14 @@ class NoteWebViewClient(
 				return WebResourceResponse("application/json", "utf-8", content.inputStream())
 			} else if (firstSegment == "note-children" && !fetchingAttachment) {
 				return runBlocking {
-					val children = note!!.computeChildren()
+					val children = note?.computeChildren().orEmpty()
+					if (children.isEmpty()) {
+						return@runBlocking WebResourceResponse(
+							"text/html",
+							"utf-8",
+							"".byteInputStream()
+						)
+					}
 					var html = Assets.noteChildrenTemplateHTML(view.context)
 					html += "<div class='note-list-container'>"
 					for (child in children) {
