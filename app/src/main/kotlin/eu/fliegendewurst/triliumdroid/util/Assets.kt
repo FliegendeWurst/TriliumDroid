@@ -11,6 +11,7 @@ import kotlin.io.path.outputStream
 object Assets {
 	private const val TAG: String = "Assets"
 	private const val LATEST_WEB_ASSETS = 2 // increment when updating web.zip
+	private const val LATEST_DOC_ASSETS = 1 // increment when updating doc_notes.zip
 
 	private var ckeditorJS: String? = null // ~1.8 MB
 	private var excalidraw_TPL: String? = null
@@ -96,6 +97,10 @@ object Assets {
 		webAssetInternal(context, url)
 	}
 
+	fun docAsset(context: Context, docName: String): InputStream? = synchronized(this) {
+		docAssetInternal(context, docName)
+	}
+
 	private fun webAssetInternal(context: Context, url: String): InputStream? {
 		val webZipCached = context.cacheDir.toPath().resolve("web.zip")
 		if (webZipCached.notExists() || Preferences.webAssetsVersion() < LATEST_WEB_ASSETS) {
@@ -114,6 +119,27 @@ object Assets {
 		}
 		val zip = ZipFile(webZipCached.toFile())
 		val zipEntry = zip.getEntry(url.replace('/', '_')) ?: return null
+		return zip.getInputStream(zipEntry)
+	}
+
+	private fun docAssetInternal(context: Context, docName: String): InputStream? {
+		val docZipCached = context.cacheDir.toPath().resolve("doc_notes.zip")
+		if (docZipCached.notExists() || Preferences.webAssetsVersion() < LATEST_DOC_ASSETS) {
+			Log.d(TAG, "updating cached doc_notes.zip")
+			docZipCached.deleteIfExists()
+			context.resources.assets.open("doc_notes.zip").use { inputStream ->
+				inputStream.buffered().use { inputBuffered ->
+					docZipCached.outputStream().use { outputStream ->
+						outputStream.buffered().use { outputBuffered ->
+							inputBuffered.copyTo(outputBuffered)
+						}
+					}
+				}
+			}
+			Preferences.setDocAssetsVersion(LATEST_DOC_ASSETS)
+		}
+		val zip = ZipFile(docZipCached.toFile())
+		val zipEntry = zip.getEntry("en/${docName}.html") ?: return null
 		return zip.getInputStream(zipEntry)
 	}
 }

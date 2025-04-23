@@ -153,6 +153,23 @@ class InitialSyncTest {
 	}
 
 	@Test
+	fun test_011_help() {
+		Thread.sleep(2000) // wait until ready
+
+		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
+		onView(withText(R.string.jump_to_dialog))
+			.perform(click())
+		onView(withId(R.id.jump_input))
+			.perform(typeText("backup"))
+		Thread.sleep(2000) // wait for DB query
+		onView(allOf(withIndex(withText("Backup"), 1)))
+			.perform(click())
+		Thread.sleep(2000) // wait for note to load
+		saveScreenshot()
+		Espresso.pressBack()
+	}
+
+	@Test
 	fun test_011_jumpToNote() {
 		Thread.sleep(2000) // wait until ready
 		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)

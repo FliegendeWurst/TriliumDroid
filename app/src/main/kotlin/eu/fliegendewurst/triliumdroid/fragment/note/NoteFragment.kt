@@ -137,7 +137,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			subCodeNotes =
 				note.children.orEmpty().map { Notes.getNote(it.note)!! }
 			binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id.rawId())
-		} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg") || note.type == "book") {
+		} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg") || note.type == "doc" || note.type == "book") {
 			binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id.rawId())
 		} else {
 			binding.webview.settings.builtInZoomControls = true

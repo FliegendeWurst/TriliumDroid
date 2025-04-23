@@ -27,6 +27,7 @@ object Preferences {
 	private const val DB_MIGRATION = "dbMigration"
 	private const val DATABASE_VERSION = "databaseVersion"
 	private const val WEB_ASSETS_VERSION = "webAssetsVersion"
+	private const val DOC_ASSETS_VERSION = "webAssetsVersion"
 	private const val READ_ONLY_MODE = "readOnlyMode"
 
 	fun init(applicationContext: Context) {
@@ -73,6 +74,7 @@ object Preferences {
 	}
 
 	fun webAssetsVersion(): Int = prefs.getInt(WEB_ASSETS_VERSION, 0)
+	fun docAssetsVersion(): Int = prefs.getInt(DOC_ASSETS_VERSION, 0)
 
 	fun widgetAction(appWidgetId: Int): HistoryItem? =
 		parseWidgetAction(prefs.getString("widget_$appWidgetId", null))
@@ -123,6 +125,7 @@ object Preferences {
 	fun setReadOnlyMode(readOnly: Boolean) = prefs.edit { putBoolean(READ_ONLY_MODE, readOnly) }
 
 	fun setWebAssetsVersion(version: Int) = prefs.edit { putInt(WEB_ASSETS_VERSION, version) }
+	fun setDocAssetsVersion(version: Int) = prefs.edit { putInt(DOC_ASSETS_VERSION, version) }
 
 	fun clearMTLS() = prefs.edit { remove(MTLS_CERT) }
 	fun clearSyncSSID() = prefs.edit { remove(SYNC_SSID) }

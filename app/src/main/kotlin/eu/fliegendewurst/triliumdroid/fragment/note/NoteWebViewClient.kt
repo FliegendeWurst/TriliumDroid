@@ -158,7 +158,6 @@ class NoteWebViewClient(
 				)
 			}
 			if (id == "noteEditable.js") {
-				Log.d(TAG, "returning note editable js")
 				return WebResourceResponse(
 					"text/javascript",
 					"utf-8",
@@ -166,6 +165,19 @@ class NoteWebViewClient(
 				)
 			}
 			val note = runBlocking { Notes.getNoteWithContent(NoteId(id)) }
+			if (note?.type == "doc") {
+				return runBlocking {
+					val docName =
+						note.getLabel("docName") ?: return@runBlocking notFound("text/html")
+					val asset = Assets.docAsset(view.context, docName)
+						?: return@runBlocking notFound("text/html")
+					return@runBlocking WebResourceResponse(
+						"text/html",
+						"utf-8",
+						asset
+					)
+				}
+			}
 			// viewing revision: override response for main note
 			val blobToShow = blob()
 			var content = if (blobToShow != null && id == note()?.id?.rawId()) {
