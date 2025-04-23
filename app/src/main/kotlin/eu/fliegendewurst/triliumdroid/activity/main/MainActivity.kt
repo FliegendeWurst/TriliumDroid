@@ -335,6 +335,8 @@ class MainActivity : AppCompatActivity() {
 		tree!!.submitList(items)
 	}
 
+	fun treeIsEmpty() = tree?.currentList?.isEmpty() != false
+
 	private var snackbar: Snackbar? = null
 
 	fun indicateSyncStart() {

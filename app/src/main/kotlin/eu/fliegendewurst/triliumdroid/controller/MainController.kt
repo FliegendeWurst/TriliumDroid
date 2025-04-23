@@ -88,6 +88,10 @@ class MainController {
 	 * Navigation stack.
 	 */
 	private val noteHistory = HistoryList()
+
+	/**
+	 * First action to execute, used to implement widgets.
+	 */
 	private var firstAction: HistoryItem? = null
 
 	// initial note to show
@@ -203,6 +207,13 @@ class MainController {
 				activity.refreshTree()
 			}
 			return
+		}
+		// tree items may disappear if app gets unloaded too much
+		if (activity.treeIsEmpty()) {
+			activity.lifecycleScope.launch {
+				Cache.getTreeData("")
+				activity.refreshTree()
+			}
 		}
 		// if the user deleted the database, nuke the history too
 		if (!Preferences.hasSyncContext() || !DB.haveDatabase(activity)) {
