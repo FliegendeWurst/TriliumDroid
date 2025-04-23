@@ -815,6 +815,8 @@ class MainActivity : AppCompatActivity() {
 		controller.onDestroy()
 	}
 
+	fun hasFragment() = supportFragmentManager.findFragmentById(R.id.fragment_container) != null
+
 	fun getFragment(): Fragment {
 		val hostFragment =
 			supportFragmentManager.findFragmentById(R.id.fragment_container)

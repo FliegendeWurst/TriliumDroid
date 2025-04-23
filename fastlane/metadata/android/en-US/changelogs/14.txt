@@ -5,3 +5,4 @@ Bugfixes
 - Fixed bug where the note tree may disappear until restart
 - Fixed error when modifying the same entity twice
 - Fixed NPE when viewing a deleted note
+- Fixed rare background crash when sync login fails

@@ -847,7 +847,7 @@ class MainController {
 			activity, toastText,
 			Toast.LENGTH_LONG
 		).show()
-		if (activity.getFragment() is EmptyFragment || activity.getFragment() is SyncErrorFragment || showSyncError) {
+		if (activity.hasFragment() && (activity.getFragment() is EmptyFragment || activity.getFragment() is SyncErrorFragment || showSyncError)) {
 			val frag = SyncErrorFragment()
 			frag.showError(it)
 			activity.showFragment(frag, true)
