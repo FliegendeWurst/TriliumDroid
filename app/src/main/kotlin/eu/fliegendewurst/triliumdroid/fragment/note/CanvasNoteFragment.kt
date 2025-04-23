@@ -115,7 +115,7 @@ class CanvasNoteFragment : Fragment(R.layout.fragment_canvas_note), NoteRelatedF
 
 		refreshHeader(note)
 
-		binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
+		binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id.rawId())
 
 		val main = (this@CanvasNoteFragment.activity ?: return) as MainActivity
 		// FABs obscure excalidraw menu items

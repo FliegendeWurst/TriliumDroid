@@ -43,7 +43,17 @@ import java.io.IOException
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class InitialSyncTest {
 	companion object {
-		private const val SYNC_WAIT_MS: Long = 50000
+		private const val LOCAL_TEST: Boolean = false
+		private val SYNC_WAIT_MS: Long = if (LOCAL_TEST) {
+			10000
+		} else {
+			50000
+		}
+		private val SYNC_SERVER = if (LOCAL_TEST) {
+			"http://127.0.0.1:8080"
+		} else {
+			"http://10.0.2.2:8080"
+		}
 	}
 
 	@get:Rule
@@ -55,12 +65,12 @@ class InitialSyncTest {
 	@Test
 	@Throws(IOException::class)
 	fun test_010_initialSync() {
-		Thread.sleep(3000) // wait for network
+		Thread.sleep(10000) // wait for network
 		onView(withId(R.id.button_setup_sync))
 			.perform(click())
 		// see ./app/test/setup-sync-server.sh
 		onView(withId(R.id.server))
-			.perform(typeText("http://10.0.2.2:8080"))
+			.perform(typeText(SYNC_SERVER))
 		onView(withId(R.id.password))
 			.perform(typeText("1234"))
 		Espresso.closeSoftKeyboard()

@@ -136,15 +136,15 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			// -> modify content returned by webview interceptor
 			subCodeNotes =
 				note.children.orEmpty().map { Notes.getNote(it.note)!! }
-			binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
+			binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id.rawId())
 		} else if (note.mime.startsWith("text/") || note.mime.startsWith("image/svg") || note.type == "canvas" || note.type == "book") {
-			binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id)
+			binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id.rawId())
 		} else {
 			binding.webview.settings.builtInZoomControls = true
 			binding.webview.settings.displayZoomControls = false
 			binding.webview.loadDataWithBaseURL(
 				WEBVIEW_DOMAIN,
-				"<meta name='viewport' content='width=device-width, initial-scale=1'><img style='max-width: 100%' src='/${note.id}'>",
+				"<meta name='viewport' content='width=device-width, initial-scale=1'><img style='max-width: 100%' src='/${note.id.rawId()}'>",
 				"text/html; charset=UTF-8",
 				"UTF-8",
 				null
@@ -167,7 +167,7 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 		val children = note.children.orEmpty()
 		if (children.isNotEmpty()) {
 			// TODO: fully support book notes
-			binding.webviewChildrenNotes.loadUrl("${WEBVIEW_DOMAIN}note-children/${note.id}")
+			binding.webviewChildrenNotes.loadUrl("${WEBVIEW_DOMAIN}note-children/${note.id.rawId()}")
 			binding.webviewChildrenNotes.visibility = View.VISIBLE
 		} else {
 			binding.webviewChildrenNotes.loadUrl("about:blank")

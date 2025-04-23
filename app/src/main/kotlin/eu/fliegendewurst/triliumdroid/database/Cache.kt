@@ -3,6 +3,7 @@ package eu.fliegendewurst.triliumdroid.database
 import android.annotation.SuppressLint
 import android.icu.text.SimpleDateFormat
 import android.util.Log
+import androidx.core.database.getStringOrNull
 import eu.fliegendewurst.triliumdroid.BuildConfig
 import eu.fliegendewurst.triliumdroid.data.AttributeId
 import eu.fliegendewurst.triliumdroid.data.BlobId
@@ -309,7 +310,12 @@ object Cache {
 				val title = it.getString(1)
 				val attrName = it.getString(2)
 				val attrValue = it.getString(3)
-				val attrId = AttributeId(it.getString(4))
+				val attrIdRaw = it.getStringOrNull(4)
+				val attrId = if (attrIdRaw != null) {
+					AttributeId(attrIdRaw)
+				} else {
+					null
+				}
 				if (currentNote == null || currentNote.id != id) {
 					if (currentNote != null) {
 						list.add(currentNote)
@@ -329,9 +335,8 @@ object Cache {
 						BlobId("INVALID")
 					)
 				}
-				if (attrValue != null && !attrValue.startsWith('_') && !attrName.startsWith(
-						"child:"
-					)
+				if (attrValue != null && !attrValue.startsWith('_') &&
+					!attrName.startsWith("child:") && attrId != null
 				) {
 					relations.add(Triple(id, NoteId(attrValue), Pair(attrName, attrId)))
 				}
