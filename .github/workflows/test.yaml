@@ -13,10 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/cache@v4
-        id: cache-build
         with:
           path: app/build
-          key: ${{ runner.os }}-build-${{ hashFiles('**/build.gradle') }}
+          key: ${{ runner.os }}-build-${{ hashFiles('app/build.gradle') }}
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v16
       - name: Install Trilium Server and ImageMagick
