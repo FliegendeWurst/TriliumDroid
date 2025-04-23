@@ -6,6 +6,7 @@
         android:id="@+id/action_edit"
         android:icon="@drawable/bx_edit_alt"
         android:title="@string/action_edit"
+        android:contentDescription="@string/action_edit"
         app:showAsAction="ifRoom" />
 
     <item

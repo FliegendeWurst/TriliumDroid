@@ -2,11 +2,17 @@ package eu.fliegendewurst.triliumdroid
 
 import android.graphics.Bitmap
 import android.view.Gravity
+import android.view.InputDevice
+import android.view.MotionEvent
 import android.view.View
 import androidx.test.core.graphics.writeToTestStorage
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu
+import androidx.test.espresso.action.CoordinatesProvider
+import androidx.test.espresso.action.GeneralClickAction
+import androidx.test.espresso.action.Press
+import androidx.test.espresso.action.Tap
 import androidx.test.espresso.action.ViewActions.captureToBitmap
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.longClick
@@ -15,6 +21,7 @@ import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.contrib.DrawerActions
 import androidx.test.espresso.matcher.ViewMatchers.hasSibling
 import androidx.test.espresso.matcher.ViewMatchers.isRoot
+import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.rules.activityScenarioRule
@@ -43,7 +50,7 @@ import java.io.IOException
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class InitialSyncTest {
 	companion object {
-		private const val LOCAL_TEST: Boolean = false
+		private const val LOCAL_TEST = true
 		private val SYNC_WAIT_MS: Long = if (LOCAL_TEST) {
 			10000
 		} else {
@@ -130,6 +137,36 @@ class InitialSyncTest {
 			.perform(typeText("pho"))
 		Thread.sleep(2000) // wait for DB query
 		saveScreenshot()
+		onView(withText("Phone call about work project"))
+			.perform(click())
+		Thread.sleep(3000) // wait for note to load
+		onView(withContentDescription(R.string.action_edit))
+			.perform(click())
+		Thread.sleep(15000) // wait for editor to load
+		saveScreenshot()
+		/*
+		TODO: figure out automated typing ...
+		onWebView(withId(R.id.webview_editable))
+			.withElement(findElement(Locator.TAG_NAME, "p"))
+			.perform(webClick()) // clickAt(286F, 175F)
+		onView(withId(R.id.webview_editable)).check(object : ViewAssertion {
+			override fun check(
+				view: View?,
+				noViewFoundException: NoMatchingViewException?
+			) {
+				assert(view!!.rootWindowInsets.isVisible(WindowInsets.Type.ime()))
+			}
+		})
+		onView(withId(R.id.webview_editable))
+			.perform(typeText("Let's hope I don't get fired :) "))
+		Espresso.closeSoftKeyboard()
+		saveScreenshot()
+		 */
+		onView(withContentDescription(R.string.action_edit))
+			.perform(click())
+		Thread.sleep(500)
+//		saveScreenshot()
+		Espresso.pressBack()
 	}
 
 	@Test
@@ -351,3 +388,16 @@ private fun withIndex(matcher: Matcher<View>, index: Int): Matcher<View> {
 		}
 	}
 }
+
+private fun clickAt(x: Float, y: Float) =
+	GeneralClickAction(Tap.SINGLE, object : CoordinatesProvider {
+		override fun calculateCoordinates(view: View): FloatArray? {
+			val screenPos = IntArray(2)
+			view.getLocationOnScreen(screenPos)
+
+			val screenX = (screenPos[0] + x).toFloat()
+			val screenY = (screenPos[1] + y).toFloat()
+
+			return floatArrayOf(screenX, screenY)
+		}
+	}, Press.FINGER, InputDevice.SOURCE_TOUCHSCREEN, MotionEvent.BUTTON_PRIMARY)

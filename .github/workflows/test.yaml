@@ -28,6 +28,8 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
+      - name: Configure test networking
+        run: "sed -i 's/LOCAL_TEST = true/LOCAL_TEST = false/g' app/src/androidTest/kotlin/eu/fliegendewurst/triliumdroid/InitialSyncTest.kt"
       - name: Configure Gradle wrapper
         run: gradle wrapper --no-daemon
       - name: Run unit tests

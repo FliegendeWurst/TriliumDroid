@@ -28,6 +28,7 @@ android {
         }
         debug {
             applicationIdSuffix ".debug"
+            testCoverageEnabled = true
         }
     }
     buildFeatures {
@@ -90,5 +91,28 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit-ktx:1.2.1"
     androidTestImplementation "androidx.test.espresso:espresso-core:3.6.1"
     androidTestImplementation "androidx.test.espresso:espresso-contrib:3.6.1"
+    androidTestImplementation 'androidx.test.espresso:espresso-web:3.6.1'
     androidTestUtil "androidx.test.services:test-services:1.5.0"
+}
+
+tasks.register("jacocoTestReport", JacocoReport) {
+    dependsOn("testDebugUnitTest")
+    dependsOn("pixel9api35DebugAndroidTest")
+
+    reports {
+        xml.required.set(false)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+
+    def fileFilter = ["**/R.class", '**/R$*.class', "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*", "android/**/*.*"]
+    def debugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def mainSrc = "${project.projectDir}/src/main/kotlin"
+
+    sourceDirectories.from = files([mainSrc])
+    classDirectories.from = files([debugTree])
+    executionData.setFrom(fileTree(dir: "$projectDir/build", includes: [
+            "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+            "outputs/managed_device_code_coverage/debug/pixel9api35/coverage.ec"
+    ]))
 }
