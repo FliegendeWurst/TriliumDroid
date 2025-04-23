@@ -332,7 +332,8 @@ class Note(
 			}
 		}
 		if (isProtected && ProtectedSession.isActive()) {
-			val theNewBlob = Blobs.new(Base64.encodeToByteArray(ProtectedSession.encrypt(contentDecrypted!!)!!))
+			val theNewBlob =
+				Blobs.new(Base64.encodeToByteArray(ProtectedSession.encrypt(new)!!), new)
 			if (theNewBlob.id == blob?.id) {
 				return false
 			}
@@ -430,3 +431,5 @@ data class NoteId(val id: String) : IdLike {
 	override fun columnName() = "noteId"
 	override fun tableName() = "notes"
 }
+
+data class CanvasNoteViewport(val x: Float, val y: Float, val zoom: Float)

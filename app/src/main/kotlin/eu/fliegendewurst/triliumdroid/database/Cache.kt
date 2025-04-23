@@ -61,6 +61,9 @@ object Cache {
 		val sha1hash = md.digest()
 		val hash = Base64.encode(sha1hash).substring(0 until 10)
 		// TODO: correct hash for blobs?
+		// already existing entity_change for this (name, ID) pair
+		DB.internalGetDatabase()!!
+			.delete("entity_changes", "entityName = ? AND entityId = ?", arrayOf(table, id))
 		DB.insert(
 			"entity_changes",
 			Pair("entityName", table),

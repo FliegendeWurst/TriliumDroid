@@ -48,6 +48,7 @@ object Blobs {
 	suspend fun new(content: ByteArray?, contentForHash: ByteArray? = null): Blob =
 		withContext(Dispatchers.IO) {
 			val blobId = calcHash(contentForHash ?: content, contentForHash != null)
+			Log.d(TAG, "creating new blob ${blobId.rawId()}")
 			val existingBlob = load(blobId)
 			if (existingBlob != null) {
 				return@withContext existingBlob

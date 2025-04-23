@@ -32,10 +32,10 @@ object DB {
 
 	var lastSync: Long? = null
 
-	suspend fun insert(table: String, vararg columns: Pair<String, Any?>) {
+	suspend fun insert(table: String, vararg columns: Pair<String, Any?>): Long {
 		ensureDatabase()
 		val cv = valuesFromPairs(columns)
-		withContext(Dispatchers.IO) {
+		return withContext(Dispatchers.IO) {
 			db!!.insert(table, null, cv)
 		}
 	}

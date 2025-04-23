@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.activity.main.HistoryItem
+import eu.fliegendewurst.triliumdroid.data.CanvasNoteViewport
 import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.widget.parseWidgetAction
@@ -75,6 +76,19 @@ object Preferences {
 	fun widgetAction(appWidgetId: Int): HistoryItem? =
 		parseWidgetAction(prefs.getString("widget_$appWidgetId", null))
 
+	fun canvasViewportOverride(id: NoteId): CanvasNoteViewport? {
+		val keyX = "canvas_${id.rawId()}_x"
+		val keyY = "canvas_${id.rawId()}_y"
+		val keyZoom = "canvas_${id.rawId()}_zoom"
+		if (!prefs.contains(keyX) || !prefs.contains(keyY) || !prefs.contains(keyZoom)) {
+			return null
+		}
+		val x = prefs.getFloat(keyX, 0F)
+		val y = prefs.getFloat(keyY, 0F)
+		val zoom = prefs.getFloat(keyZoom, 0F)
+		return CanvasNoteViewport(x, y, zoom)
+	}
+
 	fun isLeftAction(action: String) = prefs.getBoolean("fab_${action}_left", false)
 	fun isRightAction(action: String) = prefs.getBoolean("fab_${action}_right", false)
 
@@ -93,6 +107,15 @@ object Preferences {
 	fun setDatabaseMigration(newValue: Int) = prefs.edit { putInt(DB_MIGRATION, newValue) }
 	fun setWidgetAction(appWidgetId: Int, action: String) =
 		prefs.edit { putString("widget_$appWidgetId", action) }
+
+	fun setCanvasViewportOverride(id: NoteId, view: CanvasNoteViewport) = prefs.edit {
+		val keyX = "canvas_${id.rawId()}_x"
+		val keyY = "canvas_${id.rawId()}_y"
+		val keyZoom = "canvas_${id.rawId()}_zoom"
+		putFloat(keyX, view.x)
+		putFloat(keyY, view.y)
+		putFloat(keyZoom, view.zoom)
+	}
 
 	fun setWebAssetsVersion(version: Int) = prefs.edit { putInt(WEB_ASSETS_VERSION, version) }
 

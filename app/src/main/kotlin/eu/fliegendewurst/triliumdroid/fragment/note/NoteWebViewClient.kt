@@ -19,6 +19,7 @@ import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment.Companion.WEBVIEW_DOMAIN
 import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment.Companion.WEBVIEW_HOST
 import eu.fliegendewurst.triliumdroid.util.Assets
+import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -181,6 +182,13 @@ class NoteWebViewClient(
 						"utf-8",
 						"{}".byteInputStream()
 					)
+				}
+				val override = Preferences.canvasViewportOverride(NoteId(id))
+				if (override != null) {
+					Log.d(TAG, "canvas override $override")
+					content =
+						content + "CANVAS_OVERRIDE{'scrollX':${override.x},'scrollY':${override.y},'zoom':{'value':${override.zoom}}}"
+							.replace('\'', '"').encodeToByteArray()
 				}
 				return WebResourceResponse("application/json", "utf-8", content.inputStream())
 			} else if (firstSegment == "note-children" && !fetchingAttachment) {

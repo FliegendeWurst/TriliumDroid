@@ -28,11 +28,14 @@ import androidx.test.ext.junit.rules.activityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
+import eu.fliegendewurst.triliumdroid.data.CanvasNoteViewport
 import eu.fliegendewurst.triliumdroid.database.Cache.Versions.DATABASE_VERSION_0_92_6
 import eu.fliegendewurst.triliumdroid.database.Cache.Versions.SYNC_VERSION_0_90_12
 import eu.fliegendewurst.triliumdroid.database.Cache.Versions.SYNC_VERSION_0_91_6
+import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.util.Preferences
+import kotlinx.coroutines.runBlocking
 import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.allOf
@@ -125,6 +128,27 @@ class InitialSyncTest {
 			.perform(click())
 		Thread.sleep(2000) // wait for WebView to load
 		saveScreenshot()
+	}
+
+	@Test
+	fun test_011_canvas() {
+		// first override the viewport for a nicer screenshot!
+		runBlocking {
+			val id = Notes.getNotesByType("canvas")[0]
+			Preferences.setCanvasViewportOverride(id, CanvasNoteViewport(12.7F, 307.4F, 0.6F))
+		}
+
+		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
+		onView(withText(R.string.jump_to_dialog))
+			.perform(click())
+		onView(withId(R.id.jump_input))
+			.perform(typeText("canvas"))
+		Thread.sleep(2000) // wait for DB query
+		onView(allOf(withIndex(withText("Canvas"), 0)))
+			.perform(click())
+		Thread.sleep(15000) // wait for note to load
+		saveScreenshot()
+		Espresso.pressBack()
 	}
 
 	@Test

@@ -111,6 +111,16 @@ object Notes {
 		return root
 	}
 
+	suspend fun getNotesByType(type: String): List<NoteId> = withContext(Dispatchers.IO) {
+		val l = mutableListOf<NoteId>()
+		DB.rawQuery("SELECT noteId FROM notes WHERE type = ?", arrayOf(type)).use {
+			while (it.moveToNext()) {
+				l.add(NoteId(it.getString(0)))
+			}
+		}
+		return@withContext l
+	}
+
 	suspend fun getNote(id: NoteId): Note? {
 		val note = notes[id]
 		if (note != null && !note.invalid()) {

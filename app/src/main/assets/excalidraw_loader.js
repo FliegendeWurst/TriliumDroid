@@ -12,8 +12,12 @@ var excalidraw = null;
 var savedSceneNumber = -1;
 var savedAppState = {};
 var saveTimeoutID = -1;
+var loadedSuccess = false;
 
 function checkAndMaybeSave() {
+    if (!loadedSuccess) {
+        return;
+    }
     const elements = excalidraw.getSceneElements();
     const newSceneNumber = ExcalidrawLib.getSceneVersion(elements);
     const exAppState = excalidraw.getAppState();
@@ -62,12 +66,18 @@ const App = () => {
         excalidrawAPI: async (exApi) => {
             excalidraw = exApi;
             const resp = await fetch("/excalidraw-data/" + noteId);
-            const respJson = JSON.parse(await resp.text());
-            const appState = respJson["appState"];
+            const respText = await resp.text();
+            const jsons = respText.split("CANVAS_OVERRIDE");
+            const respJson = JSON.parse(jsons[0]);
+            let appState = respJson["appState"];
+            if (jsons.length > 1) {
+                appState = JSON.parse(jsons[1]);
+            }
             exApi.updateScene({ elements: respJson["elements"], appState: appState });
             // initial scene is loaded from database, therefore already saved
             savedSceneNumber = ExcalidrawLib.getSceneVersion(excalidraw.getSceneElements());
             savedAppState = appState;
+            loadedSuccess = true;
         },
         onChange: () => {
             // save at most every 1000 ms, and only if the user stopped working
