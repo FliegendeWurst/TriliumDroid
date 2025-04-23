@@ -211,7 +211,7 @@ class NoteWebViewClient(
 							contentNote.content()?.decodeToString() ?: ""
 						}
 						html += "<div class='note-book-card'>"
-						html += "<h5 class='note-book-header'><a href='#${child.note}'>"
+						html += "<h5 class='note-book-header'><a href='#${child.note.rawId()}'>"
 						html += escapeHtml(contentNote.title())
 						html += "</a></h5>"
 						html += "<div class='note-book-content type-text'>"
