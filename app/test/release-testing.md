@@ -9,6 +9,8 @@ Check CI status, or run tests locally:
 - Run Gradle task `:app:pixel9api35DebugAndroidTest`
 - Run `./app/test/compare-test-images.sh`
 
+Run `:app:jacocoTestReport` to get a coverage report, if desired.
+
 #### Manual tests
 
 ##### (if database version is incremented)
@@ -19,6 +21,6 @@ Check that the migration works correctly.
 
 - Check that sync pull works.
 - Check that synced changes show up correctly.
-- Make a trivial change: text note / canvas note.
+- Make a trivial change: text note / canvas note / protected text note.
 - Check that sync push works.
 - Check that synced changes show up correctly.

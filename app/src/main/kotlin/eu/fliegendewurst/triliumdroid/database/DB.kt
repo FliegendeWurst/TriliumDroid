@@ -32,7 +32,14 @@ object DB {
 
 	var lastSync: Long? = null
 
+	/**
+	 * @return -1 on error
+	 */
 	suspend fun insert(table: String, vararg columns: Pair<String, Any?>): Long {
+		if (Preferences.readOnlyMode()) {
+			Log.w(TAG, "read-only mode ignoring database insert!")
+			return 0
+		}
 		ensureDatabase()
 		val cv = valuesFromPairs(columns)
 		return withContext(Dispatchers.IO) {
@@ -48,6 +55,10 @@ object DB {
 		onConflict: Int,
 		vararg columns: Pair<String, Any?>
 	): Long {
+		if (Preferences.readOnlyMode()) {
+			Log.w(TAG, "read-only mode ignoring database insert!")
+			return 0
+		}
 		ensureDatabase()
 		val cv = valuesFromPairs(columns)
 		return withContext(Dispatchers.IO) {
@@ -70,6 +81,10 @@ object DB {
 
 	suspend fun delete(table: String, primaryKey: String, selectionArgs: Array<String>) =
 		withContext(Dispatchers.IO) {
+			if (Preferences.readOnlyMode()) {
+				Log.w(TAG, "read-only mode ignoring database delete!")
+				return@withContext 0
+			}
 			ensureDatabase()
 			db!!.delete(table, "$primaryKey = ?", selectionArgs)
 		}
@@ -83,6 +98,10 @@ object DB {
 		columnName: String,
 		generator: () -> String
 	): String = withContext(Dispatchers.IO) {
+		if (Preferences.readOnlyMode()) {
+			Log.w(TAG, "read-only mode ignoring database ID generation!")
+			return@withContext "INVALID"
+		}
 		ensureDatabase()
 		while (true) {
 			val candidate = generator.invoke()
@@ -113,6 +132,11 @@ object DB {
 		return db!!.rawQueryWithFactory(factory, sql, selectionArgs, editTable)
 	}
 
+	/**
+	 * Make sure to respect [Preferences.readOnlyMode] when using the handle.
+	 *
+	 * @return raw database handle
+	 */
 	suspend fun internalGetDatabase(): SQLiteDatabase? {
 		ensureDatabase()
 		return db

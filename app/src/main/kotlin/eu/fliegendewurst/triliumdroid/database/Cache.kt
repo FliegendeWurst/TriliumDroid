@@ -46,6 +46,10 @@ object Cache {
 		toHash: List<ByteArray?>,
 		isErased: Boolean = false
 	) = withContext(Dispatchers.IO) {
+		if (Preferences.readOnlyMode()) {
+			Log.w(TAG, "read-only mode ignoring entity change!")
+			return@withContext
+		}
 		val utc = utcDateModified()
 		// https://github.com/TriliumNext/Notes/blob/v0.93.0/src/becca/entities/abstract_becca_entity.ts#L63-L76
 		val md = MessageDigest.getInstance("SHA-1")

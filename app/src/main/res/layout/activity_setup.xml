@@ -341,6 +341,23 @@
                 android:layout_height="@dimen/divider_height"
                 android:layout_marginBottom="2dp" />
 
+            <CheckBox
+                android:id="@+id/checkbox_read_only"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/settings_label_start_margin"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/settings_label_start_margin"
+                android:layout_marginBottom="@dimen/normal_margin"
+                android:text="@string/read_only_mode"
+                android:textSize="@dimen/big_text_size" />
+
+            <include
+                layout="@layout/divider"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/divider_height"
+                android:layout_marginBottom="2dp" />
+
             <!--
             <TextView
                 style="@style/SettingsSectionLabelStyle"

@@ -124,6 +124,8 @@ class MainActivity : AppCompatActivity() {
 		binding = ActivityMainBinding.inflate(layoutInflater)
 		setContentView(binding.root)
 
+		val readOnly = Preferences.readOnlyMode()
+
 		val toolbar = binding.toolbar
 		toolbar.title = ""
 		setSupportActionBar(toolbar)
@@ -227,14 +229,26 @@ class MainActivity : AppCompatActivity() {
 			findViewById<Spinner>(R.id.widget_basic_properties_type_content).adapter = adapter
 		}
 
-		binding.root.findViewById<Button>(R.id.button_labels_modify).setOnClickListener {
+		val btnLabelsModify = binding.root.findViewById<Button>(R.id.button_labels_modify)
+		btnLabelsModify.setOnClickListener {
 			ModifyLabelsDialog.showDialog(this, getNoteLoaded() ?: return@setOnClickListener)
 		}
-		binding.root.findViewById<Button>(R.id.button_relations_edit).setOnClickListener {
+		val btnRelationsEdit = binding.root.findViewById<Button>(R.id.button_relations_edit)
+		btnRelationsEdit.setOnClickListener {
 			ModifyRelationsDialog.showDialog(this, getNoteLoaded() ?: return@setOnClickListener)
 		}
-		binding.root.findViewById<Button>(R.id.button_note_paths_add).setOnClickListener {
+		val btnAddNotePath = binding.root.findViewById<Button>(R.id.button_note_paths_add)
+		btnAddNotePath.setOnClickListener {
 			controller.addNotePath(this)
+		}
+		if (readOnly) {
+			btnLabelsModify.visibility = View.GONE
+			btnRelationsEdit.visibility = View.GONE
+			btnAddNotePath.visibility = View.GONE
+		} else {
+			btnLabelsModify.visibility = View.VISIBLE
+			btnRelationsEdit.visibility = View.VISIBLE
+			btnAddNotePath.visibility = View.VISIBLE
 		}
 
 		binding.fab.setOnClickListener {
@@ -379,6 +393,7 @@ class MainActivity : AppCompatActivity() {
 		}
 		val frag = getFragment()
 		val item = menu.findItem(R.id.action_edit)
+		item.isVisible = !Preferences.readOnlyMode()
 		if (frag is NoteEditFragment) {
 			item?.setIcon(R.drawable.bx_save)
 		} else {

@@ -11,6 +11,7 @@ import eu.fliegendewurst.triliumdroid.data.RevisionId
 import eu.fliegendewurst.triliumdroid.database.Cache.dateModified
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
+import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
@@ -118,6 +119,10 @@ object Blobs {
 	 * @return whether the blob was deleted
 	 */
 	suspend fun delete(id: BlobId) = withContext(Dispatchers.IO) {
+		if (Preferences.readOnlyMode()) {
+			Log.w(TAG, "read-only mode ignoring blob delete!")
+			return@withContext false
+		}
 		if (notesWithBlob(id).isNotEmpty() || attachmentsWithBlob(id).isNotEmpty() ||
 			revisionsWithBlob(id).isNotEmpty()
 		) {

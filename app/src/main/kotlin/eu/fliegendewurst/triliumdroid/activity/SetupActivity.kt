@@ -3,6 +3,7 @@ package eu.fliegendewurst.triliumdroid.activity
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +18,7 @@ import eu.fliegendewurst.triliumdroid.dialog.ConfigureSyncDialog
 import eu.fliegendewurst.triliumdroid.dialog.YesNoDialog
 import eu.fliegendewurst.triliumdroid.service.Option
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
+import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -181,6 +183,8 @@ class SetupActivity : AppCompatActivity() {
 				binding.status.setText(R.string.status_unknown)
 			}
 		}
+
+		binding.checkboxReadOnly.isChecked = Preferences.readOnlyMode()
 	}
 
 	override fun onStop() {
@@ -195,6 +199,12 @@ class SetupActivity : AppCompatActivity() {
 				Option.revisionIntervalUpdate(newInterval)
 			}
 		}
+
+		val newReadOnly = binding.checkboxReadOnly.isChecked
+		if (newReadOnly != Preferences.readOnlyMode()) {
+			Toast.makeText(this, R.string.hint_read_only_restart, Toast.LENGTH_LONG).show()
+		}
+		Preferences.setReadOnlyMode(newReadOnly)
 	}
 
 	private fun setText() {

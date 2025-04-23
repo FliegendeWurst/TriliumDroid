@@ -66,9 +66,7 @@ If you're any good at Android app development using Kotlin, feel free to contrib
 
 ### Testing
 
-- `app/test/setup-test-server.sh`
-- Gradle action `pixel9api35DebugAndroidTest`
-- `app/test/compare-test-images.sh`
+The app is tested using both unit tests and emulator tests ([details](./app/test/release-testing.md)).
 
 ## License
 

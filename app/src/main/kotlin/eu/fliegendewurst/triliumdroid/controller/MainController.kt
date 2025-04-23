@@ -301,6 +301,9 @@ class MainController {
 		}
 
 		R.id.action_edit -> run {
+			if (Preferences.readOnlyMode()) {
+				return@run true
+			}
 			when (val fragment = activity.getFragment()) {
 				is NoteFragment -> {
 					val id = fragment.getNoteId() ?: return true
@@ -378,7 +381,10 @@ class MainController {
 			true
 		}
 
-		R.id.action_delete -> {
+		R.id.action_delete -> run {
+			if (Preferences.readOnlyMode()) {
+				return@run true
+			}
 			val note = activity.getNoteLoaded()
 			if (note == null || note.id == Notes.ROOT) {
 				Toast.makeText(
@@ -530,6 +536,9 @@ class MainController {
 	 * User clicked on the note icon in the toolbar.
 	 */
 	fun titleIconClicked(activity: MainActivity) {
+		if (Preferences.readOnlyMode()) {
+			return
+		}
 		val note = activity.getNoteLoaded() ?: return
 		NoteIconDialog.showDialogReturningIcon(activity) {
 			activity.lifecycleScope.launch {
@@ -544,6 +553,9 @@ class MainController {
 	 * User clicked on the note title in the action bar.
 	 */
 	fun titleClicked(activity: MainActivity) {
+		if (Preferences.readOnlyMode()) {
+			return
+		}
 		val note = activity.getNoteLoaded() ?: return
 		if (note.isProtected && !ProtectedSession.isActive()) {
 			return

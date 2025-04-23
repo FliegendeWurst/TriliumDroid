@@ -27,6 +27,7 @@ object Preferences {
 	private const val DB_MIGRATION = "dbMigration"
 	private const val DATABASE_VERSION = "databaseVersion"
 	private const val WEB_ASSETS_VERSION = "webAssetsVersion"
+	private const val READ_ONLY_MODE = "readOnlyMode"
 
 	fun init(applicationContext: Context) {
 		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
@@ -89,6 +90,8 @@ object Preferences {
 		return CanvasNoteViewport(x, y, zoom)
 	}
 
+	fun readOnlyMode(): Boolean = prefs.getBoolean(READ_ONLY_MODE, false)
+
 	fun isLeftAction(action: String) = prefs.getBoolean("fab_${action}_left", false)
 	fun isRightAction(action: String) = prefs.getBoolean("fab_${action}_right", false)
 
@@ -116,6 +119,8 @@ object Preferences {
 		putFloat(keyY, view.y)
 		putFloat(keyZoom, view.zoom)
 	}
+
+	fun setReadOnlyMode(readOnly: Boolean) = prefs.edit { putBoolean(READ_ONLY_MODE, readOnly) }
 
 	fun setWebAssetsVersion(version: Int) = prefs.edit { putInt(WEB_ASSETS_VERSION, version) }
 

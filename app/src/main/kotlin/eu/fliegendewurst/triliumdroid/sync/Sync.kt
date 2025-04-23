@@ -97,6 +97,7 @@ object Sync {
 			val utc =
 				DateTimeFormatter.ISO_INSTANT.format(OffsetDateTime.now(ZoneOffset.UTC))
 					.replace('T', ' ')
+			// read-only mode: sync must still work
 			DB.internalGetDatabase()!!.execSQL(
 				"INSERT OR REPLACE INTO options (name, value, isSynced, utcDateModified) VALUES (?, ?, 0, ?)",
 				arrayOf("lastSyncedPush", largestId.toString(), utc)
@@ -295,6 +296,7 @@ object Sync {
 									}
 								}
 							}
+							// read-only mode: should still receive database updates
 							DB.internalGetDatabase()!!.insertWithOnConflict(
 								entityName,
 								null,

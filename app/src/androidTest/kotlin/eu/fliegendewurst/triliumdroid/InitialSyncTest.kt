@@ -137,6 +137,7 @@ class InitialSyncTest {
 			val id = Notes.getNotesByType("canvas")[0]
 			Preferences.setCanvasViewportOverride(id, CanvasNoteViewport(12.7F, 307.4F, 0.6F))
 		}
+		Thread.sleep(2000) // wait until ready
 
 		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
 		onView(withText(R.string.jump_to_dialog))
@@ -153,6 +154,7 @@ class InitialSyncTest {
 
 	@Test
 	fun test_011_jumpToNote() {
+		Thread.sleep(2000) // wait until ready
 		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
 		onView(withText(R.string.jump_to_dialog))
 			.perform(click())
@@ -195,6 +197,7 @@ class InitialSyncTest {
 
 	@Test
 	fun test_012_globalNoteMap() {
+		Thread.sleep(2000) // wait until ready
 		onView(withId(R.id.drawer_layout))
 			.perform(DrawerActions.open(Gravity.START))
 		onView(withText(R.string.sidebar_tab_2))

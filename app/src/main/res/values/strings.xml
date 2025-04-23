@@ -157,6 +157,8 @@
     <string name="action_share_note">Share note</string>
     <string name="action_local_note_map">Show local note map</string>
     <string name="label_promoted">Promoted</string>
+    <string name="read_only_mode">Read-only mode</string>
+    <string name="hint_read_only_restart">Read-only mode needs app restart to fully apply</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>@string/action_show_note_tree</item>
