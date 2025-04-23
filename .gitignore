@@ -24,3 +24,4 @@ local.properties
 /intercepts.txt
 /app/src/web/https*
 /app/src/web/web.zip
+/result
