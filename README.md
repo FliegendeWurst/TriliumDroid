@@ -18,6 +18,7 @@ Unofficial port of [TriliumNext Notes](https://github.com/TriliumNext/Notes) to 
 - Canvas notes powered by [Excalidraw](https://excalidraw.com/)
 - Note map view (context-based / all notes)
 - Scripting API to automate tasks or send notifications
+- In-app user guide based on TriliumNext documentation
 
 More features are planned, see the [issue tracker](https://github.com/FliegendeWurst/TriliumDroid/issues?q=sort%3Aupdated-desc%20is%3Aissue%20is%3Aopen%20label%3Aenhancement) for a full list.
 
@@ -42,7 +43,7 @@ For other ways to use Trilium on mobile, see https://github.com/TriliumNext/Note
 | Note tree  | Free-form diagrams | Full-screen navigation | Note icon selection | Jump-to-note dialog |
 | ------------- | ------------- | --- | --- | --- |
 | ![note tree](./app/test/screenshots/InitialSyncTest_test_010_initialSync_1.png) | ![note tree](./app/test/screenshots/InitialSyncTest_test_011_canvas_1.png) | ![navigation](./app/test/screenshots/InitialSyncTest_test_030_noteNavigation_1.png) | ![icons](./app/test/screenshots/InitialSyncTest_test_038_noteIcon_1.png) | ![jump](./app/test/screenshots/InitialSyncTest_test_011_jumpToNote_2.png) |
-| collapsible sub-trees | [Excalidraw](https://excalidraw.com/) | [boxicons](https://boxicons.com/) | |
+| collapsible sub-trees | [Excalidraw](https://excalidraw.com/) | | [boxicons](https://boxicons.com/) | | |
 
 ## Installation
 
