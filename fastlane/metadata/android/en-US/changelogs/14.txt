@@ -1,0 +1,2 @@
+- Fixed error when modifying the same entity twice
+- Fixed NPE when viewing a deleted note

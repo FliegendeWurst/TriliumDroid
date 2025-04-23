@@ -55,6 +55,7 @@ import eu.fliegendewurst.triliumdroid.fragment.EmptyFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
 import eu.fliegendewurst.triliumdroid.fragment.NoteMapFragment
 import eu.fliegendewurst.triliumdroid.fragment.SyncErrorFragment
+import eu.fliegendewurst.triliumdroid.fragment.note.CanvasNoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Icon
@@ -237,6 +238,10 @@ class MainController {
 		// TODO: maybe save the edited content somewhere
 		when (val fragment = activity.getFragment()) {
 			is NoteFragment -> {
+				loadedNoteId = fragment.getNoteId()
+				activity.showFragment(EmptyFragment(), true)
+			}
+			is CanvasNoteFragment -> {
 				loadedNoteId = fragment.getNoteId()
 				activity.showFragment(EmptyFragment(), true)
 			}

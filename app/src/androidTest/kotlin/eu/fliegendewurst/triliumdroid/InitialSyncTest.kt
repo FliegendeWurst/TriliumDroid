@@ -232,8 +232,10 @@ class InitialSyncTest {
 	@Test
 	@Throws(IOException::class)
 	fun test_020_nukeDatabase() {
+		Thread.sleep(2000) // wait until ready
 		// click to open settings
 		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
+		Thread.sleep(500)
 		onView(withText(R.string.action_settings))
 			.perform(click())
 		// wait to load
