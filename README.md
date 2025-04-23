@@ -39,10 +39,10 @@ For other ways to use Trilium on mobile, see https://github.com/TriliumNext/Note
 
 ## Screenshots
 
-| Note tree  | Full-screen navigation | Note icon selection | Jump-to-note dialog |
-| ------------- | ------------- | --- | --- |
-| ![note tree](./app/test/screenshots/InitialSyncTest_test_010_initialSync_1.png) | ![navigation](./app/test/screenshots/InitialSyncTest_test_030_noteNavigation_1.png) | ![icons](./app/test/screenshots/InitialSyncTest_test_038_noteIcon_1.png) | ![jump](./app/test/screenshots/InitialSyncTest_test_011_jumpToNote_2.png) |
-| sub-trees are collapsible | | [boxicons](https://boxicons.com/) | |
+| Note tree  | Free-form diagrams | Full-screen navigation | Note icon selection | Jump-to-note dialog |
+| ------------- | ------------- | --- | --- | --- |
+| ![note tree](./app/test/screenshots/InitialSyncTest_test_010_initialSync_1.png) | ![note tree](./app/test/screenshots/InitialSyncTest_test_011_canvas_1.png) | ![navigation](./app/test/screenshots/InitialSyncTest_test_030_noteNavigation_1.png) | ![icons](./app/test/screenshots/InitialSyncTest_test_038_noteIcon_1.png) | ![jump](./app/test/screenshots/InitialSyncTest_test_011_jumpToNote_2.png) |
+| collapsible sub-trees | [Excalidraw](https://excalidraw.com/) | [boxicons](https://boxicons.com/) | |
 
 ## Installation
 
