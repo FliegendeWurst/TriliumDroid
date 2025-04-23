@@ -27,7 +27,6 @@ import eu.fliegendewurst.triliumdroid.activity.main.BlobItem
 import eu.fliegendewurst.triliumdroid.activity.main.HistoryItem
 import eu.fliegendewurst.triliumdroid.activity.main.HistoryList
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
-import eu.fliegendewurst.triliumdroid.activity.main.MainActivity.Companion.tree
 import eu.fliegendewurst.triliumdroid.activity.main.NavigationItem
 import eu.fliegendewurst.triliumdroid.activity.main.NoteEditItem
 import eu.fliegendewurst.triliumdroid.activity.main.NoteItem
@@ -219,7 +218,7 @@ class MainController {
 		if (!Preferences.hasSyncContext() || !DB.haveDatabase(activity)) {
 			noteHistory.reset()
 			loadedNoteId = null
-			tree?.submitList(emptyList())
+			activity.tree?.submitList(emptyList())
 			activity.refreshTitle(null)
 			activity.showFragment(EmptyFragment(), true)
 			return

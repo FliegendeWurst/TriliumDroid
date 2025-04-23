@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.TreeItemAdapter
+import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.databinding.FragmentNoteTreeBinding
 
 class NoteTreeFragment : Fragment(R.layout.fragment_note_tree) {
@@ -26,6 +27,8 @@ class NoteTreeFragment : Fragment(R.layout.fragment_note_tree) {
 		}
 		if (binding.treeList.adapter != null) {
 			(binding.treeList.adapter as TreeItemAdapter).notifyDataSetChanged()
+		} else {
+			binding.treeList.adapter = (requireActivity() as MainActivity).tree
 		}
 		return binding.root
 	}

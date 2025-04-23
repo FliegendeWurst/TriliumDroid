@@ -170,6 +170,18 @@
 
             <include layout="@layout/divider" />
 
+            <Button
+                android:id="@+id/button_change_day_night"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/settings_label_start_margin"
+                android:layout_marginTop="@dimen/normal_margin"
+                android:layout_marginEnd="@dimen/settings_label_start_margin"
+                android:layout_marginBottom="@dimen/normal_margin"
+                android:text="@string/label_set_ui_theme" />
+
+            <include layout="@layout/divider" />
+
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/settings_fab"
                 style="@style/SettingsHolderTextViewOneLinerStyle"

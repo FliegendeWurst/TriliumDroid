@@ -121,6 +121,10 @@
     <string name="action_enter_protected_session">Enter protected session</string>
     <string name="button_configure_synchronization">Configure synchronization</string>
     <string name="label_set_ui_language">Set UI language</string>
+    <string name="label_set_ui_theme">Set UI theme (day/night)</string>
+    <string name="theme_day">Day / Light</string>
+    <string name="theme_night">Night / Dark</string>
+    <string name="theme_auto">Automatic / System</string>
     <string name="label_revisions">Revisions</string>
     <string name="label_metadata">Metadata</string>
     <string name="label_note_id">Note ID</string>

@@ -5,13 +5,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
-import eu.fliegendewurst.triliumdroid.activity.main.MainActivity.Companion.tree
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.database.Notes
@@ -37,7 +37,7 @@ class TreeItemAdapter(
 
 	override fun submitList(list: List<Pair<Branch, Int>>?) {
 		for ((i, pair) in list.orEmpty().withIndex()) {
-			tree!!.branchPosition[pair.first.note] = i
+			branchPosition[pair.first.note] = i
 			pair.first.cachedTreeIndex = i
 		}
 		super.submitList(list)
@@ -104,6 +104,7 @@ class TreeItemAdapter(
 		val item = getItem(position)
 		holder.bind(item)
 		val button = holder.itemView.findViewById<Button>(R.id.label)
+		val icon = holder.itemView.findViewById<TextView>(R.id.note_icon)
 		// make sure entries in the "jump to note" dialog are wide
 		if (item.first.id.rawId() == MainActivity.JUMP_TO_NOTE_ENTRY) {
 			button.layoutParams = FrameLayout.LayoutParams(
@@ -116,10 +117,16 @@ class TreeItemAdapter(
 			button
 				.backgroundTintList =
 				ContextCompat.getColorStateList(holder.itemView.context, R.color.tree_selected)
+			val c = holder.itemView.resources.getColor(R.color.tree_selected_text)
+			button.setTextColor(c)
+			icon.setTextColor(c)
 		} else {
 			button
 				.backgroundTintList =
 				ContextCompat.getColorStateList(holder.itemView.context, R.color.tree_normal)
+			val c = holder.itemView.resources.getColor(R.color.tree_normal_text)
+			button.setTextColor(c)
+			icon.setTextColor(c)
 		}
 	}
 

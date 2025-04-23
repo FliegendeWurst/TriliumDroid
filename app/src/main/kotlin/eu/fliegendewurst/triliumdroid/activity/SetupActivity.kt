@@ -1,7 +1,9 @@
 package eu.fliegendewurst.triliumdroid.activity
 
 import android.app.Activity
+import android.app.UiModeManager
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -82,6 +84,46 @@ class SetupActivity : AppCompatActivity() {
 						AppCompatDelegate.setApplicationLocales(
 							LocaleListCompat.create(locale)
 						)
+					}
+					dialog.dismiss()
+				}
+				.setNegativeButton(android.R.string.cancel, null)
+				.setTitle(R.string.label_set_ui_language)
+				.show()
+		}
+		binding.buttonChangeDayNight.setOnClickListener {
+			AlertDialog.Builder(this)
+				.setSingleChoiceItems(
+					arrayOf(
+						resources.getString(R.string.theme_day),
+						resources.getString(R.string.theme_night),
+						resources.getString(R.string.theme_auto)
+					), -1
+				) { dialog, n ->
+					lifecycleScope.launch {
+						val newValue = when (n) {
+							0 -> {
+								UiModeManager.MODE_NIGHT_NO
+							}
+
+							1 -> {
+								UiModeManager.MODE_NIGHT_YES
+							}
+
+							2 -> {
+								UiModeManager.MODE_NIGHT_AUTO
+							}
+
+							else -> null
+						}
+						if (newValue != null) {
+							if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+								this@SetupActivity.getSystemService(UiModeManager::class.java)
+									.setApplicationNightMode(newValue)
+							} else {
+								AppCompatDelegate.setDefaultNightMode(newValue)
+							}
+						}
 					}
 					dialog.dismiss()
 				}

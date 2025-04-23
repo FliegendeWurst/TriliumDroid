@@ -17,6 +17,8 @@
     <color name="background3">#eeeeee</color>
     <color name="foreground">@color/black</color>
     <color name="tree_selected">#FFffe44c</color>
+    <color name="tree_selected_text">@color/black</color>
+    <color name="tree_normal_text">@color/foreground</color>
     <color name="tree_normal">#FFeeeeee</color>
     <color name="divider_grey">#55808080</color>
 </resources>

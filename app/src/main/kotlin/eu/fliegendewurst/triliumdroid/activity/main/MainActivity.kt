@@ -98,10 +98,11 @@ class MainActivity : AppCompatActivity() {
 	private var hideLeftFAB = false
 	private var hideRightFAB = false
 
+	var tree: TreeItemAdapter? = null
+
 	companion object {
 		private const val TAG = "MainActivity"
 		const val JUMP_TO_NOTE_ENTRY = "JUMP_TO_NOTE_ENTRY"
-		var tree: TreeItemAdapter? = null
 		private var controller: MainController = MainController()
 	}
 

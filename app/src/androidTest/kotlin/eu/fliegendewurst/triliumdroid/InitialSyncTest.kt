@@ -405,6 +405,29 @@ class InitialSyncTest {
 		saveScreenshot()
 	}
 
+	@Test
+	fun test_090_darkMode() {
+		Thread.sleep(2000) // wait until ready
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.close(Gravity.START))
+		// click to open settings
+		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
+		Thread.sleep(500)
+		onView(withText(R.string.action_settings))
+			.perform(click())
+		// wait to load
+		Thread.sleep(2000)
+		onView(withId(R.id.button_change_day_night))
+			.perform(click())
+		// confirm delete
+		onView(withText(R.string.theme_night))
+			.perform(click())
+		Thread.sleep(2000) // wait to apply
+		Espresso.pressBack()
+		Thread.sleep(5000)
+		saveScreenshot()
+	}
+
 	private val screenshotCounts = mutableMapOf<String, Int>()
 
 	private fun saveScreenshot() {

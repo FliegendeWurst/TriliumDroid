@@ -1,6 +1,7 @@
 Features
 - Read-only mode, disabling all database changes
 - In-app user guide (TriliumNext docs)
+- Light/dark/auto theme switcher
 
 Bugfixes
 - Fixed bug where the note tree may disappear until restart
