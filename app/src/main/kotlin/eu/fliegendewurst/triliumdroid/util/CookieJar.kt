@@ -18,7 +18,7 @@ class CookieJar : CookieJar {
 	override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
 		val host = url.host
 		val cookieStore =
-			cookieStorage.computeIfAbsent(host, { return@computeIfAbsent mutableListOf() })
+			cookieStorage.computeIfAbsent(host) { return@computeIfAbsent mutableListOf() }
 		for (cookie in cookies) {
 			Log.i(
 				TAG,

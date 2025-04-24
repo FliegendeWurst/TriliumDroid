@@ -109,7 +109,7 @@ tasks.register("jacocoTestReport", JacocoReport) {
     }
 
     def fileFilter = ["**/R.class", '**/R$*.class', "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*", "android/**/*.*", "**/Icon.*"]
-    def debugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def debugTree = fileTree(dir: "${layout.buildDirectory}/tmp/kotlin-classes/debug", excludes: fileFilter)
     def mainSrc = "${project.projectDir}/src/main/kotlin"
 
     sourceDirectories.from = files([mainSrc])

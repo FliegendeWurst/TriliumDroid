@@ -1,6 +1,5 @@
 package eu.fliegendewurst.triliumdroid.activity
 
-import android.app.Activity
 import android.app.UiModeManager
 import android.content.Intent
 import android.os.Build
@@ -136,7 +135,7 @@ class SetupActivity : AppCompatActivity() {
 
 		val exportLauncher =
 			registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-				if (result.resultCode != Activity.RESULT_OK) {
+				if (result.resultCode != RESULT_OK) {
 					return@registerForActivityResult
 				}
 				contentResolver.openOutputStream(

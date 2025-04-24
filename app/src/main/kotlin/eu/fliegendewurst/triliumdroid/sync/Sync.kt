@@ -316,9 +316,7 @@ object Sync {
 					)
 					if (outstandingPullCount > 0) {
 						callbackOutstanding(outstandingPullCount)
-						runBlocking {
-							sync(totalSynced, callbackOutstanding, callbackError, callbackDone)
-						}
+						sync(totalSynced, callbackOutstanding, callbackError, callbackDone)
 					} else {
 						callbackDone(Pair(totalSynced, totalPushed))
 					}

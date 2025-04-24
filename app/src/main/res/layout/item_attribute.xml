@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="@drawable/border_attribute"
     android:contentDescription="@string/attribute"
     android:orientation="horizontal">
+
+    <!-- "hardcoded" text is always replaced by dynamic values -->
 
     <TextView
         android:id="@+id/label_attribute_name"
@@ -13,7 +16,8 @@
         android:layout_marginStart="2dp"
         android:layout_marginEnd="2dp"
         android:labelFor="@id/label_attribute_value"
-        android:text="Name" />
+        android:text="Name"
+        tools:ignore="HardcodedText" />
 
     <EditText
         android:id="@+id/label_attribute_value"
@@ -21,5 +25,6 @@
         android:layout_height="wrap_content"
         android:inputType="text"
         android:importantForAutofill="no"
-        android:text="Value" />
+        android:text="Value"
+        tools:ignore="HardcodedText" />
 </LinearLayout>

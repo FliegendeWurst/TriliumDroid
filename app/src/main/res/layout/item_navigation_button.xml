@@ -22,6 +22,7 @@
         android:background="@color/primary"
         android:baselineAligned="false"
         android:clickable="true"
+        android:focusable="true"
         android:elevation="2dp"
         android:orientation="horizontal"
         android:padding="@dimen/medium_margin">

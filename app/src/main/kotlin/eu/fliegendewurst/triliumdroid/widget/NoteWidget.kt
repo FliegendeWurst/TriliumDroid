@@ -18,6 +18,7 @@ import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.createBitmap
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.HistoryItem
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
@@ -207,8 +208,7 @@ private suspend fun updateAppWidget(
 }
 
 fun renderIcon(context: Context, width: Float, height: Float, icon: String): Bitmap {
-	val myBitmap =
-		Bitmap.createBitmap(width.roundToInt(), height.roundToInt(), Bitmap.Config.ARGB_8888)
+	val myBitmap = createBitmap(width.roundToInt(), height.roundToInt())
 	val myCanvas = Canvas(myBitmap)
 	val paint = Paint()
 	val typeface = ResourcesCompat.getFont(context, R.font.boxicons)
