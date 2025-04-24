@@ -73,6 +73,7 @@ class NoteWebViewClient(
 		request: WebResourceRequest
 	): WebResourceResponse {
 		Log.d(TAG, "intercept: ${request.url.host} ${request.url}")
+		val context = view.context
 		if (request.url.host == "esm.sh") {
 			val effectiveUrl = request.url.toString()
 			val asset = Assets.webAsset(view.context, effectiveUrl)
@@ -92,11 +93,25 @@ class NoteWebViewClient(
 				// catch-all blocker
 				WebResourceResponse(
 					mime,
-					null,
+					"utf-8",
 					"esm.sh req. @ ${request.url} not cached, please report to TriliumDroid issue tracker".byteInputStream()
 				)
 			}
-		} else if (request.url.host == WEBVIEW_HOST && (request.url.pathSegments.size <= 2 || request.url.pathSegments.size == 5 || request.url.pathSegments.size == 6)) {
+		} else if (request.url.host == WEBVIEW_HOST) {
+			val firstSegment = request.url.pathSegments.getOrNull(0)
+			// special case /stylesheets
+			if (firstSegment == "stylesheets") {
+				val asset = Assets.stylesheet(
+					context,
+					request.url.pathSegments.slice(1 until request.url.pathSegments.size)
+						.joinToString("/")
+				)
+				if (asset == null) {
+					Log.e(TAG, "failed to find stylesheet!")
+					return notFound("text/css")
+				}
+				return WebResourceResponse("text/css", "utf-8", asset)
+			}
 			val fetchingAttachment = request.url.pathSegments.size >= 5
 			var id = when (request.url.pathSegments.size) {
 				0 -> {
@@ -126,7 +141,7 @@ class NoteWebViewClient(
 				}
 
 				else -> {
-					throw IllegalStateException("wrong number of path segments")
+					return notFound("text/plain")
 				}
 			}
 			if (id == "") {
@@ -185,7 +200,6 @@ class NoteWebViewClient(
 			} else {
 				note?.content()
 			}
-			val firstSegment = request.url.pathSegments.getOrNull(0)
 			if (firstSegment == "excalidraw-data" && !fetchingAttachment) {
 				if (content == null) {
 					Log.w(TAG, "canvas note without content")

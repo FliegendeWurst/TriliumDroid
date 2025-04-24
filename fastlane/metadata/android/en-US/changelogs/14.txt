@@ -8,3 +8,4 @@ Bugfixes
 - Fixed error when modifying the same entity twice
 - Fixed NPE when viewing a deleted note
 - Fixed rare background crash when sync login fails
+- Fixed note editor theme

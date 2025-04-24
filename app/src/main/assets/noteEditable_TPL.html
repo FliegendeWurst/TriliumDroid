@@ -59,9 +59,18 @@
         position: sticky;
         top: 0px;
         left: 0px;
-        z-index: 999;
+        z-index: 10005;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            background-color: black;
+            color: white;
+        }
     }
 </style>
+<link href="/stylesheets/theme-next.css" rel="stylesheet">
+<link href="/stylesheets/ckeditor-theme.css" rel="stylesheet">
 <div class="classic-toolbar-widget"></div>
 <div class="note-detail-editable-text note-detail-printable">
     <div class="note-detail-editable-text-editor use-tn-links" tabindex="300"></div>

@@ -12,6 +12,7 @@ object Assets {
 	private const val TAG: String = "Assets"
 	private const val LATEST_WEB_ASSETS = 2 // increment when updating web.zip
 	private const val LATEST_DOC_ASSETS = 1 // increment when updating doc_notes.zip
+	private const val LATEST_CSS_ASSETS = 1 // increment when updating stylesheets.zip
 
 	private var ckeditorJS: String? = null // ~1.8 MB
 	private var excalidraw_TPL: String? = null
@@ -101,6 +102,10 @@ object Assets {
 		docAssetInternal(context, docName)
 	}
 
+	fun stylesheet(context: Context, filename: String): InputStream? = synchronized(this) {
+		stylesheetInternal(context, filename)
+	}
+
 	private fun webAssetInternal(context: Context, url: String): InputStream? {
 		val webZipCached = context.cacheDir.toPath().resolve("web.zip")
 		if (webZipCached.notExists() || Preferences.webAssetsVersion() < LATEST_WEB_ASSETS) {
@@ -124,7 +129,7 @@ object Assets {
 
 	private fun docAssetInternal(context: Context, docName: String): InputStream? {
 		val docZipCached = context.cacheDir.toPath().resolve("doc_notes.zip")
-		if (docZipCached.notExists() || Preferences.webAssetsVersion() < LATEST_DOC_ASSETS) {
+		if (docZipCached.notExists() || Preferences.docAssetsVersion() < LATEST_DOC_ASSETS) {
 			Log.d(TAG, "updating cached doc_notes.zip")
 			docZipCached.deleteIfExists()
 			context.resources.assets.open("doc_notes.zip").use { inputStream ->
@@ -140,6 +145,27 @@ object Assets {
 		}
 		val zip = ZipFile(docZipCached.toFile())
 		val zipEntry = zip.getEntry("en/${docName}.html") ?: return null
+		return zip.getInputStream(zipEntry)
+	}
+
+	private fun stylesheetInternal(context: Context, filename: String): InputStream? {
+		val cssZipCached = context.cacheDir.toPath().resolve("stylesheets.zip")
+		if (cssZipCached.notExists() || Preferences.cssAssetsVersion() < LATEST_CSS_ASSETS) {
+			Log.d(TAG, "updating cached stylesheets.zip")
+			cssZipCached.deleteIfExists()
+			context.resources.assets.open("stylesheets.zip").use { inputStream ->
+				inputStream.buffered().use { inputBuffered ->
+					cssZipCached.outputStream().use { outputStream ->
+						outputStream.buffered().use { outputBuffered ->
+							inputBuffered.copyTo(outputBuffered)
+						}
+					}
+				}
+			}
+			Preferences.setCssAssetsVersion(LATEST_CSS_ASSETS)
+		}
+		val zip = ZipFile(cssZipCached.toFile())
+		val zipEntry = zip.getEntry(filename) ?: return null
 		return zip.getInputStream(zipEntry)
 	}
 }

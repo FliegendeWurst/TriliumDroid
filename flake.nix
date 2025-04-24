@@ -36,7 +36,7 @@
 
             nativeBuildInputs = with pkgs; [
               asar
-              p7zip
+              _7zz
             ];
 
             buildInputs = with pkgs; [ ];
@@ -45,15 +45,27 @@
               asar_out=$(mktemp -d)
               asar extract ${pkgs.trilium-next-desktop}/share/trilium/resources/app.asar $asar_out
               mv $asar_out/src/public/app-dist/doc_notes/* .
+              mv $asar_out/src/public/stylesheets .
               rm -r $asar_out
+
+              mkdir doc_notes
+
               shopt -s globstar nullglob
               rm en/**/*.png en/**/*.jpg en/**/*.gif
-              7z a -mm=Deflate -mfb=258 -mpass=15 -r doc_notes.zip en cn
+              mv en cn doc_notes/
+              cd doc_notes
+              7zz a -mm=Deflate -mfb=258 -mpass=15 -- ../doc_notes.zip
+              cd ..
+
+              cd stylesheets
+              7zz a -mm=Deflate -mfb=258 -mpass=15 -- ../stylesheets.zip
+              cd ..
             '';
 
             installPhase = ''
               mkdir $out
               mv doc_notes.zip $out/
+              mv stylesheets.zip $out/
             '';
 
             meta = with lib; {
