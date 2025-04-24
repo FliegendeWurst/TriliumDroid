@@ -18,6 +18,15 @@ var glob = {
                     el.innerText = title;
                 }
             },
+            triggerCommand: (...x) => {
+                if (x[0] == "addLinkToText") {
+                    const selectedText = getSelectedText();
+                    api.addLinkDialog(selectedText, "addLinkToText");
+                } else {
+                    console.log("triggerCommand");
+                    console.log(x);
+                }
+            },
             getData: (...x) => {
                 console.log(x);
                 return "FIXME: put data here";
@@ -224,7 +233,6 @@ function buildClassicToolbar(multilineToolbar) {
 var editor = document.querySelector(".note-detail-editable-text-editor");
 const isClassicEditor = true;
 const editorClass = isClassicEditor ? CKEditor.DecoupledEditor : CKEditor.BalloonEditor;
-console.log("new Watchdog");
 const watchdog = new CKEditor.EditorWatchdog(editorClass, {
     // An average number of milliseconds between the last editor errors (defaults to 5000).
     // When the period of time between errors is lower than that and the crashNumberLimit
@@ -241,7 +249,34 @@ const watchdog = new CKEditor.EditorWatchdog(editorClass, {
     // Note that for large documents, this might impact the editor performance.
     saveInterval: 5000
 });
-console.log("on stateChange");
+function getSelectedText() {
+    const range = watchdog.editor.model.document.selection.getFirstRange();
+    let text = "";
+
+    for (const item of range.getItems()) {
+        if (item.data) {
+            text += item.data;
+        }
+    }
+
+    return text;
+}
+function addLinkToText(j) {
+    const notePath = j["notePath"];
+    const linkTitle = j["linkTitle"];
+    if (linkTitle) {
+        if (!watchdog.editor.model.document.selection.isCollapsed) {
+            watchdog.editor.execute("link", `#${notePath}`);
+        } else {
+            watchdog.editor.model.change((writer) => {
+                const insertPosition = watchdog.editor.model.document.selection.getFirstPosition();
+                writer.insertText(linkTitle, { linkHref: `#${notePath}` }, insertPosition);
+            });
+        }
+    } else {
+        watchdog.editor.execute("referenceLink", { href: "#" + notePath });
+    }
+}
 watchdog.on("stateChange", () => {
     const currentState = watchdog.state;
 
@@ -267,7 +302,6 @@ function scheduleUpdate() {
     clearTimeout(updateTimeoutID);
     updateTimeoutID = setTimeout(scheduledUpdate, 1000);
 }
-console.log("setCreator");
 watchdog.setCreator(async (elementOrData, editorConfig) => {
     const finalConfig = {
         ...editorConfig,
@@ -343,7 +377,6 @@ watchdog.setCreator(async (elementOrData, editorConfig) => {
 });
 
 async function initialize() {
-console.log("in initialize");
 await watchdog.create(editor, {
     placeholder: "Tap to start editing...", // "editable_text.placeholder", // TODO
     /*

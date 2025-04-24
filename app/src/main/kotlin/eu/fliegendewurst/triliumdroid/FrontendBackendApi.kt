@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Attribute
 import eu.fliegendewurst.triliumdroid.data.Branch
@@ -23,9 +24,12 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
+import eu.fliegendewurst.triliumdroid.dialog.JumpToNoteDialog
+import eu.fliegendewurst.triliumdroid.fragment.NoteEditFragment
 import eu.fliegendewurst.triliumdroid.service.DateNotes
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.util.Preferences
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.time.Instant
@@ -674,6 +678,29 @@ class FrontendBackendApi(
 	fun updateExcalidrawNote(noteId: String, newContent: String) {
 		runBlocking {
 			Notes.setNoteContent(NoteId(noteId), newContent)
+		}
+	}
+
+	@JavascriptInterface
+	fun addLinkDialog(text: String, callbackFn: String) {
+		mainActivity.lifecycleScope.launch {
+			JumpToNoteDialog.showDialogReturningNote(
+				mainActivity,
+				R.string.dialog_select_note,
+				{
+					val note =
+						runBlocking { Notes.getNote(it.note) } ?: return@showDialogReturningNote
+					val obj = JSONObject()
+					// TODO: make this the full path root/note1/note2/it.note
+					obj.put("notePath", it.note.rawId())
+					obj.put("linkTitle", note.title())
+					val frag = this@FrontendBackendApi.noteFragment
+					if (frag is NoteEditFragment) {
+						frag.executeJS("$callbackFn(${obj})")
+					}
+				},
+				text
+			)
 		}
 	}
 

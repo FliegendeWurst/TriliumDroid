@@ -29,6 +29,15 @@ object JumpToNoteDialog {
 		title: Int,
 		callback: (Branch) -> Unit
 	) {
+		showDialogReturningNote(activity, title, callback, null)
+	}
+
+	fun showDialogReturningNote(
+		activity: AppCompatActivity,
+		title: Int,
+		callback: (Branch) -> Unit,
+		initialText: String?
+	) {
 		val dialog = AlertDialog.Builder(activity)
 			.setTitle(title)
 			.setView(R.layout.dialog_jump)
@@ -36,6 +45,9 @@ object JumpToNoteDialog {
 		dialog.window!!.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
 		dialog.show()
 		val input = dialog.findViewById<EditText>(R.id.jump_input)!!
+		if (initialText != null) {
+			input.text.insert(0, initialText)
+		}
 		val list = dialog.findViewById<RecyclerView>(R.id.jump_to_list)!!
 		val adapter2 = TreeItemAdapter({
 			dialog.dismiss()

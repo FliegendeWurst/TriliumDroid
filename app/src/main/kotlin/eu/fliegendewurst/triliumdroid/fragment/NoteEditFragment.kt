@@ -27,6 +27,10 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit), NoteRelatedFragm
 	private lateinit var binding: FragmentNoteEditBinding
 	private var id: NoteId? = null
 
+	fun executeJS(js: String) {
+		binding.webviewEditable.evaluateJavascript(js) { }
+	}
+
 	fun loadLater(id: NoteId) {
 		this.id = id
 	}
@@ -69,80 +73,6 @@ class NoteEditFragment : Fragment(R.layout.fragment_note_edit), NoteRelatedFragm
 			binding.webviewEditable.loadUrl("${WEBVIEW_DOMAIN}note-editable#${id!!.id}")
 		}
 		return binding.root
-	}
-
-	override fun onResume() {
-		super.onResume()
-
-		/*
-		if (id != null) {
-			val note = runBlocking { Notes.getNoteWithContent(id!!) } ?: return
-			val content = note.content()?.decodeToString() ?: return
-			Aztec.with(binding.visual, binding.source, binding.formattingToolbar, this)
-				.addPlugin(object : IToolbarButton {
-					override val action: IToolbarAction
-						get() = object : IToolbarAction {
-							override val actionType: ToolbarActionType
-								get() = ToolbarActionType.OTHER
-							override val buttonDrawableRes: Int
-								get() = R.drawable.bx_link_alt
-							override val buttonId: Int
-								get() = R.id.button_inline_link
-							override val textFormats: Set<ITextFormat>
-								get() = setOf()
-						}
-
-					override val context: Context
-						get() = requireContext()
-
-					override fun inflateButton(parent: ViewGroup) {
-						LayoutInflater.from(context).inflate(R.layout.button_inline_link, parent)
-					}
-
-					override fun toggle() {
-						val start = binding.visual.selectionStart
-						val end = binding.visual.selectionEnd
-						var prev = binding.visual.getSelectedText()
-						JumpToNoteDialog.showDialogReturningNote(
-							requireContext() as MainActivity,
-							R.string.dialog_select_note
-						) {
-							if (prev.isBlank()) {
-								val noteLinked = runBlocking { Notes.getNote(it.note)!! }
-								prev = noteLinked.title()
-							}
-							// TODO: make this the full path #root/note1/note2/it.note
-							val url = "#${it.note}"
-							val builder = SpannableStringBuilder(prev)
-							val newSpan = AztecURLSpan(url, AztecAttributes())
-							builder.setSpan(newSpan, 0, 0, Spannable.SPAN_MARK_MARK)
-							builder.setSpan(
-								newSpan,
-								0,
-								prev.length,
-								Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-							)
-							binding.visual.editableText.replace(
-								start,
-								end,
-								builder,
-								0,
-								builder.length
-							)
-							runBlocking {
-								Notes.addInternalLink(note, it.note)
-							}
-						}
-					}
-
-					override fun toolbarStateAboutToChange(toolbar: AztecToolbar, enable: Boolean) {
-						toolbar.findViewById<View>(R.id.button_inline_link).isEnabled = enable
-					}
-				})
-			binding.visual.setCalypsoMode(false)
-			binding.source.displayStyledAndFormattedHtml(content)
-			binding.visual.fromHtml(content)
-		}*/
 	}
 
 	override fun onStop() {

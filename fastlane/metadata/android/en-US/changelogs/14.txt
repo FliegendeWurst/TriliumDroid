@@ -1,11 +1,11 @@
 Features
 - Read-only mode, disabling all database changes
 - In-app user guide (TriliumNext docs)
-- Light/dark/auto theme switcher
+- Light/dark/auto theme preference
 
 Bugfixes
 - Fixed bug where the note tree may disappear until restart
 - Fixed error when modifying the same entity twice
 - Fixed NPE when viewing a deleted note
 - Fixed rare background crash when sync login fails
-- Fixed note editor theme
+- Fixed note editor theme & link function
