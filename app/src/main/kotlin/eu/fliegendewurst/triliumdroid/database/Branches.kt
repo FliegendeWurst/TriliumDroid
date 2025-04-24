@@ -30,6 +30,7 @@ object Branches {
 	/**
 	 * Get one possible note path for the provided note.
 	 * For deleted notes, this path is probably empty.
+	 * The returned path starts with the innermost branch.
 	 */
 	suspend fun getNotePath(id: NoteId): List<Branch> = withContext(Dispatchers.IO) {
 		val l = mutableListOf<Branch>()

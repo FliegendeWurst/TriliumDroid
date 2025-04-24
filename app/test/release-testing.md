@@ -5,7 +5,7 @@ These cover most functionality, except note editing (CKEditor text input is not 
 Check CI status, or run tests locally:
 
 - Run `./app/test/setup-test-server.sh`
-- Run `while true; do adb reverse tcp:8080 tcp:8080; sleep 1; done`
+- Run `while true; do adb -e reverse tcp:8080 tcp:8080; sleep 1; done`
 - Run Gradle task `:app:pixel9api35DebugAndroidTest`
 - Run `./app/test/compare-test-images.sh`
 

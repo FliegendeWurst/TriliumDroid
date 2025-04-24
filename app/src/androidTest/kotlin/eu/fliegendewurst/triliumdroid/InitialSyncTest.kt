@@ -157,14 +157,16 @@ class InitialSyncTest {
 		Thread.sleep(2000) // wait until ready
 
 		openActionBarOverflowOrOptionsMenu(getInstrumentation().targetContext)
-		onView(withText(R.string.jump_to_dialog))
-			.perform(click())
-		onView(withId(R.id.jump_input))
-			.perform(typeText("backup"))
-		Thread.sleep(2000) // wait for DB query
-		onView(allOf(withIndex(withText("Backup"), 1)))
+		onView(withText(R.string.action_help))
 			.perform(click())
 		Thread.sleep(2000) // wait for note to load
+		onView(withText("Installation & Setup"))
+			.perform(click())
+		onView(withText("Backup"))
+			.perform(click())
+		Thread.sleep(2000) // wait for note to load
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.close(Gravity.START))
 		saveScreenshot()
 		Espresso.pressBack()
 	}

@@ -188,6 +188,11 @@ class NoteFragment : Fragment(R.layout.fragment_note), NoteRelatedFragment {
 			binding.noteHeaderAttributes.visibility = View.GONE
 			return
 		}
+		if (note.type == "doc") {
+			binding.noteHeader.visibility = View.GONE
+		} else {
+			binding.noteHeader.visibility = View.VISIBLE
+		}
 		binding.labelNoteRevisionInfo.text = ""
 		val constraintLayout = binding.noteHeader
 		val flow = binding.noteHeaderAttributes

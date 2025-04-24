@@ -453,6 +453,16 @@ class MainController {
 			true
 		}
 
+		R.id.action_help -> {
+			activity.lifecycleScope.launch {
+				val help = NoteId("_help")
+				val helpNote = Notes.getNote(help) ?: return@launch
+				val helpNoteBranch = Branches.getNotePath(help).firstOrNull() ?: return@launch
+				noteHistory.addAndRestore(NavigationItem(helpNote, helpNoteBranch), activity)
+			}
+			true
+		}
+
 		R.id.action_about -> {
 			activity.startActivity(Intent(activity, AboutActivity::class.java))
 			true

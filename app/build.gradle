@@ -105,7 +105,7 @@ tasks.register("jacocoTestReport", JacocoReport) {
         csv.required.set(false)
     }
 
-    def fileFilter = ["**/R.class", '**/R$*.class', "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*", "android/**/*.*"]
+    def fileFilter = ["**/R.class", '**/R$*.class', "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*", "android/**/*.*", "**/Icon.*"]
     def debugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
     def mainSrc = "${project.projectDir}/src/main/kotlin"
 

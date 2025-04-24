@@ -20,7 +20,7 @@ for x in app/test/screenshots/*; do
     "app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/${f}scaled.png" "/tmp/diff_$f" \
     2>&1 | cut -d\( -f2 | tr -d '\n' | tr -d ')')
   echo -n "$score. "
-  awk "BEGIN {exit !($score >= 0.01)}" && echo -n "FAIL!" && fail=1
+  awk "BEGIN {exit !($score >= 0.01)}" && echo -en "\033[31;1mFAIL!\033[0m" && fail=1
   echo
 done
 
