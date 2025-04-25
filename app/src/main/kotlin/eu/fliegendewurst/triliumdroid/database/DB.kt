@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.AbstractWindowedCursor
 import android.database.Cursor
+import android.database.Cursor.FIELD_TYPE_STRING
 import android.database.CursorWindow
 import android.database.sqlite.SQLiteCursorDriver
 import android.database.sqlite.SQLiteDatabase
@@ -13,6 +14,7 @@ import android.util.Log
 import androidx.core.database.getStringOrNull
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.database.Branches.branches
+import eu.fliegendewurst.triliumdroid.database.CacheDbHelper.Companion.MAX_MIGRATION
 import eu.fliegendewurst.triliumdroid.database.Notes.notes
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import eu.fliegendewurst.triliumdroid.util.Unreachable
@@ -188,6 +190,9 @@ object DB {
 			).use {
 				while (it.moveToNext()) {
 					val id = it.getString(0)
+					if (it.getType(1) != FIELD_TYPE_STRING) {
+						continue
+					}
 					val content = it.getStringOrNull(1)
 					if (content != null) {
 						decoded.add(Pair(id, Base64.decode(content)))
@@ -203,7 +208,7 @@ object DB {
 		if (migrationLevel < 2) {
 			Blobs.fixupBrokenBlobIDs()
 		}
-		Preferences.setDatabaseMigration(2)
+		Preferences.setDatabaseMigration(MAX_MIGRATION)
 	}
 
 	fun nukeDatabase(context: Context) {
@@ -219,7 +224,7 @@ object DB {
 		branches.clear()
 		lastSync = null
 		// DB migrations are only for fixups
-		Preferences.setDatabaseMigration(2)
+		Preferences.setDatabaseMigration(MAX_MIGRATION)
 	}
 
 	fun closeDatabase() {

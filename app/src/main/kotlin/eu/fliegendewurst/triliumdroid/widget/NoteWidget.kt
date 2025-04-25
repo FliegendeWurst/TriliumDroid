@@ -48,6 +48,7 @@ class NoteWidget : AppWidgetProvider() {
 		appWidgetIds: IntArray
 	) {
 		Preferences.init(context.applicationContext)
+		DB.applicationContext = context.applicationContext
 		if (DB.haveDatabase(context)) {
 			runBlocking {
 				// There may be multiple widgets active, so update all of them
@@ -65,6 +66,7 @@ class NoteWidget : AppWidgetProvider() {
 		newOptions: Bundle?
 	) {
 		Preferences.init(context.applicationContext)
+		DB.applicationContext = context.applicationContext
 		if (DB.haveDatabase(context)) {
 			runBlocking {
 				updateAppWidget(context, appWidgetManager, appWidgetId, newOptions)
@@ -74,6 +76,7 @@ class NoteWidget : AppWidgetProvider() {
 
 	override fun onEnabled(context: Context) {
 		Preferences.init(context.applicationContext)
+		DB.applicationContext = context.applicationContext
 		if (DB.haveDatabase(context)) {
 			runBlocking {
 				DB.initializeDatabase(context)

@@ -7,6 +7,7 @@ import androidx.preference.PreferenceManager
 import eu.fliegendewurst.triliumdroid.activity.main.HistoryItem
 import eu.fliegendewurst.triliumdroid.data.CanvasNoteViewport
 import eu.fliegendewurst.triliumdroid.data.NoteId
+import eu.fliegendewurst.triliumdroid.database.CacheDbHelper.Companion.MAX_MIGRATION
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.widget.parseWidgetAction
 
@@ -33,6 +34,12 @@ object Preferences {
 
 	fun init(applicationContext: Context) {
 		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+		if (!prefs.contains(DATABASE_VERSION) && !prefs.contains(HOSTNAME)) {
+			// This is relevant if the app is uninstalled and reinstalled,
+			// in which case the database may persist. We assume it doesn't
+			// need fixups in that case.
+			setDatabaseMigration(MAX_MIGRATION)
+		}
 	}
 
 	fun hostname(): String? = prefs.getString(HOSTNAME, null)

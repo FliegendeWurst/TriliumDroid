@@ -14,6 +14,7 @@ class CacheDbHelper(context: Context, private val sql: String) :
 	SQLiteOpenHelper(context, Versions.DATABASE_NAME, null, Versions.DATABASE_VERSION) {
 	companion object {
 		private const val TAG = "CacheDbHelper"
+		const val MAX_MIGRATION = 2
 	}
 
 	override fun onCreate(db: SQLiteDatabase) {
@@ -40,7 +41,7 @@ class CacheDbHelper(context: Context, private val sql: String) :
 				}
 			}
 			// DB migrations are only for fixups
-			Preferences.setDatabaseMigration(2)
+			Preferences.setDatabaseMigration(MAX_MIGRATION)
 		} catch (t: Throwable) {
 			Log.e(TAG, "fatal error creating database", t)
 		}

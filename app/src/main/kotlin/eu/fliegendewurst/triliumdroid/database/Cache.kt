@@ -315,8 +315,8 @@ object Cache {
 			while (it.moveToNext()) {
 				val id = NoteId(it.getString(0))
 				val title = it.getString(1)
-				val attrName = it.getString(2)
-				val attrValue = it.getString(3)
+				val attrName = it.getStringOrNull(2)
+				val attrValue = it.getStringOrNull(3)
 				val attrIdRaw = it.getStringOrNull(4)
 				val attrId = if (attrIdRaw != null) {
 					AttributeId(attrIdRaw)
@@ -342,8 +342,9 @@ object Cache {
 						BlobId("INVALID")
 					)
 				}
-				if (attrValue != null && !attrValue.startsWith('_') &&
-					!attrName.startsWith("child:") && attrId != null
+				if (attrId != null && attrName != null && attrValue != null &&
+					!attrValue.startsWith('_') &&
+					!attrName.startsWith("child:")
 				) {
 					relations.add(Triple(id, NoteId(attrValue), Pair(attrName, attrId)))
 				}

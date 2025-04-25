@@ -1,0 +1,3 @@
+Bugfixes
+- Fix many bugs/crashes with widgets
+- Fixed crash when re-installing the app without deleting app data
