@@ -34,7 +34,7 @@ object Preferences {
 
 	fun init(applicationContext: Context) {
 		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
-		if (!prefs.contains(DATABASE_VERSION) && !prefs.contains(HOSTNAME)) {
+		if (!prefs.contains(DB_MIGRATION) && !prefs.contains(HOSTNAME)) {
 			// This is relevant if the app is uninstalled and reinstalled,
 			// in which case the database may persist. We assume it doesn't
 			// need fixups in that case.
