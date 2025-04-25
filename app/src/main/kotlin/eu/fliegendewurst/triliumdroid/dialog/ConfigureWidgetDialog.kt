@@ -53,7 +53,7 @@ object ConfigureWidgetDialog {
 			JumpToNoteDialog.showDialogReturningNote(activity, R.string.dialog_select_note) {
 				activity.lifecycleScope.launch {
 					val note = Notes.getNote(it.note)!!
-					noteSelected.text = "${note.id}: ${note.title()}"
+					noteSelected.text = "${note.id.rawId()}: ${note.title()}"
 				}
 			}
 		}
