@@ -25,3 +25,4 @@ local.properties
 /app/src/web/https*
 /app/src/web/web.zip
 /result
+/*.logcat

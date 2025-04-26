@@ -100,7 +100,7 @@ class InitialSyncTest {
 
 		// Trilium 0.91+: Demo Document has different default expanded state
 		if (Preferences.databaseVersion()!! >= DATABASE_VERSION_0_92_6) {
-			for (name in listOf("Inbox", "Formatting examples")) {
+			for (name in listOf("Formatting examples")) {
 				onView(withText(name))
 					.perform(longClick())
 				Thread.sleep(2000)
@@ -408,8 +408,69 @@ class InitialSyncTest {
 	}
 
 	@Test
+	fun test_050_cloneNote() {
+		Thread.sleep(2000) // wait until ready
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.START))
+		onView(withText("Books"))
+			.perform(longClick())
+		Thread.sleep(500)
+		saveScreenshot()
+		onView(withText("The Last Question"))
+			.perform(click())
+		Thread.sleep(2000)
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.END))
+		saveScreenshot()
+		onView(withId(R.id.button_note_path_edit))
+			.perform(click())
+		saveScreenshot()
+		onView(withId(R.id.jump_input))
+			.perform(typeText("books"))
+		Thread.sleep(1000)
+		onView(withText("Books"))
+			.perform(click())
+		Thread.sleep(1000)
+		saveScreenshot()
+		onView(withText(R.string.button_insert_as_last_note))
+			.perform(click())
+		Thread.sleep(1000)
+		saveScreenshot()
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.close(Gravity.END))
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.START))
+		saveScreenshot()
+
+		// clone back!
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.close(Gravity.START))
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.END))
+		onView(withId(R.id.button_note_paths_add))
+			.perform(click())
+		saveScreenshot()
+		onView(withId(R.id.jump_input))
+			.perform(typeText("inbox"))
+		Thread.sleep(1000)
+		onView(withText("Inbox"))
+			.perform(click())
+		Thread.sleep(1000)
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.close(Gravity.END))
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.START))
+		saveScreenshot()
+	}
+
+	@Test
 	fun test_090_darkMode() {
 		Thread.sleep(2000) // wait until ready
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.START))
+		onView(withIndex(withText("Formatting examples"), 0))
+			.perform(click())
+		Thread.sleep(1000)
 		onView(withId(R.id.drawer_layout))
 			.perform(DrawerActions.close(Gravity.START))
 		// click to open settings

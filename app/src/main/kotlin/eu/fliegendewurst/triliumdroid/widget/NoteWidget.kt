@@ -104,7 +104,11 @@ fun parseWidgetAction(action: String?): HistoryItem? {
 				val note = runBlocking {
 					Notes.getNoteWithContent(NoteId(parts[1]))
 				}
-				NoteItem(note!!, null)
+				if (note == null) {
+					Log.w(NoteWidget.TAG, "failed to find widget note from action $action")
+					return null
+				}
+				NoteItem(note, null)
 			} else {
 				null
 			}
@@ -115,7 +119,11 @@ fun parseWidgetAction(action: String?): HistoryItem? {
 				val note = runBlocking {
 					Notes.getNoteWithContent(NoteId(parts[1]))
 				}
-				NoteEditItem(note!!)
+				if (note == null) {
+					Log.w(NoteWidget.TAG, "failed to find widget note from action $action")
+					return null
+				}
+				NoteEditItem(note)
 			} else {
 				null
 			}

@@ -635,6 +635,8 @@ class MainController {
 		JumpToNoteDialog.showDialogReturningNote(activity, R.string.dialog_select_note) {
 			runBlocking {
 				Branches.cloneNote(it, loaded)
+				Cache.getTreeData("")
+				activity.refreshTree()
 			}
 		}
 	}

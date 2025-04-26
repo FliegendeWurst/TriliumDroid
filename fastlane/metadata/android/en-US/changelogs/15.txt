@@ -1,3 +1,4 @@
 Bugfixes
-- Fix many bugs/crashes with widgets
+- Fixed many bugs/crashes with widgets
 - Fixed crash when re-installing the app without deleting app data
+- Fixed several bugs related to note cloning / moving

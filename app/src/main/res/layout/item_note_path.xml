@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal">
@@ -12,6 +12,9 @@
         android:minHeight="?android:attr/listPreferredItemHeightSmall"
         android:paddingStart="?android:attr/listPreferredItemPaddingStart"
         android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_toStartOf="@id/button_note_path_edit"
         android:textAppearance="?android:attr/textAppearanceListItemSmall" />
 
     <Button
@@ -22,6 +25,8 @@
         android:background="#fff"
         android:contentDescription="@string/description_move_note"
         android:drawableStart="@drawable/bx_file_blank_move"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
         android:translationZ="@dimen/medium_margin_plus" />
 
-</LinearLayout>
+</RelativeLayout>

@@ -2,6 +2,8 @@ package eu.fliegendewurst.triliumdroid.database
 
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
+import android.widget.Toast
+import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.BranchId
 import eu.fliegendewurst.triliumdroid.data.Note
@@ -110,13 +112,24 @@ object Branches {
 	suspend fun cloneNote(parentNoteId: NoteId, noteId: NoteId) = withContext(Dispatchers.IO) {
 		// first, make sure we aren't creating a cycle
 		val paths = getNotePaths(parentNoteId) ?: return@withContext
-		if (paths.any { it.any { otherBranch -> otherBranch.note == noteId } }) {
+		if (paths.any {
+				it.slice(1 until it.size).any { otherBranch -> otherBranch.note == noteId }
+			}) {
+			Toast.makeText(
+				DB.applicationContext,
+				R.string.toast_clone_would_cycle,
+				Toast.LENGTH_LONG
+			).show()
+			Log.w(TAG, "refused to create cycle @ parent = $parentNoteId note = $noteId")
 			return@withContext
 		}
 		// create new branch
-		val branchId = "${parentNoteId}_${noteId}"
+		val branchId = "${parentNoteId.rawId()}_${noteId.rawId()}"
 		// check if it is used
-		DB.rawQuery("SELECT 1 FROM branches WHERE branchId = ?", arrayOf(branchId))
+		DB.rawQuery(
+			"SELECT 1 FROM branches WHERE branchId = ? AND isDeleted = 0",
+			arrayOf(branchId)
+		)
 			.use {
 				if (it.moveToNext()) {
 					return@withContext
@@ -124,8 +137,9 @@ object Branches {
 			}
 		// TODO: proper position
 		val utc = utcDateModified()
-		DB.insert(
+		DB.insertWithConflict(
 			"branches",
+			SQLiteDatabase.CONFLICT_REPLACE,
 			Pair("branchId", branchId),
 			Pair("noteId", noteId),
 			Pair("parentNoteId", parentNoteId),
@@ -155,7 +169,7 @@ object Branches {
 			if (branch.parentNote == newParent.note && branch.position == newPosition) {
 				return@withContext // no action needed
 			}
-			val newId = BranchId("${newParent.note}_${branch.note}")
+			val newId = BranchId("${newParent.note.rawId()}_${branch.note.rawId()}")
 			val idChanged = branch.id != newId
 			val utc = utcDateModified()
 			val res = DB.insertWithConflict(
@@ -182,7 +196,7 @@ object Branches {
 			registerEntityChangeBranch(branch)
 			notes[oldParent]?.children = null
 			notes[newParent.note]?.children = null
-			getTreeData("AND (branches.parentNoteId = \"${oldParent}\" OR branches.parentNoteId = \"${newParent.note}\")")
+			getTreeData("AND (branches.parentNoteId = \"${oldParent.rawId()}\" OR branches.parentNoteId = \"${newParent.note.rawId()}\")")
 		}
 
 	suspend fun delete(branch: Branch) = withContext(Dispatchers.IO) {
