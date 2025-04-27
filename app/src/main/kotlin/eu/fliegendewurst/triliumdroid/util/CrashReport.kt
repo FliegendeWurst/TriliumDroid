@@ -1,5 +1,6 @@
 package eu.fliegendewurst.triliumdroid.util
 
+import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -14,6 +15,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStreamReader
+import java.util.*
 
 
 object CrashReport {
@@ -31,7 +33,9 @@ object CrashReport {
 			var bytes = "\n\n"
 			bytes += "Thread: ${thread.name} (ID = ${thread.id})\n"
 			bytes += "Error: ${throwable}\n"
-			bytes += "API Level: ${Build.VERSION.SDK_INT} (${Build.VERSION.RELEASE})\n"
+			bytes += "API Level: ${Build.VERSION.SDK_INT} (Android ${Build.VERSION.RELEASE})\n"
+			bytes += "RAM: ${getMemorySize(context) / 1024 / 1024}MB\n"
+			bytes += "Locale: ${Locale.getDefault().language}\n"
 			bytes += "Stacktrace:\n"
 			bytes += throwable.stackTraceToString()
 			fos.write(bytes.encodeToByteArray())
@@ -119,6 +123,17 @@ object CrashReport {
 				}
 				.setIconAttribute(android.R.attr.alertDialogIcon)
 				.show()
+		}
+	}
+
+	private fun getMemorySize(context: Context): Long {
+		try {
+			val actManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+			val memInfo = ActivityManager.MemoryInfo()
+			actManager.getMemoryInfo(memInfo)
+			return memInfo.totalMem
+		} catch (_: Exception) {
+			return 0
 		}
 	}
 }
