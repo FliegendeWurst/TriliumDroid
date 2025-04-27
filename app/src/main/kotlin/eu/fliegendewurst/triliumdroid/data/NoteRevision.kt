@@ -37,4 +37,5 @@ data class RevisionId(val id: String) : IdLike {
 	override fun rawId() = id
 	override fun columnName() = "revisionId"
 	override fun tableName() = "revisions"
+	override fun toString() = id
 }

@@ -430,6 +430,7 @@ data class NoteId(val id: String) : IdLike {
 	override fun rawId() = id
 	override fun columnName() = "noteId"
 	override fun tableName() = "notes"
+	override fun toString() = id
 }
 
 data class CanvasNoteViewport(val x: Float, val y: Float, val zoom: Float)

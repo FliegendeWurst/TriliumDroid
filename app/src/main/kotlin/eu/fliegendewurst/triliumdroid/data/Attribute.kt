@@ -16,4 +16,5 @@ data class AttributeId(val id: String) : IdLike {
 	override fun rawId() = id
 	override fun columnName() = "attributeId"
 	override fun tableName() = "attributes"
+	override fun toString() = id
 }

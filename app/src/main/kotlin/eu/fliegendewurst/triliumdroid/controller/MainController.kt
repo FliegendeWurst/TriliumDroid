@@ -38,10 +38,10 @@ import eu.fliegendewurst.triliumdroid.data.NoteRevision
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Attributes
 import eu.fliegendewurst.triliumdroid.database.Branches
-import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.DB
 import eu.fliegendewurst.triliumdroid.database.NoteRevisions
 import eu.fliegendewurst.triliumdroid.database.Notes
+import eu.fliegendewurst.triliumdroid.database.Tree
 import eu.fliegendewurst.triliumdroid.dialog.AskForNameDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureWidgetDialog
@@ -111,6 +111,8 @@ class MainController {
 	 */
 	private var loadedNoteId: NoteId? = null
 
+	private var timeOnStart = 0L
+
 	/**
 	 * Called when the app is created, possibly in the background.
 	 */
@@ -157,6 +159,8 @@ class MainController {
 	 * - database not present → WelcomeActivity
 	 */
 	fun onStart(activity: MainActivity) {
+		timeOnStart = System.currentTimeMillis()
+
 		CrashReport.showPendingReports(activity)
 
 		if (firstAction != null) {
@@ -181,8 +185,7 @@ class MainController {
 							handleError(activity, it)
 						}
 					})
-					Cache.getTreeData("")
-					activity.refreshTree()
+					Tree.getTreeData("")
 					showInitialNote(activity, true)
 				}
 			} else if (noteHistory.isEmpty()) {
@@ -198,19 +201,21 @@ class MainController {
 
 	fun onResume(activity: MainActivity) {
 		active = true
-		if (firstAction != null) {
-			noteHistory.addAndRestore(firstAction!!, activity)
+		val theAction = firstAction
+		if (theAction != null) {
 			firstAction = null
 			activity.lifecycleScope.launch {
-				Cache.getTreeData("")
+				Tree.getTreeData("")
 				activity.refreshTree()
+				noteHistory.addAndRestore(theAction, activity)
 			}
 			return
 		}
 		// tree items may disappear if app gets unloaded too much
-		if (activity.treeIsEmpty()) {
+		// (obviously not needed if app just started)
+		if (activity.treeIsEmpty() && (System.currentTimeMillis() - timeOnStart) > 1000) {
 			activity.lifecycleScope.launch {
-				Cache.getTreeData("")
+				Tree.getTreeData("")
 				activity.refreshTree()
 			}
 		}
@@ -635,7 +640,7 @@ class MainController {
 		JumpToNoteDialog.showDialogReturningNote(activity, R.string.dialog_select_note) {
 			runBlocking {
 				Branches.cloneNote(it, loaded)
-				Cache.getTreeData("")
+				Tree.getTreeData("")
 				activity.refreshTree()
 			}
 		}
@@ -887,7 +892,7 @@ class MainController {
 					}, {
 						activity.lifecycleScope.launch {
 							activity.indicateSyncDone(it.first, it.second)
-							Cache.getTreeData("")
+							Tree.getTreeData("")
 							showInitialNote(activity, resetView)
 							showSyncError = false
 						}
@@ -895,7 +900,7 @@ class MainController {
 				}
 			}, {
 				activity.lifecycleScope.launch {
-					Cache.getTreeData("")
+					Tree.getTreeData("")
 					val showInitial = !showSyncError
 					handleError(activity, it)
 					if (showInitial) {

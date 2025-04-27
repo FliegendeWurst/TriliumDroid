@@ -8,7 +8,6 @@ import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.BranchId
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteId
-import eu.fliegendewurst.triliumdroid.database.Cache.getTreeData
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.database.Notes.notes
 import eu.fliegendewurst.triliumdroid.service.Util
@@ -196,7 +195,7 @@ object Branches {
 			registerEntityChangeBranch(branch)
 			notes[oldParent]?.children = null
 			notes[newParent.note]?.children = null
-			getTreeData("AND (branches.parentNoteId = \"${oldParent.rawId()}\" OR branches.parentNoteId = \"${newParent.note.rawId()}\")")
+			Tree.getTreeData("AND (branches.parentNoteId = \"${oldParent.rawId()}\" OR branches.parentNoteId = \"${newParent.note.rawId()}\")")
 		}
 
 	suspend fun delete(branch: Branch) = withContext(Dispatchers.IO) {

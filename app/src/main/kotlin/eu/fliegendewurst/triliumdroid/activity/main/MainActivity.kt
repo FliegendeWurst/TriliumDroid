@@ -48,8 +48,8 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Branches
-import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
+import eu.fliegendewurst.triliumdroid.database.Tree
 import eu.fliegendewurst.triliumdroid.databinding.ActivityMainBinding
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.DELETE_NOTE
@@ -340,12 +340,13 @@ class MainActivity : AppCompatActivity() {
 		controller.onResume(this)
 	}
 
-	fun refreshTree() {
+	fun refreshTree() = lifecycleScope.launch {
+		Log.w(TAG, "call to refreshTree ", Error())
 		if (tree == null) {
 			Log.w(TAG, "tried to refresh tree without tree")
-			return
+			return@launch
 		}
-		val items = Cache.getTreeList(Branches.NONE_ROOT, 0)
+		val items = Tree.getTreeList(Branches.NONE_ROOT, 0)
 		Log.d(TAG, "about to show ${items.size} tree items")
 		tree!!.submitList(items)
 	}
@@ -514,27 +515,23 @@ class MainActivity : AppCompatActivity() {
 
 
 	private fun scrollTreeTo(noteId: NoteId) {
-		tree!!.select(noteId)
 		val frag = supportFragmentManager.findFragmentByTag("f0") ?: return
-		val pos = tree!!.getBranchPosition(noteId) ?: return
-		((frag as NoteTreeFragment).binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
-			pos,
-			5
-		)
+		tree!!.select(noteId, true) {
+			((frag as NoteTreeFragment).binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
+				it,
+				5
+			)
+		}
 	}
 
 	fun scrollTreeToBranch(branch: Branch) {
-		val pos = branch.cachedTreeIndex
-		Log.d(TAG, "scrolling to $pos")
-		if (pos == null) {
-			Log.e(TAG, "trying to scroll to branch with null cachedTreeIndex: $branch")
-			return
-		}
 		val frag = supportFragmentManager.findFragmentByTag("f0") ?: return
-		((frag as NoteTreeFragment).binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
-			pos,
-			5
-		)
+		tree!!.scrollTo(branch) {
+			((frag as NoteTreeFragment).binding.treeList.layoutManager!! as LinearLayoutManager).scrollToPositionWithOffset(
+				it,
+				5
+			)
+		}
 	}
 
 	/**

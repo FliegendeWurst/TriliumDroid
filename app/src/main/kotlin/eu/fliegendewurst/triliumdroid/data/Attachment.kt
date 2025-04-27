@@ -23,6 +23,7 @@ data class AttachmentId(val id: String) : IdLike {
 	override fun rawId() = id
 	override fun columnName() = "attachmentId"
 	override fun tableName() = "attachments"
+	override fun toString() = id
 }
 
 enum class AttachmentRole {

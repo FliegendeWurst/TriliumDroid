@@ -24,6 +24,7 @@ data class BlobId(val id: String) : IdLike {
 	override fun rawId() = id
 	override fun columnName() = "blobId"
 	override fun tableName() = "blobs"
+	override fun toString() = id
 }
 
 suspend fun BlobId.load(): Blob? = Blobs.load(this)

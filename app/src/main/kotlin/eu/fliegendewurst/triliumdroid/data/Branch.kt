@@ -28,4 +28,5 @@ data class BranchId(val id: String) : IdLike {
 	override fun rawId() = id
 	override fun columnName() = "branchId"
 	override fun tableName() = "branches"
+	override fun toString() = id
 }

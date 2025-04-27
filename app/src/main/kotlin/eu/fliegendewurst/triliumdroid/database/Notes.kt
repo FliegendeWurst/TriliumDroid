@@ -13,7 +13,6 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Cache.dateModified
-import eu.fliegendewurst.triliumdroid.database.Cache.getTreeData
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.database.DB.CursorFactory
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
@@ -88,7 +87,7 @@ object Notes {
 			)
 		)
 		Branches.cloneNote(parentNote.id, newId)
-		getTreeData("AND noteId = '$newId'")
+		Tree.getTreeData("AND noteId = '$newId'")
 		return getNote(newId)!!
 	}
 

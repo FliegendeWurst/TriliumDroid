@@ -1,5 +1,6 @@
 package eu.fliegendewurst.triliumdroid
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -29,30 +30,89 @@ class TreeItemAdapter(
 	private val onLongClick: (Branch) -> Unit,
 ) :
 	ListAdapter<Pair<Branch, Int>, TreeItemAdapter.TreeItemViewHolder>(TreeItemDiffCallback) {
+	companion object {
+		private const val TAG = "TreeItemAdapter"
+	}
+
 	private var selectedNote: NoteId? = null
 
-	private val branchPosition: MutableMap<NoteId, Int> = ConcurrentHashMap()
+	private val branchPosition: MutableMap<NoteId, MutableSet<Int>> = ConcurrentHashMap()
 
-	fun getBranchPosition(noteId: NoteId): Int? = branchPosition[noteId]
+	private var scrollToNote: NoteId? = null
+	private var scrollToBranch: Branch? = null
+	private var scrollCallback: ((Int) -> Unit)? = null
+
+	fun getBranchPosition(noteId: NoteId): Set<Int>? = branchPosition[noteId]
 
 	override fun submitList(list: List<Pair<Branch, Int>>?) {
+		branchPosition.clear()
 		for ((i, pair) in list.orEmpty().withIndex()) {
-			branchPosition[pair.first.note] = i
+			val it = branchPosition[pair.first.note]
+			if (it != null) {
+				it.add(i)
+			} else {
+				branchPosition[pair.first.note] = mutableSetOf<Int>(i)
+			}
 			pair.first.cachedTreeIndex = i
 		}
 		super.submitList(list)
+		if (scrollToNote != null) {
+			val pos = getBranchPosition(scrollToNote!!)?.first()
+			scrollToNote = null
+			Log.d(TAG, "(delayed) scrolling to $pos")
+			if (pos == null) {
+				scrollCallback = null
+				return
+			}
+			scrollCallback?.invoke(pos)
+			scrollCallback = null
+		} else if (scrollToBranch != null) {
+			val pos = scrollToBranch!!.cachedTreeIndex
+			scrollToBranch = null
+			Log.d(TAG, "(delayed) scrolling to $pos")
+			if (pos == null) {
+				scrollCallback = null
+				return
+			}
+			scrollCallback?.invoke(pos)
+			scrollCallback = null
+		}
 	}
 
-	fun select(noteId: NoteId) {
+	fun select(noteId: NoteId, scroll: Boolean = false, callbackPosition: ((Int) -> Unit)? = null) {
 		val prev = selectedNote
 		selectedNote = noteId
 		if (prev != null) {
 			val idx = branchPosition[prev]
-			if (idx != null) {
-				notifyItemChanged(idx)
-			}
+			idx?.forEach { notifyItemChanged(it) }
 		}
-		notifyItemChanged(branchPosition[noteId] ?: return)
+		branchPosition[noteId]?.forEach { notifyItemChanged(it) }
+
+		if (scroll) {
+			val pos = getBranchPosition(noteId)?.first()
+			Log.d(TAG, "scrolling to $pos")
+			if (pos == null) {
+				Log.e(TAG, "trying to scroll to note with null cachedTreeIndex: $noteId")
+				scrollToNote = noteId
+				scrollToBranch = null
+				scrollCallback = callbackPosition
+				return
+			}
+			callbackPosition?.invoke(pos)
+		}
+	}
+
+	fun scrollTo(branch: Branch, callbackPosition: (Int) -> Unit) {
+		val pos = branch.cachedTreeIndex
+		Log.d(TAG, "scrolling to $pos")
+		if (pos == null) {
+			Log.e(TAG, "trying to scroll to branch with null cachedTreeIndex: ${branch.id}")
+			scrollToNote = null
+			scrollToBranch = branch
+			scrollCallback = callbackPosition
+			return
+		}
+		callbackPosition.invoke(pos)
 	}
 
 	class TreeItemViewHolder(
