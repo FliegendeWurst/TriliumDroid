@@ -294,10 +294,10 @@ class MainController {
 		R.id.action_note_navigation -> {
 			activity.lifecycleScope.launch {
 				var note = Notes.getNote(noteHistory.noteId()) ?: return@launch
-				var branch = noteHistory.branch() ?: note.branches[0]
+				var branch = noteHistory.branch() ?: note.branches.getOrNull(0) ?: return@launch
 				if (note.computeChildren().isEmpty()) {
 					note = Notes.getNote(branch.parentNote)!!
-					branch = note.branches[0] // TODO
+					branch = note.branches.getOrNull(0) ?: return@launch
 				}
 				noteHistory.addAndRestore(NavigationItem(note, branch), activity)
 			}
