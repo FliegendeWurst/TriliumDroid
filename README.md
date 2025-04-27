@@ -10,7 +10,7 @@ Unofficial port of [TriliumNext Notes](https://github.com/TriliumNext/Notes) to 
 
 - Synchronisation with sync server / desktop app
 - Notes can be arranged into arbitrarily deep tree, where single notes can be placed into multiple places in the tree
-- WYSIWYG note editor based on [AztecEditor](https://github.com/wordpress-mobile/AztecEditor-Android/)
+- WYSIWYG note editor based on [CKEditor](https://github.com/ckeditor/ckeditor5)
 - Fast and easy navigation between notes
 - Automatic note versioning
 - Note attributes and relations for organization, querying and advanced scripting

@@ -1,19 +1,19 @@
 Cross-platform hierarchical note taking application with focus on building large personal knowledge bases.
 
-This is a port of the desktop application Trilium Notes.
+This is a port of the desktop application TriliumNext Notes.
 These features of the original are implemented:
 
-- Synchronization with self-hosted or managed sync server (required)
-- Rich WYSIWYG note editing
-- Notes can be arranged into arbitrarily deep tree
-- Seamless note versioning
+- Synchronisation with sync server / desktop app
+- Notes can be arranged into arbitrarily deep tree, where single notes can be placed into multiple places in the tree
+- WYSIWYG note editor based on CKEditor
 - Fast and easy navigation between notes
-- Single note can be placed into multiple places in the tree (cloning)
-- Strong note encryption with per-note granularity
-- Note attributes can be used for note organization, querying and advanced scripting
-- Scripting
-- Scales well in both usability and performance upwards of 10000 notes
-- Night theme
+- Automatic note versioning
+- Note attributes and relations for organization, querying and advanced scripting
+- Note encryption with per-note granularity
+- Canvas notes powered by Excalidraw
+- Note map view (context-based / all notes)
+- Scripting API to automate tasks or send notifications
+- In-app user guide based on TriliumNext documentation
 
 The following features are only available in the desktop client.
 They will be implemented in the app at a later time.
@@ -21,7 +21,6 @@ They will be implemented in the app at a later time.
 - Support for editing notes with source code, including syntax highlighting
 - Full text search
 - Sharing (publishing) notes to public internet
-- Sketching diagrams with built-in Excalidraw (note type "canvas")
 - Relation maps and link maps for visualizing notes and their relations
 - REST API for automation
 - Scales well in both usability and performance upwards of 100000 notes
