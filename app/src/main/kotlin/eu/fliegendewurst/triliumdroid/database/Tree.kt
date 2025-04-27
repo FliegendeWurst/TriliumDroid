@@ -172,7 +172,15 @@ object Tree {
 			while (it.moveToNext()) {
 				val noteId = NoteId(it.getString(0))
 				val noteIcon = it.getString(1)
-				notes[noteId]!!.icon = noteIcon
+				val note = notes[noteId]
+				if (note == null) {
+					Log.w(
+						TAG,
+						"failed to find note = $noteId, perhaps all its branches are deleted?"
+					)
+					continue
+				}
+				note.icon = noteIcon
 				// gather statistics on note icons of user notes
 				if (stats != null && Util.isRegularId(noteId)) {
 					stats[noteIcon] = stats.getOrDefault(noteIcon, 0) + 1
