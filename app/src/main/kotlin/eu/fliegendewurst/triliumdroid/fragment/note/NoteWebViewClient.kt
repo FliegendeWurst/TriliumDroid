@@ -289,7 +289,7 @@ class NoteWebViewClient(
 				}
 			}
 			if (mime == "text/html") {
-				data += "<style>@media (prefers-color-scheme: dark) { * { color: white; background-color: black; } }</style>".encodeToByteArray()
+				data += "<style>img { max-width: 100% !important; }\n@media (prefers-color-scheme: dark) { * { color: white; background-color: black; } }</style>".encodeToByteArray()
 			}
 			return WebResourceResponse(mime, "utf-8", data.inputStream())
 		}

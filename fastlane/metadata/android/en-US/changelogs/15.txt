@@ -3,3 +3,4 @@ Bugfixes
 - Fixed crash when re-installing the app without deleting app data
 - Fixed several bugs related to note cloning / moving
 - Fixed several note tree glitches
+- Fixed image sizing in clipped web content
