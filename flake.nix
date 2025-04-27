@@ -27,6 +27,37 @@
           pkgs = nixpkgsFor.${system};
         in
         {
+          demoDatabase = pkgs.stdenvNoCC.mkDerivation rec {
+            pname = "TriliumDroid-demoDatabase";
+            version = "0";
+
+            src = null;
+            dontUnpack = true;
+
+            nativeBuildInputs = with pkgs; [
+              trilium-next-server
+              curl
+              psmisc
+              writableTmpDirAsHomeHook
+            ];
+
+            buildPhase = ''
+              export TRILIUM_PORT=14385
+              trilium-server &
+              sleep 10
+              curl "http://127.0.0.1:$TRILIUM_PORT/api/setup/new-document" -X POST
+              curl "http://127.0.0.1:$TRILIUM_PORT/set-password" -X POST --data-raw "password1=1234&password2=1234"
+              sleep 5
+              killall node
+              sleep 5
+            '';
+
+            installPhase = ''
+              mkdir $out
+              mv $HOME/trilium-data/document.db $out/
+            '';
+          };
+
           docs = pkgs.stdenv.mkDerivation rec {
             pname = "TriliumDroid-docs";
             version = "0";
