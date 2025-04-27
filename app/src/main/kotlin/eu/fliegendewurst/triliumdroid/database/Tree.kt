@@ -130,16 +130,15 @@ object Tree {
 						blobId
 					)
 				}
-				if (n.branches.none { branch -> branch.id == branchId }) {
-					n.branches.add(b)
-					n.branches.sortBy { br -> br.position } // TODO: sort by date instead?
-				}
+				n.branches.removeIf { branch -> branch.id == branchId }
+				n.branches.add(b)
+				n.branches.sortBy { br -> br.position } // TODO: sort by date instead?
 				clones.add(Pair(Pair(parentNoteId, noteId), branchId))
 			}
 			for (p in clones) {
 				val parentNoteId = p.first.first
 				val b = branches[p.second]
-				if (parentNoteId == Notes.NONE) {
+				if (parentNoteId == Notes.NONE || b == null) {
 					continue
 				}
 				val parentNote = notes[parentNoteId]
@@ -147,6 +146,7 @@ object Tree {
 					if (parentNote.children == null) {
 						parentNote.children = TreeSet()
 					}
+					parentNote.children!!.removeIf { it.id == b.id }
 					parentNote.children!!.add(b)
 				} else {
 					Log.w(TAG, "getTreeData() failed to find $parentNoteId in ${notes.size} notes")

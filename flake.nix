@@ -38,6 +38,7 @@
               trilium-next-server
               curl
               psmisc
+              _7zz
               writableTmpDirAsHomeHook
             ];
 
@@ -55,6 +56,8 @@
             installPhase = ''
               mkdir $out
               mv $HOME/trilium-data/document.db $out/
+              cd $out
+              7zz a -mm=Deflate -mfb=258 -mpass=15 document_db.zip document.db
             '';
           };
 
