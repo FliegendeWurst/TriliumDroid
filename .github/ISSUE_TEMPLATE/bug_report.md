@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-<!-- PLEASE fill this template out. Your issue has a higher chance of being addressed quickly if you provide all requested information. -->
+<!-- Please fill this template out. Your issue has a higher chance of being addressed quickly if you provide all requested information. -->
 
 **Describe the bug**
 <!-- A clear and concise description of what the bug is. -->
@@ -28,6 +28,7 @@ Steps to reproduce the behavior:
 **Smartphone:**
  - Device: 
  - Android version: 
+ - App version: 
 
 **Additional context**
 <!-- Add any other context about the problem here. -->
