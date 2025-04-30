@@ -236,74 +236,74 @@ object Sync {
 							DB.delete(entityName, "$primaryKey = ?", arrayOf(entityId))
 							continue
 						}
-						DB.rawQuery(
+						val alreadyHere = DB.rawQuery(
 							"SELECT 1 FROM entity_changes WHERE changeId = ?",
 							arrayOf(changeId)
 						).use {
-							if (it.count != 0) {
-								// already applied
-								return@use
-							}
-							if (entityName == "note_reordering") {
-								for (key in entity.keys()) {
-									DB.update(BranchId(key), Pair("notePosition", entity[key]))
-								}
-								return@use
-							}
-							if (arrayOf("note_contents", "note_revision_contents").contains(
-									entityName
-								)
-							) {
-								entity.put("content", Base64.decode(entity.getString("content")))
-							}
-							val keys = entity.keys().asSequence().toList()
-
-							// TODO: invalidate existing cache
-							// TODO: lookup notes related to blob!
-
-							val cv = ContentValues(entity.length())
-							keys.map { fieldName ->
-								var x = entity.get(fieldName)
-								if (x == JSONObject.NULL) {
-									cv.putNull(fieldName)
-								} else {
-									if (fieldName == "content") {
-										x = (x as String).decodeBase64()!!.toByteArray()
-									}
-									when (x) {
-										is String -> {
-											cv.put(fieldName, x)
-										}
-
-										is Int -> {
-											cv.put(fieldName, x)
-										}
-
-										is Double -> {
-											cv.put(fieldName, x)
-										}
-
-										is ByteArray -> {
-											cv.put(fieldName, x)
-										}
-
-										else -> {
-											Log.e(
-												TAG,
-												"failed to recognize sync entity value $x of type ${x.javaClass}"
-											)
-										}
-									}
-								}
-							}
-							// read-only mode: should still receive database updates
-							DB.internalGetDatabase()!!.insertWithOnConflict(
-								entityName,
-								null,
-								cv,
-								SQLiteDatabase.CONFLICT_REPLACE
-							)
+							return@use it.count != 0
 						}
+						if (alreadyHere) {
+							continue
+						}
+
+						if (entityName == "note_reordering") {
+							for (key in entity.keys()) {
+								DB.update(BranchId(key), Pair("notePosition", entity[key]))
+							}
+							continue
+						}
+						val keys = entity.keys().asSequence().toList()
+
+						// TODO: invalidate existing cache
+						// TODO: lookup notes related to blob!
+
+						val cv = ContentValues(entity.length())
+						keys.map { fieldName ->
+							var x = entity.get(fieldName)
+							if (x == JSONObject.NULL) {
+								cv.putNull(fieldName)
+							} else {
+								if (fieldName == "content" && x is String) {
+									val decoded = x.decodeBase64()
+									if (decoded == null) {
+										callbackError(IllegalStateException("failed to base64-decode content column in sync response"))
+										return@runBlocking
+									}
+									x = x.toByteArray()
+								}
+								when (x) {
+									is String -> {
+										cv.put(fieldName, x)
+									}
+
+									is Int -> {
+										cv.put(fieldName, x)
+									}
+
+									is Double -> {
+										cv.put(fieldName, x)
+									}
+
+									is ByteArray -> {
+										cv.put(fieldName, x)
+									}
+
+									else -> {
+										Log.e(
+											TAG,
+											"failed to recognize sync entity value $x of type ${x.javaClass}"
+										)
+									}
+								}
+							}
+						}
+						// read-only mode: should still receive database updates
+						DB.internalGetDatabase()!!.insertWithOnConflict(
+							entityName,
+							null,
+							cv,
+							SQLiteDatabase.CONFLICT_REPLACE
+						)
 					}
 					Log.i(TAG, "last entity change id: $entityChangeId")
 					val utc = utcDateModified()

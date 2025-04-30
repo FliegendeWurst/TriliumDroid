@@ -168,4 +168,13 @@ object Assets {
 		val zipEntry = zip.getEntry(filename) ?: return null
 		return zip.getInputStream(zipEntry)
 	}
+
+	fun trimMemory() {
+		ckeditorJS = null
+		excalidraw_TPL = null
+		excalidraw_loader = null
+		noteChildren_TPL = null
+		noteEditable_TPL = null
+		noteEditable_JS = null
+	}
 }

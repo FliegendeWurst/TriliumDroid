@@ -47,6 +47,7 @@ import eu.fliegendewurst.triliumdroid.data.Label
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.Relation
+import eu.fliegendewurst.triliumdroid.database.Blobs
 import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.database.Tree
@@ -74,6 +75,7 @@ import eu.fliegendewurst.triliumdroid.fragment.note.CanvasNoteFragment
 import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment
 import eu.fliegendewurst.triliumdroid.service.Icon
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
+import eu.fliegendewurst.triliumdroid.util.Assets
 import eu.fliegendewurst.triliumdroid.util.ListAdapter
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import eu.fliegendewurst.triliumdroid.view.ListViewAutoExpand
@@ -863,5 +865,19 @@ class MainActivity : AppCompatActivity() {
 			return runBlocking { Notes.getNoteWithContent(id) }
 		}
 		return null
+	}
+
+	override fun onTrimMemory(level: Int) {
+		super.onTrimMemory(level)
+		if (level >= TRIM_MEMORY_BACKGROUND) {
+			// app is in background for longer period of time (?)
+			Assets.trimMemory()
+			Blobs.trimMemory()
+		}
+	}
+
+	override fun onLowMemory() {
+		Assets.trimMemory()
+		Blobs.trimMemory()
 	}
 }

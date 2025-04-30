@@ -268,6 +268,11 @@ object Blobs {
 		}
 		ProtectedSession.leave()
 	}
+
+	fun trimMemory() {
+		// technically not needed (all weak references), but may help anyway
+		blobCache.clear()
+	}
 }
 
 private suspend fun registerEntityChangeBlob(b: Blob, deleted: Boolean = false) {
