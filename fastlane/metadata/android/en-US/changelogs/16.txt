@@ -3,3 +3,4 @@ Features
 
 Bugfixes
 - Fixed rare crash when activating navigation mode
+- Fixed crash when the revision interval was specified with sub-second precision

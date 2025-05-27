@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalEncodingApi::class)
 object Option {
@@ -32,7 +33,9 @@ object Option {
 		return@withContext null
 	}
 
-	private suspend fun getInt(name: String): Int? = getString(name)?.toInt()
+	// NOTE: this uses toFloat, since sometimes the option (revision snapshot interval) will contain 180.0 / 30.0 or similar.
+	// Presumably Trilium is a bit less strict.
+	private suspend fun getInt(name: String): Int? = getString(name)?.toFloatOrNull()?.roundToInt()
 
 	private suspend fun putString(name: String, value: String) = withContext(Dispatchers.IO) {
 		// TODO: consider syncing?
