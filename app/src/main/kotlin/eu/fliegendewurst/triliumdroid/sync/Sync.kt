@@ -263,13 +263,13 @@ object Sync {
 							if (x == JSONObject.NULL) {
 								cv.putNull(fieldName)
 							} else {
-								if (fieldName == "content" && x is String) {
+								if (fieldName.equals("content") && x is String) {
 									val decoded = x.decodeBase64()
 									if (decoded == null) {
 										callbackError(IllegalStateException("failed to base64-decode content column in sync response"))
 										return@runBlocking
 									}
-									x = x.toByteArray()
+									x = decoded.toByteArray()
 								}
 								when (x) {
 									is String -> {
