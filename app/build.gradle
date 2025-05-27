@@ -28,7 +28,8 @@ android {
         }
         debug {
             applicationIdSuffix ".debug"
-            testCoverageEnabled = true
+            enableUnitTestCoverage true
+            enableAndroidTestCoverage true
         }
     }
     buildFeatures {
