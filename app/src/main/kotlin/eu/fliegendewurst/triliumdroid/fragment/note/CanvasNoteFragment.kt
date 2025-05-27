@@ -8,9 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.ConsoleMessage
-import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.iterator
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.FrontendBackendApi
@@ -18,13 +15,11 @@ import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Note
-import eu.fliegendewurst.triliumdroid.database.Attributes
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.databinding.FragmentCanvasNoteBinding
 import eu.fliegendewurst.triliumdroid.fragment.NoteRelatedFragment
 import eu.fliegendewurst.triliumdroid.util.MyWebChromeClient
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 
 class CanvasNoteFragment : Fragment(R.layout.fragment_canvas_note), NoteRelatedFragment {
@@ -53,6 +48,7 @@ class CanvasNoteFragment : Fragment(R.layout.fragment_canvas_note), NoteRelatedF
 
 		binding = FragmentCanvasNoteBinding.inflate(inflater, container, false)
 		binding.webview.settings.javaScriptEnabled = true
+		binding.webview.settings.domStorageEnabled = true
 		binding.webview.addJavascriptInterface(
 			FrontendBackendApi(this, this.requireContext(), handler!!),
 			"api"
@@ -101,7 +97,6 @@ class CanvasNoteFragment : Fragment(R.layout.fragment_canvas_note), NoteRelatedF
 		if (note == null) {
 			return
 		}
-		binding.textId.text = note.id.rawId()
 		if (note.content() == null && blob == null) {
 			note = Notes.getNoteWithContent(note.id)
 		}
@@ -112,8 +107,6 @@ class CanvasNoteFragment : Fragment(R.layout.fragment_canvas_note), NoteRelatedF
 		val consoleLog = false
 		var execute = false
 		var share = false
-
-		refreshHeader(note)
 
 		binding.webview.loadUrl(WEBVIEW_DOMAIN + note.id.rawId())
 
@@ -127,63 +120,5 @@ class CanvasNoteFragment : Fragment(R.layout.fragment_canvas_note), NoteRelatedF
 			share,
 			note.id == Notes.ROOT
 		)
-	}
-
-	suspend fun refreshHeader(note: Note) {
-		if (!this.load || context == null) {
-			return
-		}
-		if (blob != null) {
-			// previous revision: hide labels
-			binding.labelNoteRevisionInfo.text = blob!!.dateModified
-			binding.noteHeaderAttributes.visibility = View.GONE
-			return
-		}
-		binding.labelNoteRevisionInfo.text = ""
-		val constraintLayout = binding.noteHeader
-		val flow = binding.noteHeaderAttributes
-		val attributeContentDesc = getString(R.string.attribute)
-		// remove previously shown attributes
-		constraintLayout.iterator().also { iterator ->
-			iterator.forEach { view ->
-				if (view.contentDescription == attributeContentDesc) {
-					iterator.remove()
-				}
-			}
-		}
-		for (attribute in note.getLabels()) {
-			if (!attribute.promoted) {
-				continue
-			}
-			val view =
-				LayoutInflater.from(context)
-					.inflate(R.layout.item_attribute, constraintLayout, false)
-			view.findViewById<TextView>(R.id.label_attribute_name).text = attribute.name
-			val textInput = view.findViewById<TextView>(R.id.label_attribute_value)
-			textInput.text = attribute.value()
-			textInput.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
-				if (hasFocus) {
-					return@OnFocusChangeListener
-				}
-				val newValue = textInput.text
-				if (newValue != attribute.value) {
-					runBlocking {
-						Attributes.updateLabel(
-							note,
-							attribute.name,
-							newValue.toString(),
-							attribute.inheritable
-						)
-					}
-				}
-			}
-			view.layoutParams = ConstraintLayout.LayoutParams(
-				ConstraintLayout.LayoutParams.WRAP_CONTENT,
-				ConstraintLayout.LayoutParams.WRAP_CONTENT
-			)
-			view.id = View.generateViewId()
-			constraintLayout.addView(view)
-			flow.addView(view)
-		}
 	}
 }

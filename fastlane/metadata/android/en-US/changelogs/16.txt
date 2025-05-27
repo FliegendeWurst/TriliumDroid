@@ -1,2 +1,5 @@
+Features
+- Support for viewing geo map notes
+
 Bugfixes
 - Fixed rare crash when activating navigation mode

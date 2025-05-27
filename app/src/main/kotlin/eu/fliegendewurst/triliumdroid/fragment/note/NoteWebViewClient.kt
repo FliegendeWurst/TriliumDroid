@@ -15,6 +15,7 @@ import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.data.load
 import eu.fliegendewurst.triliumdroid.database.Attachments
+import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment.Companion.WEBVIEW_DOMAIN
 import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment.Companion.WEBVIEW_HOST
@@ -22,6 +23,8 @@ import eu.fliegendewurst.triliumdroid.util.Assets
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.json.JSONArray
+import org.json.JSONObject
 
 class NoteWebViewClient(
 	private val note: () -> Note?,
@@ -71,9 +74,12 @@ class NoteWebViewClient(
 	override fun shouldInterceptRequest(
 		view: WebView,
 		request: WebResourceRequest
-	): WebResourceResponse {
-		Log.d(TAG, "intercept: ${request.url.host} ${request.url}")
+	): WebResourceResponse? {
 		val context = view.context
+		if (request.url.host == "tile.openstreetmap.org") {
+			return null // for geomap notes
+		}
+//		Log.d(TAG, "intercept: ${request.url.host} ${request.url}")
 		if (request.url.host == "esm.sh") {
 			val effectiveUrl = request.url.toString()
 			val asset = Assets.webAsset(view.context, effectiveUrl)
@@ -162,6 +168,13 @@ class NoteWebViewClient(
 					"text/javascript",
 					"utf-8",
 					Assets.excalidrawLoaderJS(view.context).byteInputStream()
+				)
+			}
+			if (id == "geomap_loader.js") {
+				return WebResourceResponse(
+					"text/javascript",
+					"utf-8",
+					Assets.geomapLoaderJS(view.context).byteInputStream()
 				)
 			}
 			if (id == "note-editable") {
@@ -257,6 +270,35 @@ class NoteWebViewClient(
 					return notFound(note?.mime ?: "text/html")
 				}
 				return WebResourceResponse(note.mime, "utf-8", content.inputStream())
+			} else if (firstSegment == "geomap-data" && !fetchingAttachment) {
+				if (content == null) {
+					Log.w(TAG, "geomap note without content")
+					return WebResourceResponse(
+						"application/json",
+						"utf-8",
+						"{'view': {'center': {'lat': 50.878638227135724, 'lng': 0 }, 'zoom': 3 }, 'pins': [] }"
+							.replace('\'', '"').byteInputStream()
+					)
+				}
+				val theJson = JSONObject(content.decodeToString())
+				val pinArray = JSONArray()
+				val pins = runBlocking { Cache.getGeoMapPins(NoteId(id)) }
+				for (pin in pins) {
+					val o = JSONObject()
+					o.put("noteId", pin.noteId)
+					o.put("title", pin.title)
+					o.put("lat", pin.lat)
+					o.put("lng", pin.lng)
+					o.putOpt("iconClass", pin.iconClass)
+					o.putOpt("color", pin.color)
+					pinArray.put(o)
+				}
+				theJson.put("pins", pinArray)
+				return WebResourceResponse(
+					"application/json",
+					"utf-8",
+					theJson.toString().byteInputStream()
+				)
 			}
 			var mime = note?.mime
 			if (note == null) {
@@ -271,11 +313,16 @@ class NoteWebViewClient(
 			var data: ByteArray = content
 			// Excalidraw/Canvas notes: use generic wrapper note
 			if (note?.type == "canvas") {
-				Log.d(TAG, "canvas note, returning excalidraw template!")
 				return WebResourceResponse(
 					"text/html",
 					"utf-8",
 					Assets.excalidrawTemplateHTML(view.context).byteInputStream()
+				)
+			} else if (note?.type == "geoMap") {
+				return WebResourceResponse(
+					"text/html",
+					"utf-8",
+					Assets.geomapTemplateHTML(view.context).byteInputStream()
 				)
 			}
 			val subCodeNotesToRun = subCodeNotes()

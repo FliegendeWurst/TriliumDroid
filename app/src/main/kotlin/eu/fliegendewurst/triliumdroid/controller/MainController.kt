@@ -234,9 +234,7 @@ class MainController {
 		when (activity.getFragment()) {
 			is EmptyFragment -> {
 				activity.lifecycleScope.launch {
-					val frag = NoteFragment()
-					frag.loadLater(Notes.getNoteWithContent(loadedNoteId!!))
-					activity.showFragment(frag, false)
+					noteHistory.restore(activity)
 				}
 			}
 		}

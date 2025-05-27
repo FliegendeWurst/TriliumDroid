@@ -10,13 +10,15 @@ import kotlin.io.path.outputStream
 
 object Assets {
 	private const val TAG: String = "Assets"
-	private const val LATEST_WEB_ASSETS = 2 // increment when updating web.zip
+	private const val LATEST_WEB_ASSETS = 7 // increment when updating web.zip
 	private const val LATEST_DOC_ASSETS = 1 // increment when updating doc_notes.zip
 	private const val LATEST_CSS_ASSETS = 1 // increment when updating stylesheets.zip
 
 	private var ckeditorJS: String? = null // ~1.8 MB
 	private var excalidraw_TPL: String? = null
+	private var geomap_TPL: String? = null
 	private var excalidraw_loader: String? = null
+	private var geomap_loader: String? = null
 	private var noteChildren_TPL: String? = null
 	private var noteEditable_TPL: String? = null
 	private var noteEditable_JS: String? = null
@@ -30,8 +32,19 @@ object Assets {
 				excalidraw_TPL = it.readText()
 			}
 		}
-		Log.d(TAG, "loaded excalidraw template with ${excalidraw_TPL!!.length} characters")
 		return excalidraw_TPL!!
+	}
+
+	fun geomapTemplateHTML(context: Context): String {
+		if (geomap_TPL != null) {
+			return geomap_TPL!!
+		}
+		context.resources.assets.open("geomap_TPL.html").use { fileInput ->
+			fileInput.bufferedReader().use {
+				geomap_TPL = it.readText()
+			}
+		}
+		return geomap_TPL!!
 	}
 
 	fun excalidrawLoaderJS(context: Context): String {
@@ -44,6 +57,18 @@ object Assets {
 			}
 		}
 		return excalidraw_loader!!
+	}
+
+	fun geomapLoaderJS(context: Context): String {
+		if (geomap_loader != null) {
+			return geomap_loader!!
+		}
+		context.resources.assets.open("geomap_loader.js").use { fileInput ->
+			fileInput.bufferedReader().use {
+				geomap_loader = it.readText()
+			}
+		}
+		return geomap_loader!!
 	}
 
 	fun ckeditorJS(context: Context): String {
@@ -172,7 +197,9 @@ object Assets {
 	fun trimMemory() {
 		ckeditorJS = null
 		excalidraw_TPL = null
+		geomap_TPL = null
 		excalidraw_loader = null
+		geomap_loader = null
 		noteChildren_TPL = null
 		noteEditable_TPL = null
 		noteEditable_JS = null

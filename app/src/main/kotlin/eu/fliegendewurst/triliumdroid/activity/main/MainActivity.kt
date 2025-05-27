@@ -792,7 +792,7 @@ class MainActivity : AppCompatActivity() {
 			}
 			if (noteContent.isProtected && !ProtectedSession.isActive()) {
 				showFragment(EncryptedNoteFragment(), true)
-			} else if (noteContent.type == "canvas") {
+			} else if (noteContent.type == "canvas" || noteContent.type == "geoMap") {
 				getCanvasNoteFragment().load(noteContent, content)
 			} else {
 				getNoteFragment().load(noteContent, content)

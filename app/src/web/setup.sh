@@ -11,7 +11,7 @@
 #
 
 set -eo pipefail
-rm *.zip https* || true
-cat ../../../intercepts.txt | rg '(https://esm.sh/.+) ' --only-matching -r '$1' | sort | uniq | xargs -n 1 bash -c 'curl -L "$0" > "$(echo $0 | tr / _)"'
-7z a -mm=Deflate -mfb=258 -mpass=15 -r web.zip https*
+#rm *.zip https* || true
+cat ../../../intercepts.txt | rg '(https://esm.sh/.+) ' --only-matching -r '$1' | sort | uniq | xargs -n 1 bash -c 'fn="$(echo $0 | tr / _)"; [[ -e "$fn" ]] && exit; curl -L "$0" > "$fn"'
+7zz a -mm=Deflate -mfb=258 -mpass=15 -r web.zip https*
 cp web.zip ../main/assets/

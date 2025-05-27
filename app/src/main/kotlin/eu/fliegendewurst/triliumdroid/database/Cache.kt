@@ -233,6 +233,54 @@ object Cache {
 		return@withContext list
 	}
 
+	suspend fun getGeoMapPins(id: NoteId): List<GeoMapPin> = withContext(Dispatchers.IO) {
+		val l = mutableListOf<GeoMapPin>()
+		val geolocations = mutableMapOf<String, String>()
+		val icons = mutableMapOf<String, String>()
+		val colors = mutableMapOf<String, String>()
+		val titles = mutableMapOf<String, String>()
+		DB.rawQuery(
+			"SELECT noteId,attributes.name,attributes.value,notes.title FROM attributes INNER JOIN notes USING (noteId) INNER JOIN branches USING (noteId) WHERE branches.parentNoteId = ? AND (attributes.name = 'geolocation' OR attributes.name = 'iconClass' OR attributes.name = 'color')",
+			arrayOf(id.rawId())
+		).use {
+			while (it.moveToNext()) {
+				val id = it.getString(0)
+				val name = it.getString(1)
+				val value = it.getString(2)
+				val title = it.getString(3)
+				titles.put(id, title)
+				when (name) {
+					"geolocation" -> {
+						geolocations.put(id, value)
+					}
+
+					"iconClass" -> {
+						icons.put(id, value)
+					}
+
+					"colors" -> {
+						colors.put(id, value)
+					}
+				}
+			}
+		}
+		for (loc in geolocations) {
+			val id = loc.key
+			val latLng = loc.value.split(',')
+			l.add(
+				GeoMapPin(
+					id,
+					titles[id] ?: continue,
+					latLng[0].toDouble(),
+					latLng[1].toDouble(),
+					icons[id],
+					colors[id]
+				)
+			)
+		}
+		l
+	}
+
 	@SuppressLint("SimpleDateFormat")
 	private val localTime: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ")
 
@@ -247,6 +295,15 @@ object Cache {
 		return DateTimeFormatter.ISO_INSTANT.format(OffsetDateTime.now(ZoneOffset.UTC))
 			.replace('T', ' ')
 	}
+
+	data class GeoMapPin(
+		val noteId: String,
+		val title: String,
+		val lat: Double,
+		val lng: Double,
+		val iconClass: String?,
+		val color: String?
+	)
 
 	// see https://github.com/TriliumNext/Notes/tree/develop/db
 	// and https://github.com/TriliumNext/Notes/blob/develop/src/services/app_info.ts
