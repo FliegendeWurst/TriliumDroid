@@ -4,6 +4,8 @@ import android.app.UiModeManager
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -128,6 +130,45 @@ class SetupActivity : AppCompatActivity() {
 				}
 				.setNegativeButton(android.R.string.cancel, null)
 				.setTitle(R.string.label_set_ui_language)
+				.show()
+		}
+		binding.buttonChangeTextSize.setOnClickListener {
+			AlertDialog.Builder(this)
+				.setSingleChoiceItems(
+					arrayOf(
+						resources.getString(R.string.textsize_auto),
+						resources.getString(R.string.textsize_manual),
+					), -1
+				) { dialog, n ->
+					lifecycleScope.launch {
+						when (n) {
+							0 -> {
+								Preferences.setTextSize(null)
+							}
+
+							1 -> {
+								val dialog = AlertDialog.Builder(this@SetupActivity)
+								dialog.setTitle(R.string.textsize_manual_title)
+								val input = EditText(this@SetupActivity)
+								input.inputType = InputType.TYPE_CLASS_NUMBER
+								val previous = Preferences.textSize()
+								if (previous != -1) {
+									input.setText(previous.toString())
+								}
+								dialog.setView(input)
+									.setPositiveButton(android.R.string.ok) { dialog, which ->
+										Preferences.setTextSize(input.text.toString().toIntOrNull())
+										dialog.dismiss()
+									}
+									.setNegativeButton(android.R.string.cancel, null)
+								dialog.show()
+							}
+						}
+					}
+					dialog.dismiss()
+				}
+				.setNegativeButton(android.R.string.cancel, null)
+				.setTitle(R.string.label_set_text_size)
 				.show()
 		}
 

@@ -123,6 +123,7 @@
     <string name="button_configure_synchronization">Configure synchronization</string>
     <string name="label_set_ui_language">Set UI language</string>
     <string name="label_set_ui_theme">Set UI theme (day/night)</string>
+    <string name="label_set_text_size">Set text size</string>
     <string name="theme_day">Day / Light</string>
     <string name="theme_night">Night / Dark</string>
     <string name="theme_auto">Automatic / System</string>
@@ -165,6 +166,9 @@
     <string name="read_only_mode">Read-only mode</string>
     <string name="hint_read_only_restart">Read-only mode needs app restart to fully apply</string>
     <string name="toast_clone_would_cycle">clone would create cycle</string>
+    <string name="textsize_auto">Automatic</string>
+    <string name="textsize_manual">Manual</string>
+    <string name="textsize_manual_title">Enter font size in pixels</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>@string/action_show_note_tree</item>

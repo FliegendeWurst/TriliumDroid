@@ -1,5 +1,6 @@
 Features
 - Support for viewing geo map notes
+- Customizable text size for main note content
 
 Bugfixes
 - Fixed rare crash when activating navigation mode
