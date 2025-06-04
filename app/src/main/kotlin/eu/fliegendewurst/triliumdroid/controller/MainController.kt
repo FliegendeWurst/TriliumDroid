@@ -170,11 +170,11 @@ class MainController {
 			return
 		}
 		if (DB.haveDatabase(activity)) {
-			if (Preferences.hostname() == null) {
+			if (!Preferences.databaseConfigured(activity)) {
 				Log.i(TAG, "starting setup!")
 				val intent = Intent(activity, SetupActivity::class.java)
 				activity.startActivity(intent)
-			} else if (DB.lastSync == null && noteHistory.isEmpty()) {
+			} else if (DB.lastSync == null && noteHistory.isEmpty() && Preferences.syncConfigured()) {
 				activity.lifecycleScope.launch {
 					ConnectionUtil.setup(activity, {
 						activity.handler.post {
@@ -190,7 +190,10 @@ class MainController {
 				}
 			} else if (noteHistory.isEmpty()) {
 				Log.d(TAG, "last sync is ${DB.lastSync}, showing initial note")
-				showInitialNote(activity, true)
+				activity.lifecycleScope.launch {
+					Tree.getTreeData("")
+					showInitialNote(activity, true)
+				}
 			}
 		} else {
 			Log.d(TAG, "no database, starting welcome activity")
@@ -254,6 +257,7 @@ class MainController {
 				loadedNoteId = fragment.getNoteId()
 				activity.showFragment(EmptyFragment(), true)
 			}
+
 			is CanvasNoteFragment -> {
 				loadedNoteId = fragment.getNoteId()
 				activity.showFragment(EmptyFragment(), true)
@@ -870,6 +874,10 @@ class MainController {
 	}
 
 	private fun startSync(activity: MainActivity, resetView: Boolean = true) {
+		if (!Preferences.syncConfigured()) {
+			Toast.makeText(activity, R.string.toast_sync_unavailable, Toast.LENGTH_SHORT).show()
+			return
+		}
 		activity.indicateSyncStart()
 		activity.lifecycleScope.launch {
 			DB.initializeDatabase(activity.applicationContext)

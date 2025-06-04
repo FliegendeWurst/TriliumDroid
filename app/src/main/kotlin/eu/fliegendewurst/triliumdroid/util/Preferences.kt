@@ -10,6 +10,7 @@ import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.database.CacheDbHelper.Companion.MAX_MIGRATION
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.widget.parseWidgetAction
+import java.io.File
 
 object Preferences {
 	// TODO: make this variable private
@@ -31,6 +32,7 @@ object Preferences {
 	private const val DOC_ASSETS_VERSION = "docAssetsVersion"
 	private const val CSS_ASSETS_VERSION = "cssAssetsVersion"
 	private const val READ_ONLY_MODE = "readOnlyMode"
+	private const val TEXT_SIZE = "textSize"
 
 	fun init(applicationContext: Context) {
 		prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
@@ -40,6 +42,15 @@ object Preferences {
 			// need fixups in that case.
 			setDatabaseMigration(MAX_MIGRATION)
 		}
+	}
+
+	fun databaseConfigured(context: Context): Boolean {
+		return hostname() != null
+				|| File(context.filesDir.parent, "databases/Document.db").exists()
+	}
+
+	fun syncConfigured(): Boolean {
+		return hostname() != null && password() != null
 	}
 
 	fun hostname(): String? = prefs.getString(HOSTNAME, null)
@@ -103,6 +114,11 @@ object Preferences {
 
 	fun readOnlyMode(): Boolean = prefs.getBoolean(READ_ONLY_MODE, false)
 
+	/**
+	 * @return -1 if not present
+	 */
+	fun textSize(): Int = prefs.getInt(TEXT_SIZE, -1)
+
 	fun isLeftAction(action: String) = prefs.getBoolean("fab_${action}_left", false)
 	fun isRightAction(action: String) = prefs.getBoolean("fab_${action}_right", false)
 
@@ -132,6 +148,7 @@ object Preferences {
 	}
 
 	fun setReadOnlyMode(readOnly: Boolean) = prefs.edit { putBoolean(READ_ONLY_MODE, readOnly) }
+	fun setTextSize(textSize: Int?) = prefs.edit { putInt(TEXT_SIZE, textSize ?: -1) }
 
 	fun setWebAssetsVersion(version: Int) = prefs.edit { putInt(WEB_ASSETS_VERSION, version) }
 	fun setDocAssetsVersion(version: Int) = prefs.edit { putInt(DOC_ASSETS_VERSION, version) }
