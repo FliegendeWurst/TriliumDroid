@@ -18,6 +18,10 @@ class CacheDbHelper(context: Context, private val sql: String) :
 	}
 
 	override fun onCreate(db: SQLiteDatabase) {
+		if (DB.skipNextMigration) {
+			Preferences.setDatabaseMigration(MAX_MIGRATION)
+			return
+		}
 		try {
 			Log.i(TAG, "creating database ${db.attachedDbs[0].second}")
 			sql.split(';').forEach {
@@ -47,7 +51,17 @@ class CacheDbHelper(context: Context, private val sql: String) :
 		}
 	}
 
-	override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+	override fun onUpgrade(db: SQLiteDatabase, oldVersionAndroid: Int, newVersion: Int) {
+		var oldVersion = oldVersionAndroid
+		if (DB.skipNextMigration) {
+			db.rawQuery("SELECT value FROM options WHERE name = 'dbVersion'", arrayOf())
+				.use {
+					if (it.moveToNext()) {
+						oldVersion = it.getString(0).toInt()
+					}
+				}
+			DB.skipNextMigration = false
+		}
 		try {
 			// source: https://github.com/zadam/trilium/tree/master/db/migrations
 			// and: https://github.com/TriliumNext/Notes/tree/develop/db/migrations
@@ -239,6 +253,8 @@ class CacheDbHelper(context: Context, private val sql: String) :
 								"UNIQUE (tmpID),PRIMARY KEY (tmpID))"
 					)
 				}
+				// always update to latest version
+				execSQL("UPDATE options SET value = '229' WHERE name = 'dbVersion'")
 			}
 		} catch (t: Throwable) {
 			Log.e(TAG, "fatal error in database migration", t)

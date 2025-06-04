@@ -118,4 +118,37 @@
         android:importantForAccessibility="no"
         app:layout_constraintTop_toBottomOf="@id/button_setup_sync" />
 
+    <TextView
+        android:id="@+id/text_header4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:paddingStart="@dimen/activity_margin"
+        android:paddingEnd="@dimen/activity_margin"
+        android:text="@string/text_existing_database"
+        android:textSize="@dimen/big_text_size"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider3" />
+
+    <Button
+        android:id="@+id/button_import_database"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:text="@string/button_import_database"
+        android:textSize="@dimen/big_text_size"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text_header4" />
+
+    <ImageView
+        android:id="@+id/divider4"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/divider_height"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:background="@color/divider_grey"
+        android:importantForAccessibility="no"
+        app:layout_constraintTop_toBottomOf="@id/button_import_database" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

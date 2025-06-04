@@ -10,6 +10,7 @@ import eu.fliegendewurst.triliumdroid.data.NoteId
 import eu.fliegendewurst.triliumdroid.database.CacheDbHelper.Companion.MAX_MIGRATION
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.widget.parseWidgetAction
+import java.io.File
 
 object Preferences {
 	// TODO: make this variable private
@@ -41,6 +42,15 @@ object Preferences {
 			// need fixups in that case.
 			setDatabaseMigration(MAX_MIGRATION)
 		}
+	}
+
+	fun databaseConfigured(context: Context): Boolean {
+		return hostname() != null
+				|| File(context.filesDir.parent, "databases/Document.db").exists()
+	}
+
+	fun syncConfigured(): Boolean {
+		return hostname() != null && password() != null
 	}
 
 	fun hostname(): String? = prefs.getString(HOSTNAME, null)

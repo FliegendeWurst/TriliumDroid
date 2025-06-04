@@ -33,6 +33,7 @@ object DB {
 	private var db: SQLiteDatabase? = null
 
 	var lastSync: Long? = null
+	var skipNextMigration: Boolean = false
 
 	/**
 	 * @return -1 on error

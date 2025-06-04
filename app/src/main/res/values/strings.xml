@@ -65,7 +65,9 @@
     <string name="text_first_time_user">If this is your first time using Trilium Notes, you must first use the desktop app and set up a sync server. (This requirement will be lifted in a future update.)</string>
     <string name="button_create_new_note_collection">Create new note collection</string>
     <string name="text_existing_user">If you are already using the PC version, you may synchronize your existing data.</string>
+    <string name="text_existing_database">Synchronizing your data with the above option is the preferred way of getting started. But if your database contains very large notes or attachments (>10 megabytes), you must copy and import the database manually, due to technical constraints.</string>
     <string name="button_synchronize_existing_data">Synchronize existing data</string>
+    <string name="button_import_database">Import database manually</string>
     <string name="label_miscellaneous">Miscellaneous</string>
     <string name="button_delete_database">Delete database</string>
     <string name="description_add_note_link">add note link</string>
@@ -148,6 +150,7 @@
     <string name="widget_description">TriliumDroid widget</string>
     <string name="open_note">Open note</string>
     <string name="title_trust_sync_server_certificate">Trust sync server certificate?</string>
+    <string name="toast_sync_unavailable">Sync not configured!</string>
     <string name="snackbar_sync_start">Sync: starting…</string>
     <string name="snackbar_sync_progress" tools:ignore="PluralsCandidate">Sync: %1$d outstanding…</string>
     <string name="snackbar_sync_error">Sync: error!</string>
