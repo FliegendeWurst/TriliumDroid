@@ -269,8 +269,69 @@ class CacheDbHelper(context: Context, private val sql: String) :
 								"UNIQUE (tmpID),PRIMARY KEY (tmpID))"
 					)
 				}
+				// https://github.com/TriliumNext/Notes/blob/v0.94.0/apps/server/src/migrations/migrations.ts
+				if (oldVersion < 230 && newVersion >= 230) {
+					Log.i(TAG, "migrating to version 230")
+					execSQL(
+						"""
+            			CREATE TABLE IF NOT EXISTS "note_embeddings" (
+                			"embedId" TEXT NOT NULL PRIMARY KEY,
+                			"noteId" TEXT NOT NULL,
+                			"providerId" TEXT NOT NULL,
+                			"modelId" TEXT NOT NULL,
+                			"dimension" INTEGER NOT NULL,
+                			"embedding" BLOB NOT NULL,
+                			"version" INTEGER NOT NULL DEFAULT 1,
+                			"dateCreated" TEXT NOT NULL,
+                			"utcDateCreated" TEXT NOT NULL,
+                			"dateModified" TEXT NOT NULL,
+                			"utcDateModified" TEXT NOT NULL
+            			)""".trimIndent()
+					)
+					execSQL("""CREATE INDEX "IDX_note_embeddings_noteId" ON "note_embeddings" ("noteId")""")
+					execSQL("""CREATE INDEX "IDX_note_embeddings_providerId_modelId" ON "note_embeddings" ("providerId", "modelId")""")
+					execSQL(
+						"""
+						CREATE TABLE IF NOT EXISTS "embedding_queue" (
+	                		"noteId" TEXT NOT NULL PRIMARY KEY,
+			                "operation" TEXT NOT NULL, -- CREATE, UPDATE, DELETE
+			                "dateQueued" TEXT NOT NULL,
+			                "utcDateQueued" TEXT NOT NULL,
+			                "priority" INTEGER NOT NULL DEFAULT 0,
+			                "attempts" INTEGER NOT NULL DEFAULT 0,
+			                "lastAttempt" TEXT,
+			                "error" TEXT,
+			                "failed" INTEGER NOT NULL DEFAULT 0,
+			                "isProcessing" INTEGER NOT NULL DEFAULT 0
+			            )""".trimIndent()
+					)
+					execSQL(
+						"""
+						CREATE TABLE IF NOT EXISTS "embedding_providers" (
+                			"providerId" TEXT NOT NULL PRIMARY KEY,
+                			"name" TEXT NOT NULL,
+                			"priority" INTEGER NOT NULL DEFAULT 0,
+                			"config" TEXT NOT NULL, -- JSON config object
+                			"dateCreated" TEXT NOT NULL,
+                			"utcDateCreated" TEXT NOT NULL,
+                			"dateModified" TEXT NOT NULL,
+                			"utcDateModified" TEXT NOT NULL
+            			)""".trimIndent()
+					)
+				}
+				if (oldVersion < 231 && newVersion >= 231) {
+					Log.i(TAG, "migrating to version 231")
+					execSQL(
+						"""
+						CREATE TABLE IF NOT EXISTS sessions (
+                			id TEXT PRIMARY KEY,
+                			data TEXT,
+                			expires INTEGER
+            			)""".trimIndent()
+					)
+				}
 				// always update to latest version
-				execSQL("UPDATE options SET value = '229' WHERE name = 'dbVersion'")
+				execSQL("UPDATE options SET value = '${newVersion}' WHERE name = 'dbVersion'")
 			}
 		} catch (t: Throwable) {
 			Log.e(TAG, "fatal error in database migration", t)

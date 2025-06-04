@@ -343,6 +343,9 @@ object Sync {
 		"options" -> "name"
 		"recent_notes" -> "" // TODO
 		"revisions" -> "revisionId"
+		"note_embeddings" -> "embedId"
+		"embedding_queue" -> "noteId" // unclear if this is synchronized
+		"embedding_providers" -> "providerId" // unclear if this is synchronized
 		else -> ""
 	}
 }
