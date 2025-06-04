@@ -84,7 +84,8 @@ object ConnectionUtil {
 		val instanceId = Preferences.instanceId()
 		Log.d(TAG, "setup with server = $server, instance ID = $instanceId")
 		val documentSecret = Preferences.documentSecret()
-		if (documentSecret == null) {
+		val syncVersionConfigured = Preferences.syncVersion()
+		if (documentSecret == null || syncVersionConfigured == null) {
 			loginSuccess = false
 			fetch("/api/setup/sync-seed", null, true, {
 				if (!Cache.Versions.SUPPORTED_SYNC_VERSIONS.contains(it.getInt("syncVersion"))) {
@@ -98,6 +99,10 @@ object ConnectionUtil {
 					val name = opt.getString("name")
 					val value = opt.getString("value")
 					if (name == "documentSecret") {
+						if (documentSecret != null && documentSecret != value) {
+							callbackError(MismatchedDatabaseException)
+							return@fetch
+						}
 						Preferences.setDocumentSecret(value)
 						Preferences.setSyncVersion(syncVersion)
 						loginSuccess = true

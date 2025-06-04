@@ -58,8 +58,24 @@ class CacheDbHelper(context: Context, private val sql: String) :
 				.use {
 					if (it.moveToNext()) {
 						oldVersion = it.getString(0).toInt()
+					} else {
+						Log.e(TAG, "failed to get previous database version")
 					}
 				}
+			db.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("documentSecret"))
+				.use {
+					if (it.moveToFirst()) {
+						// This is important to ensure that a (later) sync configuration works properly.
+						val secret = it.getString(0)
+						Preferences.setDocumentSecret(secret)
+					} else {
+						Log.e(TAG, "failed to get previous document secret")
+					}
+				}
+			// remove now-useless entity_changes
+			db.rawQuery("DELETE FROM entity_changes", arrayOf()).close()
+			// ETAPI irrelevant for mobile app
+			db.rawQuery("DELETE FROM etapi_tokens", arrayOf()).close()
 			DB.skipNextMigration = false
 		}
 		try {

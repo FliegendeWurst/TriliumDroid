@@ -20,6 +20,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalEncodingApi::class)
 object Sync {
@@ -209,7 +210,9 @@ object Sync {
 			DB.rawQuery("SELECT value FROM options WHERE name = ?", arrayOf("lastSyncedPull"))
 				.use {
 					if (it.moveToFirst()) {
-						lastSyncedPull = it.getInt(0)
+						// NOTE: TriliumDroid will always save this as an int,
+						// but the user may have imported a TriliumNext database where this is a float
+						lastSyncedPull = it.getFloat(0).roundToInt()
 					}
 				}
 			val logMarkerId = "trilium-droid"
