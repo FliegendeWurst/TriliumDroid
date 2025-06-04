@@ -1,4 +1,4 @@
-# Trilium Notes for Android ![test workflow](https://github.com/FliegendeWurst/TriliumDroid/actions/workflows/test.yaml/badge.svg) <a href="https://hosted.weblate.org/engage/triliumdroid/"><img src="https://hosted.weblate.org/widget/triliumdroid/app/svg-badge.svg" alt="translation status" /></a>
+# Trilium Notes for Android ![test workflow](https://github.com/FliegendeWurst/TriliumDroid/actions/workflows/test.yaml/badge.svg) <a href="https://hosted.weblate.org/engage/triliumdroid/"><img src="https://hosted.weblate.org/widget/triliumdroid/app/svg-badge.svg" alt="translation status" /></a> <a href="https://matrix.to/#/#triliumdroid:matrix.org" title="link to Matrix channel"><img src="https://img.shields.io/matrix/triliumdroid:matrix.org?server_fqdn=matrix.org&label=matrix" /></a>
 
 <img align="right" width="200" src="./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" />
 
@@ -61,7 +61,9 @@ To edit notes, use the edit button in the toolbar.
 
 ## Contribute
 
-Please report bugs and missing features. Translations are done via [Weblate](https://hosted.weblate.org/projects/triliumdroid/app/).
+Please report bugs and missing features, either using [Github issues](https://github.com/FliegendeWurst/TriliumDroid/issues) or on Matrix: [#triliumdroid:matrix.org](https://matrix.to/#/#triliumdroid:matrix.org).
+
+Translations are done via [Weblate](https://hosted.weblate.org/projects/triliumdroid/app/).
 
 If you're any good at Android app development using Kotlin, feel free to contribute code :)
 
