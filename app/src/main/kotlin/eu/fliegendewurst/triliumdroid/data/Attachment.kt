@@ -1,5 +1,6 @@
 package eu.fliegendewurst.triliumdroid.data
 
+import eu.fliegendewurst.triliumdroid.database.Blobs
 import eu.fliegendewurst.triliumdroid.database.IdLike
 
 class Attachment(
@@ -17,6 +18,13 @@ class Attachment(
 	val deleted: Boolean,
 	val deleteId: String?
 ) {
+	suspend fun blob(): Blob? {
+		val blobId = this.blobId
+		if (blobId != null) {
+			return Blobs.load(blobId)
+		}
+		return null
+	}
 }
 
 data class AttachmentId(val id: String) : IdLike {

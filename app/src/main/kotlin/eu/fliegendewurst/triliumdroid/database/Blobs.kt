@@ -1,6 +1,7 @@
 package eu.fliegendewurst.triliumdroid.database
 
 import android.content.ContentValues
+import android.database.Cursor.FIELD_TYPE_BLOB
 import android.database.sqlite.SQLiteDatabase.CONFLICT_FAIL
 import android.util.Log
 import eu.fliegendewurst.triliumdroid.data.AttachmentId
@@ -15,7 +16,7 @@ import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
-import java.util.*
+import java.util.WeakHashMap
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -95,7 +96,11 @@ object Blobs {
 			null, null, null
 		).use {
 			if (it.moveToNext()) {
-				val content = it.getBlob(0)
+				val content: ByteArray = if (it.getType(0) == FIELD_TYPE_BLOB) {
+					it.getBlob(0)
+				} else {
+					it.getString(0).encodeToByteArray()
+				}
 				val dateModified = it.getString(1)
 				val utcDateModified = it.getString(2)
 				val blob = Blob(id, content, dateModified, utcDateModified)

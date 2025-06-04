@@ -13,7 +13,6 @@ import eu.fliegendewurst.triliumdroid.data.AttachmentId
 import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteId
-import eu.fliegendewurst.triliumdroid.data.load
 import eu.fliegendewurst.triliumdroid.database.Attachments
 import eu.fliegendewurst.triliumdroid.database.Cache
 import eu.fliegendewurst.triliumdroid.database.Notes
@@ -136,7 +135,7 @@ class NoteWebViewClient(
 					request.url.pathSegments[1]
 				}
 
-				// /api/attachments/note_id/image/Trilium%20Demo_trilium-icon.png
+				// /api/attachments/attachment_id/image/Trilium%20Demo_trilium-icon.png
 				5 -> {
 					request.url.pathSegments[2]
 				}
@@ -192,7 +191,16 @@ class NoteWebViewClient(
 					Assets.noteEditableJS(view.context).byteInputStream()
 				)
 			}
-			val note = runBlocking { Notes.getNoteWithContent(NoteId(id)) }
+			val note = if (!fetchingAttachment) {
+				runBlocking { Notes.getNoteWithContent(NoteId(id)) }
+			} else {
+				null
+			}
+			val attachment = if (fetchingAttachment) {
+				runBlocking { Attachments.load(AttachmentId(id)) }
+			} else {
+				null
+			}
 			if (note?.type == "doc") {
 				return runBlocking {
 					val docName =
@@ -208,7 +216,9 @@ class NoteWebViewClient(
 			}
 			// viewing revision: override response for main note
 			val blobToShow = blob()
-			var content = if (blobToShow != null && id == note()?.id?.rawId()) {
+			var content = if (fetchingAttachment) {
+				runBlocking { attachment?.blob() }?.content
+			} else if (blobToShow != null && id == note()?.id?.rawId()) {
 				blobToShow.content
 			} else {
 				note?.content()
@@ -300,12 +310,10 @@ class NoteWebViewClient(
 					theJson.toString().byteInputStream()
 				)
 			}
-			var mime = note?.mime
-			if (note == null) {
-				// try attachment
-				val attachment = runBlocking { Attachments.load(AttachmentId(id)) }
-				content = runBlocking { attachment?.blobId?.load()?.content }
-				mime = attachment?.mime
+			val mime = if (!fetchingAttachment) {
+				note?.mime
+			} else {
+				attachment?.mime
 			}
 			if (content == null) {
 				return notFound(mime ?: "text/html")
