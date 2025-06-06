@@ -18,8 +18,10 @@ jobs:
           key: ${{ runner.os }}-build-${{ hashFiles('app/build.gradle') }}
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v16
+        with:
+          extra-conf: "extra-substituters = https://cache.garnix.io\nextra-trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
       - name: Install Trilium Server and ImageMagick
-        run: nix profile install nixpkgs/master#trilium-next-server nixpkgs/master#imagemagick
+        run: nix profile install github:TriliumNext/Notes/63a6f00a47f87b2c4b07ec3a4a1493616e0af29f#server nixpkgs/master#imagemagick
       - name: Run Trilium Server
         run: ./app/test/setup-test-server.sh
       - uses: actions/setup-java@v4
