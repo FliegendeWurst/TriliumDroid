@@ -3,9 +3,12 @@
 # Use this script to compare current results against previously "blessed" results.
 
 shopt -s nullglob
+
+rm app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/*scaled* 2>/dev/null
+
 fail=0
 
-for x in app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/*{1,2,3,4,5,6,7,8,9,0}.png; do
+for x in app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/*.png; do
   f=$(basename "$x")
   [ ! -e "app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/${f}scaled.png" ] \
     && magick "app/build/outputs/managed_device_android_test_additional_output/debug/pixel9api35/$f" \

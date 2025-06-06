@@ -30,8 +30,6 @@ import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.CanvasNoteViewport
 import eu.fliegendewurst.triliumdroid.database.Cache.Versions.DATABASE_VERSION_0_92_6
-import eu.fliegendewurst.triliumdroid.database.Cache.Versions.SYNC_VERSION_0_90_12
-import eu.fliegendewurst.triliumdroid.database.Cache.Versions.SYNC_VERSION_0_91_6
 import eu.fliegendewurst.triliumdroid.database.Notes
 import eu.fliegendewurst.triliumdroid.sync.ConnectionUtil
 import eu.fliegendewurst.triliumdroid.util.Preferences
@@ -72,6 +70,17 @@ class InitialSyncTest {
 	@get:Rule
 	val activityScenarioRule = activityScenarioRule<MainActivity>()
 
+	fun expandNotes() {
+		// BEGIN highly version-specific
+		// The expanded state of notes in the demo document changes very frequently.
+		for (name in listOf("Inbox", "Formatting examples", "Note Types")) {
+			onView(withText(name))
+				.perform(longClick())
+			Thread.sleep(2000)
+		}
+		// END highly version-specific
+	}
+
 	@Test
 	@Throws(IOException::class)
 	fun test_010_initialSync() {
@@ -98,31 +107,8 @@ class InitialSyncTest {
 		}
 		// (these will only be synced after the DB nuke in 020)
 
-		// Trilium 0.91+: Demo Document has different default expanded state
-		if (Preferences.databaseVersion()!! >= DATABASE_VERSION_0_92_6) {
-			for (name in listOf("Formatting examples")) {
-				onView(withText(name))
-					.perform(longClick())
-				Thread.sleep(2000)
-			}
-			onView(withIndex(withText("Journal"), 0)).perform(longClick())
-			Thread.sleep(2000)
-		} else if (Preferences.syncVersion()!! >= SYNC_VERSION_0_91_6) {
-			onView(withText("Trilium Demo"))
-				.perform(longClick())
-			Thread.sleep(2000)
-		} else if (Preferences.syncVersion()!! == SYNC_VERSION_0_90_12) {
-			onView(withText("Journal"))
-				.perform(longClick())
-			Thread.sleep(2000)
-			onView(withText("11 - November"))
-				.perform(longClick())
-			Thread.sleep(2000)
-			onView(withText("12 - December"))
-				.perform(longClick())
-			Thread.sleep(2000)
-		}
-		// End Trilium 0.91+
+		expandNotes()
+
 		saveScreenshot()
 		onView(withText("Trilium Demo"))
 			.perform(click())
@@ -249,6 +235,9 @@ class InitialSyncTest {
 			.perform(click())
 		// wait for sync to finish
 		Thread.sleep(5000)
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.START))
+		saveScreenshot()
 	}
 
 	@Test
@@ -271,6 +260,11 @@ class InitialSyncTest {
 		// wait to sync
 		Thread.sleep(SYNC_WAIT_MS)
 		saveScreenshot()
+
+		// the app explicitly never syncs branch expansion, so we must restore it here
+		onView(withId(R.id.drawer_layout))
+			.perform(DrawerActions.open(Gravity.START))
+		expandNotes()
 	}
 
 	@Test
@@ -280,7 +274,7 @@ class InitialSyncTest {
 			.perform(click())
 		Thread.sleep(2000) // wait until ready
 		saveScreenshot()
-		for (text in arrayOf("root", "Journal", "2021", "12 - December")) {
+		for (text in arrayOf("root", "Trilium Demo Title Edited!", "Journal", "2021", "12 - December")) {
 			onView(
 				allOf(
 					withText(text),
@@ -385,6 +379,8 @@ class InitialSyncTest {
 		Thread.sleep(5000)
 		onView(withId(R.id.drawer_layout))
 			.perform(DrawerActions.open(Gravity.START))
+		onView(withText("Journal"))
+			.perform(longClick())
 		onView(withText("2021"))
 			.perform(click())
 		// wait for note to load
