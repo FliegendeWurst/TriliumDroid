@@ -16,6 +16,7 @@ Unofficial port of [TriliumNext Notes](https://github.com/TriliumNext/Notes) to 
 - Note attributes and relations for organization, querying and advanced scripting
 - Note encryption with per-note granularity
 - Canvas notes powered by [Excalidraw](https://excalidraw.com/)
+- Geo map notes powered by Leaflet using OSM data
 - Note map view (context-based / all notes)
 - Scripting API to automate tasks or send notifications
 - In-app user guide based on TriliumNext documentation
@@ -31,7 +32,7 @@ More features are planned, see the [issue tracker](https://github.com/FliegendeW
 
 ### Requirements
 
-- Sync server running TriliumNext/Trilium (any version from 0.93.0 to 0.63.7)
+- Sync server running TriliumNext/Trilium (any version from 0.94.1 to 0.63.7)
 - Android 7.0+
 
 For using the app without a sync server, follow [this issue](https://github.com/FliegendeWurst/TriliumDroid/issues/75).  

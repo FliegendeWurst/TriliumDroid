@@ -11,6 +11,7 @@ These features of the original are implemented:
 - Note attributes and relations for organization, querying and advanced scripting
 - Note encryption with per-note granularity
 - Canvas notes powered by Excalidraw
+- Geo map notes powered by Leaflet using OSM data
 - Note map view (context-based / all notes)
 - Scripting API to automate tasks or send notifications
 - In-app user guide based on TriliumNext documentation
