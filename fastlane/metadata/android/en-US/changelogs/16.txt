@@ -1,6 +1,8 @@
 Features
-- Support for viewing geo map notes
+- Support for TriliumNext 0.94 (older versions also still supported)
+- Geo map notes
 - Customizable text size for main note content
+- Option to import database manually (to avoid exceeding Android memory limitations during Sync)
 
 Bugfixes
 - Fixed rare crash when activating navigation mode

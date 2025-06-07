@@ -45,6 +45,7 @@ import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import java.io.IOException
+import java.lang.ref.WeakReference
 
 
 @RunWith(AndroidJUnit4::class)
@@ -274,7 +275,7 @@ class InitialSyncTest {
 			.perform(click())
 		Thread.sleep(2000) // wait until ready
 		saveScreenshot()
-		for (text in arrayOf("root", "Trilium Demo Title Edited!", "Journal", "2021", "12 - December")) {
+		for (text in arrayOf("root", "Journal", "2021", "12 - December")) {
 			onView(
 				allOf(
 					withText(text),
@@ -379,8 +380,15 @@ class InitialSyncTest {
 		Thread.sleep(5000)
 		onView(withId(R.id.drawer_layout))
 			.perform(DrawerActions.open(Gravity.START))
-		onView(withText("Journal"))
+		onView(
+			allOf(
+				withText("Trilium Demo Title Edited!"),
+				hasSibling(withId(R.id.note_icon))
+			)
+		)
 			.perform(longClick())
+//		onView(withText("Journal"))
+//			.perform(longClick())
 		onView(withText("2021"))
 			.perform(click())
 		// wait for note to load
@@ -400,6 +408,13 @@ class InitialSyncTest {
 		Thread.sleep(5000)
 		onView(withId(R.id.drawer_layout))
 			.perform(DrawerActions.open(Gravity.START))
+		onView(
+			allOf(
+				withText("Trilium Demo Title Edited!"),
+				hasSibling(withId(R.id.note_icon))
+			)
+		)
+			.perform(longClick())
 		saveScreenshot()
 	}
 
@@ -409,6 +424,8 @@ class InitialSyncTest {
 		onView(withId(R.id.drawer_layout))
 			.perform(DrawerActions.open(Gravity.START))
 		onView(withText("Books"))
+			.perform(longClick())
+		onView(withText("Formatting examples"))
 			.perform(longClick())
 		Thread.sleep(500)
 		saveScreenshot()
@@ -504,6 +521,7 @@ class InitialSyncTest {
 private fun withIndex(matcher: Matcher<View>, index: Int): Matcher<View> {
 	return object : TypeSafeMatcher<View>() {
 		var currentIndex: Int = 0
+		var matched: WeakReference<View> = WeakReference(null)
 
 		override fun describeTo(description: Description) {
 			description.appendText("with index: ")
@@ -512,7 +530,28 @@ private fun withIndex(matcher: Matcher<View>, index: Int): Matcher<View> {
 		}
 
 		override fun matchesSafely(view: View): Boolean {
-			return matcher.matches(view) && currentIndex++ == index
+			val previous = matched.get()
+			if (previous == view) {
+				return true
+			}
+			if (matcher.matches(view) && currentIndex++ == index) {
+				matched = WeakReference(view)
+				return true
+			}
+			return false
+		}
+	}
+}
+
+private fun hasCoordinateX(x: Float): Matcher<View> {
+	return object : TypeSafeMatcher<View>() {
+		override fun describeTo(description: Description) {
+			description.appendText("with x: ")
+			description.appendValue(x)
+		}
+
+		override fun matchesSafely(view: View): Boolean {
+			return view.x == x
 		}
 	}
 }
