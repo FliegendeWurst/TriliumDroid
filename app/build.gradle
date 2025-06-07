@@ -12,7 +12,7 @@ android {
         compileSdk 35
         targetSdkVersion 35
         versionCode 16
-        versionName "0.93.0-alpha11"
+        versionName "0.94.1-alpha11"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments useTestStorageService: "true"
