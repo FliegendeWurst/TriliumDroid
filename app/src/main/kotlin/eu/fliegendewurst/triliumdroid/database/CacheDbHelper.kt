@@ -330,6 +330,14 @@ class CacheDbHelper(context: Context, private val sql: String) :
             			)""".trimIndent()
 					)
 				}
+				// https://github.com/TriliumNext/Notes/blob/v0.95.0/apps/server/src/migrations/migrations.ts
+				if (oldVersion < 232 && newVersion >= 232) {
+					Log.i(TAG, "migrating to version 232")
+					execSQL("""DROP TABLE IF EXISTS "note_embeddings"""")
+					execSQL("""DROP TABLE IF EXISTS "embedding_queue"""")
+					execSQL("""DROP TABLE IF EXISTS "embedding_providers"""")
+					execSQL("""DELETE FROM entity_changes WHERE entityName IN ('note_embeddings', 'embedding_queue', 'embedding_providers')""")
+				}
 				// always update to latest version
 				execSQL("UPDATE options SET value = '${newVersion}' WHERE name = 'dbVersion'")
 			}

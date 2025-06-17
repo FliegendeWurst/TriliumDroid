@@ -1,0 +1,5 @@
+Features
+- Support for TriliumNext 0.95 (0.94 is no longer supported)
+
+Bugfixes
+- Fixed crash when viewing very large note on Android 8.1 or older
