@@ -32,7 +32,7 @@ More features are planned, see the [issue tracker](https://github.com/FliegendeW
 
 ### Requirements
 
-- Sync server running TriliumNext/Trilium (any version from 0.94.1 to 0.63.7)
+- Sync server running TriliumNext/Trilium (any version from 0.95.0 to 0.63.7, except 0.94)
 - Android 7.0+
 
 For using the app without a sync server, follow [this issue](https://github.com/FliegendeWurst/TriliumDroid/issues/75).  
@@ -93,6 +93,6 @@ Parts of this program are derived from zadam's [Trilium Notes](https://github.co
 Parts of this program are derived from Elian Doran's [TriliumNext Notes](https://github.com/TriliumNext/Notes), the AGPL-3.0 applies.  
 The MIT License applies to the [boxicons](https://boxicons.com/) included in the project (see `boxicons_LICENSE.txt`).  
 The GPL-3.0 license applies to the styles derived from [Simple-Commons](https://github.com/SimpleMobileTools/Simple-Commons).  
-The MIT license applies to the bundled [excalidraw](https://github.com/excalidraw/excalidraw) (see license notices in `app/src/main/assets/web.zip`).  
+The MIT license applies to the bundled [Excalidraw](https://github.com/excalidraw/excalidraw), other free licenses apply to other bundled web libraries (see notices in `app/src/main/assets/web.zip`).  
 The GPL-2.0 (or later) license applies to the included [CKEditor](https://github.com/ckeditor/ckeditor5) (`app/src/main/assets/ckeditor.js`).  
 For other included libraries, their respective license applies.  
