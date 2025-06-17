@@ -149,4 +149,21 @@
     <string name="label_mtls_authentication">mTLS 验证（可选，试验性）</string>
     <string name="button_enter_protected_session">进入受保护的会话</string>
     <string name="label_protect_the_note">保护笔记</string>
+    <string name="text_existing_database">开始使用的首选方式是依据以上选项进行数据同步。但由于技术限制，如果数据库中包含非常大的笔记或附件（超过 10 兆字节），则必须手动复制并导入数据库。</string>
+    <string name="action_share_note">分享笔记</string>
+    <string name="button_import_database">手动导入数据库</string>
+    <string name="label_set_ui_theme">设置界面主题（日/夜）</string>
+    <string name="label_set_text_size">设置字体大小</string>
+    <string name="theme_night">夜晚/深色</string>
+    <string name="theme_day">白天/明亮</string>
+    <string name="theme_auto">自动/系统</string>
+    <string name="toast_sync_unavailable">同步参数未配置！</string>
+    <string name="action_local_note_map">显示本地笔记地图</string>
+    <string name="read_only_mode">只读模式</string>
+    <string name="textsize_auto">自动</string>
+    <string name="textsize_manual">手动设置</string>
+    <string name="textsize_manual_title">输入字体大小（单位pixels）</string>
+    <string name="action_help">帮助</string>
+    <string name="toast_note_not_in_database">数据库中不存在该笔记。</string>
+    <string name="hint_read_only_restart">只读模式生效需要重新启动应用程序</string>
 </resources>
