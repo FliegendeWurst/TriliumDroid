@@ -172,6 +172,13 @@ object Notes {
 			"notes"
 		).use {
 			if (it.moveToFirst()) {
+				val noteContent = try {
+					it.getBlobOrNull(0)
+				} catch (e: IllegalStateException) {
+					Log.e(TAG, "error fetching blob, perhaps too large? ", e)
+					it.moveToFirst() // reset cursor state, maybe get the other columns at least?
+					null
+				}
 				val blobId = BlobId(it.getString(12))
 				val blobDateModified = it.getString(14)
 				val blobUtcDateModified = it.getString(15)
@@ -193,7 +200,6 @@ object Notes {
 					it.getInt(11) != 0,
 					blobId
 				)
-				val noteContent = it.getBlobOrNull(0)
 				if (noteContent != null) {
 					val blob = Blob(blobId, noteContent, blobDateModified, blobUtcDateModified)
 					Blobs.loadInternal(blob)
