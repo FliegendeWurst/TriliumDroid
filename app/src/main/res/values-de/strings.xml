@@ -152,4 +152,18 @@
     <string name="action_local_note_map">Lokale Notizen-Karte anzeigen</string>
     <string name="action_share_note">Notiz teilen</string>
     <string name="text_about_3">Die Desktop-Anwendung wird von zadam seit 2017 entwickelt und läuft unter Windows, Mac und Linux. Seit 2024 wird die Entwicklung in der TriliumNext-Organisation fortgesetzt.</string>
+    <string name="toast_sync_unavailable">Sync. nicht konfiguriert!</string>
+    <string name="button_import_database">Datenbank manuell importieren</string>
+    <string name="hint_read_only_restart">Nur-Lese-Modus benötigt zur Anwendung App-Neustart</string>
+    <string name="textsize_manual_title">Textgröße in Pixeln eingeben</string>
+    <string name="text_existing_database">Falls deine Datenbank sehr große Notizen oder Anhänge enthält, musst du sie aus technischen Gründen auf das Handy kopieren und hier importieren.</string>
+    <string name="label_set_text_size">Textgröße konfigurieren</string>
+    <string name="theme_day">Tag / Hell</string>
+    <string name="theme_night">Nacht / Dunkel</string>
+    <string name="theme_auto">Automatisch / System</string>
+    <string name="read_only_mode">Nur-Lese-Modus</string>
+    <string name="textsize_auto">Automatisch</string>
+    <string name="textsize_manual">Manuell</string>
+    <string name="action_help">Hilfe</string>
+    <string name="label_set_ui_theme">GUI-Farbschema konfigurieren</string>
 </resources>
