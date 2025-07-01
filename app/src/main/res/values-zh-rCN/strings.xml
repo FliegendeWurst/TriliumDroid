@@ -166,4 +166,6 @@
     <string name="action_help">帮助</string>
     <string name="toast_note_not_in_database">数据库中不存在该笔记。</string>
     <string name="hint_read_only_restart">只读模式生效需要重新启动应用程序</string>
+    <string name="label_promoted">提升</string>
+    <string name="toast_clone_would_cycle">克隆将创建循环</string>
 </resources>
