@@ -325,6 +325,7 @@ object Cache {
 		const val SYNC_VERSION_0_90_12 = 33
 		const val SYNC_VERSION_0_91_6 = 34 // same up to 0.93.0
 		const val SYNC_VERSION_0_94_0 = 35 // same up to 0.94.1
+		const val SYNC_VERSION_0_95_0 = 36
 		const val SYNC_VERSION_0_97_2 = 36
 
 		val SUPPORTED_SYNC_VERSIONS: Set<Int> = setOf(
