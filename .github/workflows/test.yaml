@@ -24,7 +24,7 @@ jobs:
         run: nix profile install github:TriliumNext/Notes/b9ae226569379574723b9367d33d45bc868e110e#server nixpkgs/master#imagemagick
       - name: Run Trilium Server
         run: ./app/test/setup-test-server.sh
-      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+      - uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
         with:
           java-version: '21'
           distribution: 'temurin'
