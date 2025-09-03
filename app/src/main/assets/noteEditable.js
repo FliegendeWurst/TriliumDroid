@@ -231,7 +231,8 @@ function buildClassicToolbar(multilineToolbar) {
 
 /* reference: https://github.com/TriliumNext/Notes/blob/v0.93.0/src/public/app/widgets/type_widgets/editable_text.ts */
 var editor = document.querySelector(".note-detail-editable-text-editor");
-const isClassicEditor = true;
+// The Decoupled Editor is unusable on mobile, since the toolbar tooltips are obscured by the action bar.
+const isClassicEditor = false;
 const editorClass = isClassicEditor ? CKEditor.DecoupledEditor : CKEditor.BalloonEditor;
 const watchdog = new CKEditor.EditorWatchdog(editorClass, {
     // An average number of milliseconds between the last editor errors (defaults to 5000).
