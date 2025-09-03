@@ -11,8 +11,8 @@ android {
         minSdkVersion 24
         compileSdk 35
         targetSdkVersion 35
-        versionCode 17
-        versionName "0.95.0-alpha12"
+        versionCode 18
+        versionName "0.95.0-alpha13"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments useTestStorageService: "true"
