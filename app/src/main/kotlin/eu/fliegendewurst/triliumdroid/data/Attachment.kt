@@ -36,13 +36,27 @@ data class AttachmentId(val id: String) : IdLike {
 
 enum class AttachmentRole {
 	File,
-	Image
+	Image,
+
+	/**
+	 * Raw value: 'viewConfig', used for Geo Map configuration.
+	 * Example value: `{"view":{"center":{"lat":3.6782592009044848,"lng":55.1953125},"zoom":2}}`
+	 */
+	ViewConfig
+}
+
+object AttachmentNames {
+	/**
+	 * Reference: [Trilium source](https://github.com/TriliumNext/Trilium/blob/v0.98.1/apps/server/src/migrations/0233__migrate_geo_map_to_collection.ts#L27)
+	 */
+	const val GEOMAP_VIEWCONFIG = "geoMap.json"
 }
 
 fun String.asAttachmentRole(): AttachmentRole? =
 	when (this) {
 		"file" -> AttachmentRole.File
 		"image" -> AttachmentRole.Image
+		"viewConfig" -> AttachmentRole.ViewConfig
 		else -> null
 	}
 
@@ -50,4 +64,5 @@ fun AttachmentRole.asString(): String =
 	when (this) {
 		AttachmentRole.File -> "file"
 		AttachmentRole.Image -> "image"
+		AttachmentRole.ViewConfig -> "viewConfig"
 	}

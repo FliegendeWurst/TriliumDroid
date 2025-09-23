@@ -10,6 +10,7 @@ import android.webkit.WebViewClient
 import androidx.lifecycle.lifecycleScope
 import eu.fliegendewurst.triliumdroid.activity.main.MainActivity
 import eu.fliegendewurst.triliumdroid.data.AttachmentId
+import eu.fliegendewurst.triliumdroid.data.AttachmentRole
 import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.Note
 import eu.fliegendewurst.triliumdroid.data.NoteId
@@ -118,6 +119,7 @@ class NoteWebViewClient(
 				return WebResourceResponse("text/css", "utf-8", asset)
 			}
 			val fetchingAttachment = request.url.pathSegments.size >= 5
+			val fetchingGeoMapData = firstSegment == "geomap-data"
 			var id = when (request.url.pathSegments.size) {
 				0 -> {
 					request.url.fragment.orEmpty()
@@ -131,6 +133,7 @@ class NoteWebViewClient(
 				// request of /excalidraw-data/${noteId}
 				// or /note-children/${noteId}
 				// or /note-raw/${noteId}
+				// or /geomap-data/${noteId}
 				2 -> {
 					request.url.pathSegments[1]
 				}
@@ -281,16 +284,15 @@ class NoteWebViewClient(
 				}
 				return WebResourceResponse(note.mime, "utf-8", content.inputStream())
 			} else if (firstSegment == "geomap-data" && !fetchingAttachment) {
-				if (content == null) {
-					Log.w(TAG, "geomap note without content")
-					return WebResourceResponse(
-						"application/json",
-						"utf-8",
-						"{'view': {'center': {'lat': 50.878638227135724, 'lng': 0 }, 'zoom': 3 }, 'pins': [] }"
-							.replace('\'', '"').byteInputStream()
-					)
+				if (content != null) {
+					Log.w(TAG, "geomap note with content, should be in attachment")
 				}
-				val theJson = JSONObject(content.decodeToString())
+				// get viewConfig attachment
+				val viewConfig = runBlocking { Attachments.find(NoteId(id), AttachmentRole.ViewConfig)?.blob() }
+				var theJson = JSONObject("{'view': {'center': {'lat': 50.878638227135724, 'lng': 0 }, 'zoom': 3 }}")
+				if (viewConfig != null) {
+					theJson = JSONObject(viewConfig.content.decodeToString())
+				}
 				val pinArray = JSONArray()
 				val pins = runBlocking { Cache.getGeoMapPins(NoteId(id)) }
 				for (pin in pins) {
@@ -326,7 +328,7 @@ class NoteWebViewClient(
 					"utf-8",
 					Assets.excalidrawTemplateHTML(view.context).byteInputStream()
 				)
-			} else if (note?.type == "geoMap") {
+			} else if (runBlocking { note?.isGeoMap() == true }) {
 				return WebResourceResponse(
 					"text/html",
 					"utf-8",

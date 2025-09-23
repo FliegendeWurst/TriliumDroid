@@ -4,6 +4,7 @@ import android.util.Log
 import eu.fliegendewurst.triliumdroid.database.Blobs
 import eu.fliegendewurst.triliumdroid.database.Branches
 import eu.fliegendewurst.triliumdroid.database.Cache
+import eu.fliegendewurst.triliumdroid.database.HiddenNotes
 import eu.fliegendewurst.triliumdroid.database.IdLike
 import eu.fliegendewurst.triliumdroid.database.NoteRevisions
 import eu.fliegendewurst.triliumdroid.database.Notes
@@ -61,6 +62,11 @@ class Note(
 
 	fun icon(): String {
 		return icon ?: "bx bx-file-blank"
+	}
+
+	suspend fun isGeoMap(): Boolean {
+		val template = getRelation("template")
+		return template?.id?.equals(HiddenNotes.GEO_MAP_TEMPLATE.id) == true
 	}
 
 	suspend fun getLabel(name: String): String? {

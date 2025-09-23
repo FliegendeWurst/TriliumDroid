@@ -47,6 +47,10 @@ object Notes {
 
 	val notes: MutableMap<NoteId, Note> = ConcurrentHashMap()
 
+	init {
+		notes.put(HiddenNotes.GEO_MAP_TEMPLATE.id, HiddenNotes.GEO_MAP_TEMPLATE)
+	}
+
 	suspend fun createChildNote(parentNote: Note, newNoteTitle: String?): Note {
 		// create entries in notes, blobs, branches
 		var newId = NoteId(DB.newId("notes", "noteId ") { Util.newNoteId() })

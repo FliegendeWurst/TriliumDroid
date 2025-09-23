@@ -6,9 +6,19 @@ import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import androidx.core.database.sqlite.transaction
+import eu.fliegendewurst.triliumdroid.data.AttachmentId
+import eu.fliegendewurst.triliumdroid.data.AttachmentNames
+import eu.fliegendewurst.triliumdroid.data.AttachmentRole
+import eu.fliegendewurst.triliumdroid.data.AttributeId
+import eu.fliegendewurst.triliumdroid.data.BlobId
+import eu.fliegendewurst.triliumdroid.data.MimeType.APPLICATION_JSON
+import eu.fliegendewurst.triliumdroid.data.NoteId
+import eu.fliegendewurst.triliumdroid.data.asString
 import eu.fliegendewurst.triliumdroid.database.Cache.Versions
+import eu.fliegendewurst.triliumdroid.database.DB.valuesFromPairs
 import eu.fliegendewurst.triliumdroid.service.Util
 import eu.fliegendewurst.triliumdroid.util.Preferences
+import kotlinx.coroutines.runBlocking
 
 class CacheDbHelper(context: Context, private val sql: String) :
 	SQLiteOpenHelper(context, Versions.DATABASE_NAME, null, Versions.DATABASE_VERSION) {
@@ -78,6 +88,8 @@ class CacheDbHelper(context: Context, private val sql: String) :
 			db.rawQuery("DELETE FROM etapi_tokens", arrayOf()).close()
 			DB.skipNextMigration = false
 		}
+		val wasReadonlyActive = Preferences.readOnlyMode()
+		Preferences.setReadOnlyMode(false)
 		try {
 			// source: https://github.com/zadam/trilium/tree/master/db/migrations
 			// and: https://github.com/TriliumNext/Notes/tree/develop/db/migrations
@@ -338,11 +350,119 @@ class CacheDbHelper(context: Context, private val sql: String) :
 					execSQL("""DROP TABLE IF EXISTS "embedding_providers"""")
 					execSQL("""DELETE FROM entity_changes WHERE entityName IN ('note_embeddings', 'embedding_queue', 'embedding_providers')""")
 				}
+				// https://github.com/TriliumNext/Trilium/blob/v0.98.1/apps/server/src/migrations/0233__migrate_geo_map_to_collection.ts
+				if (oldVersion < 233 && newVersion >= 233) {
+					Log.i(TAG, "migrating to version 233")
+					val notesToMigrate = mutableListOf<Pair<NoteId, BlobId>>()
+					rawQuery(
+						"SELECT noteId, blobId FROM notes WHERE type = 'geoMap'",
+						arrayOf()
+					).use {
+						while (it.moveToNext()) {
+							val noteId = it.getString(0)
+							val blob = it.getString(1)
+							notesToMigrate.add(Pair(NoteId(noteId), BlobId(blob)))
+						}
+					}
+					for (noteAndContent in notesToMigrate) {
+						val noteId = noteAndContent.first
+						val jsonContent = noteAndContent.second
+						Log.i(TAG, "migration 233: migrating geo map $noteId")
+						execSQL(
+							"UPDATE notes SET type = 'book' WHERE noteId = ?",
+							arrayOf(noteId.rawId())
+						)
+						execSQL(
+							"UPDATE notes SET mime = '' WHERE noteId = ?",
+							arrayOf(noteId.rawId())
+						)
+						runBlocking {
+							// create viewConfig attachment
+							// note: inlined from Attachments::create
+							// note: inlined from DB::newId
+							var newId = AttachmentId("INVALID")
+							while (newId.rawId() == "INVALID") {
+								val candidate = Util.newNoteId()
+								rawQuery(
+									"SELECT attachmentId FROM attachments WHERE attachmentId = ?",
+									arrayOf(candidate)
+								).use {
+									if (!it.moveToNext()) {
+										newId = AttachmentId(candidate)
+									}
+								}
+							}
+							val cv = valuesFromPairs(
+								arrayOf(
+									Pair("attachmentId", newId.rawId()),
+									Pair("ownerId", noteId.rawId()),
+									Pair("role", AttachmentRole.ViewConfig.asString()),
+									Pair("mime", APPLICATION_JSON),
+									Pair("title", AttachmentNames.GEOMAP_VIEWCONFIG),
+									Pair("isProtected", 0),
+									Pair("position", 0),
+									Pair("blobId", jsonContent.rawId()),
+									Pair("dateModified", Cache.dateModified()),
+									Pair("utcDateModified", Cache.utcDateModified()),
+									Pair("utcDateScheduledForErasureSince", null),
+									Pair("isDeleted", 0),
+									Pair("deleteId", null)
+								)
+							)
+							insert("attachments", null, cv)
+							// clear old note content
+							execSQL(
+								"UPDATE notes SET blobId = ? WHERE noteId = ?",
+								arrayOf(Blobs.EMPTY_BLOB_ID.rawId(), noteId.rawId())
+							)
+							// inlined from Attributes::updateRelation
+							val utc = Cache.utcDateModified()
+							// inlined from DB::newId
+							var newAttributeId = AttributeId("INVALID")
+							while (newAttributeId.rawId() == "INVALID") {
+								val candidate = Util.newNoteId()
+								rawQuery(
+									"SELECT attributeId FROM attributes WHERE attributeId = ?",
+									arrayOf(candidate)
+								).use {
+									if (!it.moveToNext()) {
+										newAttributeId = AttributeId(candidate)
+									}
+								}
+							}
+							val cv2 = valuesFromPairs(
+								arrayOf(
+									Pair("attributeId", newAttributeId.rawId()),
+									Pair("noteId", noteId.rawId()),
+									Pair("type", "relation"),
+									Pair("name", "template"),
+									Pair("value", HiddenNotes.GEO_MAP_TEMPLATE.id.rawId()),
+									Pair("position", 10),
+									Pair("utcDateModified", utc),
+									Pair("isDeleted", false),
+									Pair("deleteId", null),
+									Pair("isInheritable", false)
+								)
+							)
+							insert(
+								"attributes",
+								null,
+								cv2
+							)
+						}
+					}
+					Log.i(TAG, "migrating to version 233 done")
+				}
 				// always update to latest version
-				execSQL("UPDATE options SET value = '${newVersion}' WHERE name = 'dbVersion'")
+				execSQL(
+					"UPDATE options SET value = ? WHERE name = 'dbVersion'",
+					arrayOf(newVersion.toString())
+				)
 			}
 		} catch (t: Throwable) {
 			Log.e(TAG, "fatal error in database migration", t)
+		} finally {
+			Preferences.setReadOnlyMode(wasReadonlyActive)
 		}
 	}
 

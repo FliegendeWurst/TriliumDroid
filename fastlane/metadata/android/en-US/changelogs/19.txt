@@ -1,0 +1,2 @@
+Features
+- Support for Trilium 0.97, 0.98 (older versions no longer supported!)

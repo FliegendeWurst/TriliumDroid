@@ -234,7 +234,10 @@ object DB {
 		dbHelper?.close()
 	}
 
-	private fun valuesFromPairs(columns: Array<out Pair<String, Any?>>): ContentValues {
+	/**
+	 * Get database-ready CV object based on column name, value pairs
+	 */
+	fun valuesFromPairs(columns: Array<out Pair<String, Any?>>): ContentValues {
 		val cv = ContentValues()
 		for (x in columns) {
 			val key = x.first

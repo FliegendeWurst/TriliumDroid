@@ -343,7 +343,7 @@ class MainActivity : AppCompatActivity() {
 	}
 
 	fun refreshTree() = lifecycleScope.launch {
-		Log.w(TAG, "call to refreshTree ", Error())
+		// Log.w(TAG, "call to refreshTree ", Error())
 		if (tree == null) {
 			Log.w(TAG, "tried to refresh tree without tree")
 			return@launch
@@ -792,7 +792,7 @@ class MainActivity : AppCompatActivity() {
 			}
 			if (noteContent.isProtected && !ProtectedSession.isActive()) {
 				showFragment(EncryptedNoteFragment(), true)
-			} else if (noteContent.type == "canvas" || noteContent.type == "geoMap") {
+			} else if (noteContent.type == "canvas" || noteContent.isGeoMap()) {
 				getCanvasNoteFragment().load(noteContent, content)
 			} else {
 				getNoteFragment().load(noteContent, content)

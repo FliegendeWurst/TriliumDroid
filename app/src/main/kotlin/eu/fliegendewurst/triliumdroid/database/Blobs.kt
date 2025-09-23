@@ -23,6 +23,9 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 object Blobs {
 	private const val TAG = "Blobs"
 
+	val EMPTY_BLOB_ID = BlobId("z4PhNX7vuL3xVChQ1m2A")
+	val EMPTY_BLOB = Blob(EMPTY_BLOB_ID, byteArrayOf(), dateModified(), utcDateModified())
+
 	private val blobCache: MutableMap<String, Blob> = WeakHashMap()
 
 	/**
