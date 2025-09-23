@@ -2,7 +2,7 @@
 
 <img align="right" width="200" src="./fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" />
 
-Unofficial port of [TriliumNext Notes](https://github.com/TriliumNext/Notes) to Android.
+Unofficial port of [Trilium Notes](https://github.com/TriliumNext/Trilium) to Android.
 
 [<img src="https://github.com/user-attachments/assets/38acb15c-dbe2-4bc1-9f8b-1539654d3641" width="170">](https://apt.izzysoft.de/fdroid/index/apk/eu.fliegendewurst.triliumdroid)
 
@@ -32,12 +32,12 @@ More features are planned, see the [issue tracker](https://github.com/FliegendeW
 
 ### Requirements
 
-- Sync server running TriliumNext/Trilium (any version from 0.95.0 to 0.63.7, except 0.94)
+- Trilium sync server running version 0.97+
 - Android 7.0+
 
 For using the app without a sync server, follow [this issue](https://github.com/FliegendeWurst/TriliumDroid/issues/75).  
 If you're still using Android 6.0 or older, see [this issue](https://github.com/FliegendeWurst/TriliumDroid/issues/72).  
-For other ways to use Trilium on mobile, see https://github.com/TriliumNext/Notes/issues/72.
+For other ways to use Trilium on mobile, see https://github.com/TriliumNext/Trilium/issues/4962.
 
 ## Screenshots
 

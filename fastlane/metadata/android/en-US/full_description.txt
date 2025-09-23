@@ -1,6 +1,6 @@
 Cross-platform hierarchical note taking application with focus on building large personal knowledge bases.
 
-This is a port of the desktop application TriliumNext Notes.
+This is a port of the desktop application Trilium Notes.
 These features of the original are implemented:
 
 - Synchronisation with sync server / desktop app
