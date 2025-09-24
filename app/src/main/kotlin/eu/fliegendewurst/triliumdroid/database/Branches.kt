@@ -3,6 +3,7 @@ package eu.fliegendewurst.triliumdroid.database
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import android.widget.Toast
+import androidx.core.database.getStringOrNull
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.data.Branch
 import eu.fliegendewurst.triliumdroid.data.BranchId
@@ -28,6 +29,30 @@ object Branches {
 	 */
 	val branches: MutableMap<BranchId, Branch> = ConcurrentHashMap()
 
+	suspend fun loadBranch(parentNoteId: NoteId, noteId: NoteId): Branch? =
+		withContext(Dispatchers.IO) {
+			val branchId = BranchId("${parentNoteId.rawId()}_${noteId.rawId()}")
+			val existing = branches[branchId]
+			if (existing != null) {
+				return@withContext existing
+			}
+			DB.rawQuery(
+				"SELECT isExpanded, notePosition, prefix FROM branches WHERE branchId = ? AND isDeleted = 0 LIMIT 1",
+				arrayOf(branchId.rawId())
+			).use {
+				if (it.moveToNext()) {
+					val expanded = it.getInt(0).intValueToBool()
+					val notePosition = it.getInt(1)
+					val prefix = it.getStringOrNull(2)
+					val branch =
+						Branch(branchId, noteId, parentNoteId, notePosition, prefix, expanded)
+					branches[branchId] = branch
+					return@withContext branch
+				}
+			}
+			return@withContext null
+		}
+
 	/**
 	 * Get one possible note path for the provided note.
 	 * For deleted notes, this path is probably empty.
@@ -46,11 +71,7 @@ object Branches {
 					val parentId = NoteId(it.getString(1))
 					val expanded = it.getInt(2) == 1
 					val notePosition = it.getInt(3)
-					val prefix = if (!it.isNull(4)) {
-						it.getString(4)
-					} else {
-						null
-					}
+					val prefix = it.getStringOrNull(4)
 					if (branches.containsKey(branchId)) {
 						l.add(branches[branchId]!!)
 					} else {
@@ -166,7 +187,7 @@ object Branches {
 				"moving branch ${branch.id} to new parent ${newParent.note}, pos: ${branch.position} -> $newPosition"
 			)
 			if (branch.parentNote == newParent.note && branch.position == newPosition) {
-				return@withContext // no action needed
+				return@withContext branch // no action needed
 			}
 			val newId = BranchId("${newParent.note.rawId()}_${branch.note.rawId()}")
 			val idChanged = branch.id != newId
@@ -195,13 +216,14 @@ object Branches {
 			registerEntityChangeBranch(branch)
 			notes[oldParent]?.children = null
 			notes[newParent.note]?.children = null
-			Tree.getTreeData("AND (branches.parentNoteId = \"${oldParent.rawId()}\" OR branches.parentNoteId = \"${newParent.note.rawId()}\")")
+			Tree.getTreeData("AND (branches.parentNoteId = '${oldParent.rawId()}' OR branches.parentNoteId = '${newParent.note.rawId()}')")
 		}
 
 	suspend fun delete(branch: Branch) = withContext(Dispatchers.IO) {
 		Log.i(TAG, "deleting ${branch.id}")
 		DB.update(branch.id, Pair("isDeleted", 1), Pair("deleteId", Util.newDeleteId()))
 		registerEntityChangeBranch(branch)
+		branches.remove(branch.id)
 	}
 }
 

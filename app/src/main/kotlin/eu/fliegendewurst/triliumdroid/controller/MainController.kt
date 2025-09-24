@@ -648,6 +648,9 @@ class MainController {
 		}
 	}
 
+	/**
+	 * Change the specified note path.
+	 */
 	fun notePathEdit(activity: MainActivity, pathBranch: Branch, note: Note) {
 		JumpToNoteDialog.showDialogReturningNote(
 			activity,
@@ -662,6 +665,10 @@ class MainController {
 				children.remove(pathBranch)
 				if (children.size == 1) {
 					Branches.moveBranch(pathBranch, newParent, 0)
+					val newBranch = Branches.loadBranch(newParentNote.id, note.id)
+					noteHistory.setBranch(newBranch!!)
+					activity.refreshTree()
+					activity.refreshWidgets(note)
 				} else {
 					SelectNoteDialog.showDialogReturningNote(
 						activity,
@@ -712,7 +719,6 @@ class MainController {
 										newParent,
 										ourPosition
 									)
-
 								}
 							} else {
 								Branches.moveBranch(
@@ -721,6 +727,9 @@ class MainController {
 									siblingNote.position + 10
 								)
 							}
+							val newBranch = Branches.loadBranch(newParentNote.id, note.id)
+							noteHistory.setBranch(newBranch!!)
+							note.clearAttributeCache()
 							activity.refreshTree()
 							activity.refreshWidgets(note)
 						}

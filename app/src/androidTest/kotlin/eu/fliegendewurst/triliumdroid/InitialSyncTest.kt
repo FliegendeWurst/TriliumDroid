@@ -132,7 +132,7 @@ class InitialSyncTest {
 		onView(withId(R.id.jump_input))
 			.perform(typeText("canvas"))
 		Thread.sleep(2000) // wait for DB query
-		onView(allOf(withIndex(withText("Canvas"), 0)))
+		onView(allOf(withIndex(withText("Canvas"), 1))) // <-- this index is very error-prone
 			.perform(click())
 		Thread.sleep(15000) // wait for note to load
 		saveScreenshot()
