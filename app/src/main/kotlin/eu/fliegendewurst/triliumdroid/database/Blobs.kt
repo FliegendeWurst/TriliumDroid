@@ -16,7 +16,7 @@ import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.security.MessageDigest
-import java.util.WeakHashMap
+import java.util.*
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -24,7 +24,7 @@ object Blobs {
 	private const val TAG = "Blobs"
 
 	val EMPTY_BLOB_ID = BlobId("z4PhNX7vuL3xVChQ1m2A")
-	val EMPTY_BLOB = Blob(EMPTY_BLOB_ID, byteArrayOf(), dateModified(), utcDateModified())
+	val EMPTY_BLOB = Blob(EMPTY_BLOB_ID, byteArrayOf(), "1970-01-01 00:00:00.000+0000", "1970-01-01 00:00:00.000Z")
 
 	private val blobCache: MutableMap<String, Blob> = WeakHashMap()
 
