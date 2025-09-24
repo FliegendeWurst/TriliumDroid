@@ -12,7 +12,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+      - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: app/build
           key: ${{ runner.os }}-build-${{ hashFiles('app/build.gradle') }}
@@ -24,7 +24,7 @@ jobs:
         run: nix profile install github:TriliumNext/Trilium/27e6d1b00b53bcf1b9558fdc92da610460659dc6#server nixpkgs/master#imagemagick # v0.99.0
       - name: Run Trilium Server
         run: ./app/test/setup-test-server.sh
-      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+      - uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0
         with:
           java-version: '21'
           distribution: 'temurin'
