@@ -57,6 +57,7 @@ import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.DELETE_NOTE
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.EDIT_NOTE
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.JUMP_TO_NOTE
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.NOTE_MAP
+import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.NOTE_METADATA
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.NOTE_NAVIGATION
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SHARE_NOTE
 import eu.fliegendewurst.triliumdroid.dialog.ConfigureFabsDialog.SHOW_NOTE_TREE
@@ -322,6 +323,10 @@ class MainActivity : AppCompatActivity() {
 				controller.doMenuAction(this, R.id.action_delete)
 			}
 
+			NOTE_METADATA -> {
+				controller.doMenuAction(this, R.id.action_note_metadata)
+			}
+
 			NOTE_MAP -> {
 				controller.doMenuAction(this, R.id.action_note_map)
 			}
@@ -454,6 +459,13 @@ class MainActivity : AppCompatActivity() {
 			binding.drawerLayout.closeDrawers()
 		}
 		binding.drawerLayout.openDrawer(GravityCompat.START)
+	}
+
+	fun openDrawerMetadata() {
+		if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+			binding.drawerLayout.closeDrawers()
+		}
+		binding.drawerLayout.openDrawer(GravityCompat.END)
 	}
 
 	fun fixVisibilityFABs(hideFabs: Boolean) {

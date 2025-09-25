@@ -267,6 +267,11 @@ class MainController {
 	}
 
 	fun doMenuAction(activity: MainActivity, actionId: Int): Boolean = when (actionId) {
+		R.id.action_note_metadata -> {
+			activity.openDrawerMetadata()
+			true
+		}
+
 		R.id.action_enter_protected_session -> {
 			val error = ProtectedSession.enter()
 			if (error != null) {

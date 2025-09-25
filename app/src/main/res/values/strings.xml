@@ -172,6 +172,7 @@
     <string name="textsize_auto">Automatic</string>
     <string name="textsize_manual">Manual</string>
     <string name="textsize_manual_title">Enter font size in pixels</string>
+    <string name="action_note_metadata">Note metadata</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>@string/action_show_note_tree</item>
@@ -181,6 +182,7 @@
         <item>@string/action_share_note</item>
         <item>@string/title_dialog_delete_note</item>
         <item>@string/action_local_note_map</item>
+        <item>@string/action_note_metadata</item>
         <item>@string/action_sync</item>
     </string-array>
     <string-array name="note_types_array">

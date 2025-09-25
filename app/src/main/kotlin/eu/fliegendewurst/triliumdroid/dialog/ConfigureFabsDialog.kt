@@ -20,6 +20,7 @@ object ConfigureFabsDialog {
 	const val SHARE_NOTE: String = "shareNote"
 	const val DELETE_NOTE: String = "deleteNote"
 	const val NOTE_MAP: String = "noteMap"
+	const val NOTE_METADATA: String = "noteMetadata"
 	const val SYNC: String = "sync"
 
 	/**
@@ -34,6 +35,7 @@ object ConfigureFabsDialog {
 		Pair(SHARE_NOTE, R.id.action_share),
 		Pair(DELETE_NOTE, R.id.action_delete),
 		Pair(NOTE_MAP, R.id.action_note_map),
+		Pair(NOTE_METADATA, R.id.action_note_metadata),
 		Pair(SYNC, R.id.action_sync)
 	)
 
@@ -238,6 +240,10 @@ object ConfigureFabsDialog {
 
 			"noteMap" -> {
 				return R.drawable.bx_graphql
+			}
+
+			"noteMetadata" -> {
+				return R.drawable.bx_info
 			}
 
 			"sync" -> {

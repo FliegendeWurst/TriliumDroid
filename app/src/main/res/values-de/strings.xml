@@ -166,4 +166,5 @@
     <string name="textsize_manual">Manuell</string>
     <string name="action_help">Hilfe</string>
     <string name="label_set_ui_theme">GUI-Farbschema konfigurieren</string>
+    <string name="action_note_metadata">Notiz-Metadaten</string>
 </resources>
