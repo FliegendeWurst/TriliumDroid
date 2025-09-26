@@ -173,6 +173,7 @@
     <string name="textsize_manual">Manual</string>
     <string name="textsize_manual_title">Enter font size in pixels</string>
     <string name="action_note_metadata">Note metadata</string>
+    <string name="toast_ssl_certificate">Restart sync to accept new certificate</string>
     <!-- FAB IDs: showNoteTree", "jumpToNote", "noteNavigation", "editNote", "shareNote", "deleteNote", "noteMap", "sync" -->
     <string-array name="fabs">
         <item>@string/action_show_note_tree</item>

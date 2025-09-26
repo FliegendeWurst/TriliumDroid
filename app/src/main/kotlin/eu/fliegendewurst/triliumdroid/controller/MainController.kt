@@ -70,6 +70,7 @@ import java.security.KeyStore
 import java.security.cert.CertPathValidatorException
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLPeerUnverifiedException
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeBytes
@@ -825,8 +826,8 @@ class MainController {
 		if (cause2 is CertPathValidatorException) {
 			certException = cause2
 		}
-		if (it is SSLHandshakeException && certException != null) {
-			val cert = certException.certPath.certificates[0]
+		val cert = certException?.certPath?.certificates[0]
+		if (it is SSLHandshakeException && cert != null) {
 			AlertDialog.Builder(activity)
 				.setTitle(R.string.title_trust_sync_server_certificate)
 				.setMessage(cert.toString())
@@ -845,6 +846,16 @@ class MainController {
 					}
 				}
 				.setNegativeButton(android.R.string.cancel, null).show()
+		}
+		// this exception may occur if the user previously configured a trusted cert
+		// https://github.com/FliegendeWurst/TriliumDroid/issues/118
+		if (it is SSLPeerUnverifiedException) {
+			// clear previous value
+			val ks: KeyStore = KeyStore.getInstance("AndroidKeyStore").apply {
+				load(null)
+			}
+			ks.deleteEntry("syncServer")
+			toastText = activity.getString(R.string.toast_ssl_certificate)
 		}
 
 		if (it is SSLException && it.message == "Unable to parse TLS packet header") {
