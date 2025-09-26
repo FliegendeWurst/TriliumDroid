@@ -162,6 +162,9 @@ class MainActivity : AppCompatActivity() {
 						it.binding.buttonNewNoteSibling.setOnClickListener {
 							controller.newNoteSibling(this@MainActivity)
 						}
+						it.binding.buttonJournal.setOnClickListener {
+							controller.journalSelect(this@MainActivity)
+						}
 						for (buttonId in Preferences.prefs.all.keys.filter { pref ->
 							pref.startsWith(
 								"button"

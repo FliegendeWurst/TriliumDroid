@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.icu.util.Calendar
 import android.os.Build
 import android.os.StrictMode
 import android.system.ErrnoException
@@ -18,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity.NOTIFICATION_SERVICE
 import androidx.core.content.FileProvider
 import androidx.core.text.parseAsHtml
 import androidx.lifecycle.lifecycleScope
+import com.wdullaer.materialdatetimepicker.date.DatePickerDialog
 import eu.fliegendewurst.triliumdroid.AlarmReceiver
 import eu.fliegendewurst.triliumdroid.R
 import eu.fliegendewurst.triliumdroid.activity.AboutActivity
@@ -74,6 +76,7 @@ import javax.net.ssl.SSLPeerUnverifiedException
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeBytes
+
 
 /**
  * Controller for the main activity.
@@ -617,6 +620,46 @@ class MainController {
 			return
 		}
 		CreateNewNoteDialog.showDialog(activity, false, note)
+	}
+
+	/**
+	 * User clicked on journal navigation button.
+	 */
+	fun journalSelect(activity: MainActivity) {
+		activity.lifecycleScope.launch {
+			// get all valid journal dates
+			val dates = DateNotes.getCalendarDates()
+			if (dates.isEmpty()) {
+				Toast.makeText(activity, R.string.toast_no_journal_found, Toast.LENGTH_LONG)
+					.show()
+				return@launch
+			}
+			val now = Calendar.getInstance()
+			val dpd = DatePickerDialog.newInstance(
+				null,
+				now.get(Calendar.YEAR),  // Initial year selection
+				now.get(Calendar.MONTH),  // Initial month selection
+				now.get(Calendar.DAY_OF_MONTH) // Initial day selection
+			)
+			dpd.selectableDays = dates.toTypedArray()
+			dpd.onDateSetListener = object : DatePickerDialog.OnDateSetListener {
+				override fun onDateSet(
+					view: DatePickerDialog?,
+					year: Int,
+					month: Int,
+					day: Int
+				) {
+					val isoDate = "$year-${(month + 1).toString().padStart(2, '0')}-${
+						day.toString().padStart(2, '0')
+					}"
+					activity.lifecycleScope.launch {
+						val dn = DateNotes.getDayNote(isoDate)!!
+						navigateTo(activity, dn)
+					}
+				}
+			}
+			dpd.show(activity.supportFragmentManager, "Datepickerdialog")
+		}
 	}
 
 	fun globalNoteMap(activity: MainActivity) {

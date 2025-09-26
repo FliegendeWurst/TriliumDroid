@@ -77,10 +77,15 @@ object Cache {
 		)
 	}
 
+	/**
+	 * Get all notes with the specified attribute.
+	 *
+	 * @param attributeValue if not null: only return if attribute has this value
+	 */
 	suspend fun getNotesWithAttribute(attributeName: String, attributeValue: String?): List<Note> =
 		withContext(Dispatchers.IO) {
 			var query =
-				"SELECT noteId FROM notes INNER JOIN attributes USING (noteId) WHERE attributes.name = ? AND attributes.isDeleted = 0"
+				"SELECT noteId FROM notes INNER JOIN attributes USING (noteId) WHERE attributes.name = ? AND attributes.isDeleted = 0 AND notes.isDeleted = 0"
 			if (attributeValue != null) {
 				query += " AND attributes.value = ?"
 			}
@@ -96,6 +101,29 @@ object Cache {
 				while (it.moveToNext()) {
 					val id = NoteId(it.getString(0))
 					l.add(Notes.getNote(id)!!)
+				}
+				return@withContext l
+			}
+		}
+
+	/**
+	 * Get all date notes.
+	 */
+	suspend fun getDateNotes(): List<Calendar> =
+		withContext(Dispatchers.IO) {
+			DB.rawQuery(
+				"SELECT attributes.value FROM notes INNER JOIN attributes USING (noteId) WHERE attributes.name = 'dateNote' AND attributes.isDeleted = 0 AND notes.isDeleted = 0",
+				arrayOf()
+			).use {
+				val l = mutableListOf<Calendar>()
+				while (it.moveToNext()) {
+					val ymd = it.getString(0).split('-')
+					val year = ymd[0].toInt()
+					val month = ymd[1].toInt()
+					val day = ymd[2].toInt()
+					val cal = Calendar.getInstance()
+					cal.set(year, month - 1, day, 0, 0, 0)
+					l.add(cal)
 				}
 				return@withContext l
 			}

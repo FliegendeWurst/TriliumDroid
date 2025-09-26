@@ -55,6 +55,11 @@ object DateNotes {
 		}
 	}
 
+	suspend fun getCalendarDates(): List<Calendar> = withContext(Dispatchers.IO) {
+		val dates = Cache.getDateNotes()
+		return@withContext dates
+	}
+
 	suspend fun getInboxNote(): Note = withContext(Dispatchers.IO) {
 		val inboxNotes = Cache.getNotesWithAttribute("inbox", null)
 		return@withContext if (inboxNotes.isNotEmpty()) {

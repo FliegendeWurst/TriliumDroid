@@ -1,0 +1,29 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:autoMirrored="true"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- source: boxicons calendar-alt -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="m19,4h-2v-2h-2v2h-6v-2h-2v2h-2c-1.1,0-2,.9-2,2v14c0,1.1.9,2,2,2h14c1.1,0,2-.9,2-2V6c0-1.1-.9-2-2-2ZM5,20v-12h14v-2,14s-14,0-14,0Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M7 11H9V13H7z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M11 11H13V13H11z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M15 11H17V13H15z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M7 15H9V17H7z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M11 15H13V17H11z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M15 15H17V17H15z" />
+</vector>

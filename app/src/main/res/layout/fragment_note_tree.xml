@@ -48,6 +48,13 @@
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/button_new_note_sibling"
                 android:src="@drawable/bx_file_blank_next" />
+
+            <ImageButton
+                android:id="@+id/button_journal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/button_journal"
+                android:src="@drawable/bx_calendar" />
         </LinearLayout>
     </HorizontalScrollView>
 </RelativeLayout>
