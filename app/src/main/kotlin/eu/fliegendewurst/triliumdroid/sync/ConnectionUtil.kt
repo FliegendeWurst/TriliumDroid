@@ -100,7 +100,7 @@ object ConnectionUtil {
 					val value = opt.getString("value")
 					if (name == "documentSecret") {
 						if (documentSecret != null && documentSecret != value) {
-							callbackError(MismatchedDatabaseException)
+							callbackError(MismatchedDatabaseException())
 							return@fetch
 						}
 						Preferences.setDocumentSecret(value)
@@ -366,7 +366,7 @@ object ConnectionUtil {
 						val msg = json.getString("message")
 						if (msg.startsWith("Sync login credentials are incorrect. It looks like you're trying to sync two different initialized documents which is not possible.")) {
 							dbMismatch = true
-							callbackError(MismatchedDatabaseException)
+							callbackError(MismatchedDatabaseException())
 							return
 						}
 						for (version in Cache.Versions.SUPPORTED_SYNC_VERSIONS) {
