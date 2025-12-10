@@ -17,7 +17,7 @@ jobs:
           path: app/build
           key: ${{ runner.os }}-build-${{ hashFiles('app/build.gradle') }}
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-      - uses: DeterminateSystems/nix-installer-action@786fff0690178f1234e4e1fe9b536e94f5433196 # v20
+      - uses: DeterminateSystems/nix-installer-action@c5a866b6ab867e88becbed4467b93592bce69f8a # v21
         with:
           extra-conf: "extra-substituters = https://cache.garnix.io\nextra-trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
       - name: Install Trilium Server and ImageMagick
