@@ -346,7 +346,7 @@ class NoteWebViewClient(
 				}
 			}
 			if (mime == "text/html") {
-				data += "<style>img { max-width: 100% !important; }\n@media (prefers-color-scheme: dark) { * { color: white; background-color: black; } }</style>".encodeToByteArray()
+				data += "<style>img { max-width: 100% !important; height: auto !important; }\n@media (prefers-color-scheme: dark) { * { color: white; background-color: black; } }</style>".encodeToByteArray()
 				val textSize = Preferences.textSize()
 				if (textSize != -1) {
 					data += "<style>body{font-size:${textSize}px;}</style>".encodeToByteArray()
