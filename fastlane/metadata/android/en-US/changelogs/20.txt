@@ -1,0 +1,7 @@
+Features
+- Support for Trilium 0.100, 0.101
+- French translation (thanks to @babastienne)
+- Show app version on about screen
+
+Bugfixes
+- Fixed images appearing stretched in some cases

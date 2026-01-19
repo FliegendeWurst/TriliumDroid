@@ -2,7 +2,8 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:id="@+id/header"
@@ -83,24 +84,10 @@
         android:drawableStart="@drawable/bxl_github"
         android:text="@string/text_about_4"
         android:textSize="@dimen/bigger_text_size"
-        app:layout_constraintBottom_toTopOf="@id/button_github3"
+        app:layout_constraintBottom_toTopOf="@id/divider2"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/description_pc" />
-
-    <Button
-        android:id="@+id/button_github3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="0dp"
-        android:layout_marginBottom="@dimen/activity_margin"
-        android:drawableStart="@drawable/bxl_github"
-        android:text="@string/text_about_5"
-        android:textSize="@dimen/bigger_text_size"
-        app:layout_constraintBottom_toBottomOf="@id/description_pc"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/button_github" />
 
     <ImageView
         android:id="@+id/divider2"
@@ -109,7 +96,7 @@
         android:layout_marginTop="@dimen/normal_margin"
         android:background="@color/divider_grey"
         android:importantForAccessibility="no"
-        app:layout_constraintTop_toBottomOf="@id/button_github3" />
+        app:layout_constraintTop_toBottomOf="@id/button_github" />
 
     <TextView
         android:id="@+id/header_app"
@@ -153,5 +140,26 @@
         android:background="@color/divider_grey"
         android:importantForAccessibility="no"
         app:layout_constraintTop_toBottomOf="@id/button_github2" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/normal_margin"
+        android:paddingStart="@dimen/big_margin"
+        android:paddingEnd="@dimen/big_margin"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider3">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_version" />
+
+        <TextView
+            android:id="@+id/text_app_version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

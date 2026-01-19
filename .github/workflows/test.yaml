@@ -21,7 +21,7 @@ jobs:
         with:
           extra-conf: "extra-substituters = https://cache.garnix.io\nextra-trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
       - name: Install Trilium Server and ImageMagick
-        run: nix profile install github:TriliumNext/Trilium/27e6d1b00b53bcf1b9558fdc92da610460659dc6#server nixpkgs/master#imagemagick # v0.99.0
+        run: nix profile install github:TriliumNext/Trilium/v0.101.3#server nixpkgs/master#imagemagick
       - name: Run Trilium Server
         run: ./app/test/setup-test-server.sh
       - uses: actions/setup-java@5d7b2146334bacf88728daaa70414a99f5164e0f # v5.0.0
