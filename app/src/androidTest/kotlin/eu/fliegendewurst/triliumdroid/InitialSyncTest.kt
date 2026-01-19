@@ -75,7 +75,12 @@ class InitialSyncTest {
 		// BEGIN highly version-specific
 		// The expanded state of notes in the demo document changes very frequently.
 		for (name in listOf("Inbox", "Formatting examples", "Note Types")) {
-			onView(withText(name))
+			onView(
+				allOf(
+					withText(name),
+					withId(R.id.label)
+				)
+			)
 				.perform(longClick())
 			Thread.sleep(2000)
 		}
@@ -387,8 +392,8 @@ class InitialSyncTest {
 			)
 		)
 			.perform(longClick())
-//		onView(withText("Journal"))
-//			.perform(longClick())
+		onView(allOf(withText("Journal"), withId(R.id.label)))
+			.perform(longClick())
 		onView(withText("2021"))
 			.perform(click())
 		// wait for note to load
