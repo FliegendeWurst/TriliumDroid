@@ -16,7 +16,7 @@ jobs:
         with:
           path: app/build
           key: ${{ runner.os }}-build-${{ hashFiles('app/build.gradle') }}
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: DeterminateSystems/nix-installer-action@c5a866b6ab867e88becbed4467b93592bce69f8a # v21
         with:
           extra-conf: "extra-substituters = https://cache.garnix.io\nextra-trusted-public-keys = cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
