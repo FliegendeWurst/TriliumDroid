@@ -1,10 +1,12 @@
 Features
 - Support for Trilium 0.102
 - Support for HTTP Basic Authentication
+- LaTeX rendering in text notes
 - Russian translation (thanks to @Xapitonov)
 
 Fixes
 - Crash on launch if invalid date notes are present
 - Crash when viewing a too large note (>16 MB)
+- Rare crash in navigation mode
 - Tables now have borders in view mode
 - When syncing currently open node, update node view

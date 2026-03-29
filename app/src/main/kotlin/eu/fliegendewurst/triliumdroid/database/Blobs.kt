@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.database.Cursor.FIELD_TYPE_BLOB
 import android.database.sqlite.SQLiteDatabase.CONFLICT_FAIL
 import android.util.Log
+import androidx.core.database.getStringOrNull
 import eu.fliegendewurst.triliumdroid.data.AttachmentId
 import eu.fliegendewurst.triliumdroid.data.Blob
 import eu.fliegendewurst.triliumdroid.data.BlobId
@@ -24,7 +25,12 @@ object Blobs {
 	private const val TAG = "Blobs"
 
 	val EMPTY_BLOB_ID = BlobId("z4PhNX7vuL3xVChQ1m2A")
-	val EMPTY_BLOB = Blob(EMPTY_BLOB_ID, byteArrayOf(), "1970-01-01 00:00:00.000+0000", "1970-01-01 00:00:00.000Z")
+	val EMPTY_BLOB = Blob(
+		EMPTY_BLOB_ID,
+		byteArrayOf(),
+		"1970-01-01 00:00:00.000+0000",
+		"1970-01-01 00:00:00.000Z"
+	)
 
 	private val blobCache: MutableMap<String, Blob> = WeakHashMap()
 
@@ -102,7 +108,11 @@ object Blobs {
 				val content: ByteArray = if (it.getType(0) == FIELD_TYPE_BLOB) {
 					it.getBlob(0)
 				} else {
-					it.getString(0).encodeToByteArray()
+					val contentStr = it.getStringOrNull(0)
+					if (contentStr == null) {
+						Log.e(TAG, "blob $id has NULL content")
+					}
+					(contentStr ?: "").encodeToByteArray()
 				}
 				val dateModified = it.getString(1)
 				val utcDateModified = it.getString(2)
