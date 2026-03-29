@@ -14,7 +14,7 @@ class HistoryList {
 	}
 
 	fun restore(activity: MainActivity) {
-		items.last().restore(activity)
+		items.lastOrNull()?.restore(activity)
 	}
 
 	fun addAndRestore(item: HistoryItem, activity: MainActivity) {
