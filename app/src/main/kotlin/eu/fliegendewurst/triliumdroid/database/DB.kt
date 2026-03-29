@@ -26,6 +26,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 
 object DB {
 	private const val TAG = "DB"
+	const val MAX_BLOB_SIZE: Long = 16 * 1024 * 1024
 
 	var applicationContext: Context? = null
 
@@ -313,7 +314,7 @@ object DB {
 				)!!
 			// try 16 MB for note content
 			val cw = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-				CursorWindow("note_content", 16 * 1024 * 1024)
+				CursorWindow("note_content", MAX_BLOB_SIZE)
 			} else {
 				CursorWindow("note_content")
 			}

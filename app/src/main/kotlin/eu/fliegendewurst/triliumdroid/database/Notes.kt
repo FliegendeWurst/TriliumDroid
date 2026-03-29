@@ -15,6 +15,7 @@ import eu.fliegendewurst.triliumdroid.data.Relation
 import eu.fliegendewurst.triliumdroid.database.Cache.dateModified
 import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.database.DB.CursorFactory
+import eu.fliegendewurst.triliumdroid.database.DB.MAX_BLOB_SIZE
 import eu.fliegendewurst.triliumdroid.service.ProtectedSession
 import eu.fliegendewurst.triliumdroid.service.Util
 import kotlinx.coroutines.Dispatchers
@@ -149,7 +150,7 @@ object Notes {
 		val relations = mutableListOf<Relation>()
 		DB.rawQueryWithFactory(
 			CursorFactory,
-			"SELECT content," + // 0
+			"SELECT CASE WHEN LENGTH(content) > ${MAX_BLOB_SIZE - 256} THEN NULL ELSE content END as content," + // 0
 					"mime," + // 1
 					"title," + // 2
 					"attributes.type," + // 3
