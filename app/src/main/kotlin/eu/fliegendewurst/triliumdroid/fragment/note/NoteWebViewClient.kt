@@ -288,8 +288,10 @@ class NoteWebViewClient(
 					Log.w(TAG, "geomap note with content, should be in attachment")
 				}
 				// get viewConfig attachment
-				val viewConfig = runBlocking { Attachments.find(NoteId(id), AttachmentRole.ViewConfig)?.blob() }
-				var theJson = JSONObject("{'view': {'center': {'lat': 50.878638227135724, 'lng': 0 }, 'zoom': 3 }}")
+				val viewConfig =
+					runBlocking { Attachments.find(NoteId(id), AttachmentRole.ViewConfig)?.blob() }
+				var theJson =
+					JSONObject("{'view': {'center': {'lat': 50.878638227135724, 'lng': 0 }, 'zoom': 3 }}")
 				if (viewConfig != null) {
 					theJson = JSONObject(viewConfig.content.decodeToString())
 				}
@@ -346,7 +348,31 @@ class NoteWebViewClient(
 				}
 			}
 			if (mime == "text/html") {
-				data += "<style>img { max-width: 100% !important; height: auto !important; }\n@media (prefers-color-scheme: dark) { * { color: white; background-color: black; } }</style>".encodeToByteArray()
+				data += """<style>
+					|img {
+					|	max-width: 100% !important;
+					|	height: auto !important;
+					|}
+					|th {
+					|	background-color: #f5f5f5;
+					|}
+					|th, td {
+					|	border: 1px solid #bfbfbf;
+					|	padding: .4em;
+					|}
+					|tr {
+					|	border-width: 0;
+					|}
+					|@media (prefers-color-scheme: dark) {
+					|	* {
+					|		color: white;
+					|		background-color: black;
+					|	}
+					|	th {
+					|		background-color: #555;
+					|	}
+					|}
+					|</style>""".trimMargin().encodeToByteArray()
 				val textSize = Preferences.textSize()
 				if (textSize != -1) {
 					data += "<style>body{font-size:${textSize}px;}</style>".encodeToByteArray()
