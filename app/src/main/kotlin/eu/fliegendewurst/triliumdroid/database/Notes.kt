@@ -49,7 +49,12 @@ object Notes {
 	val notes: MutableMap<NoteId, Note> = ConcurrentHashMap()
 
 	init {
-		notes.put(HiddenNotes.GEO_MAP_TEMPLATE.id, HiddenNotes.GEO_MAP_TEMPLATE)
+		notes[HiddenNotes.GEO_MAP_TEMPLATE.id] = HiddenNotes.GEO_MAP_TEMPLATE
+	}
+
+	fun clearCache() {
+		notes.values.forEach { it.makeInvalid() }
+		notes.clear()
 	}
 
 	suspend fun createChildNote(parentNote: Note, newNoteTitle: String?): Note {

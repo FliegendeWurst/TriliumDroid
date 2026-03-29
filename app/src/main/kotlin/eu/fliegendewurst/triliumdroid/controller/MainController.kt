@@ -966,6 +966,7 @@ class MainController {
 					}, {
 						activity.lifecycleScope.launch {
 							activity.indicateSyncDone(it.first, it.second)
+							handleSyncDone()
 							Tree.getTreeData("")
 							showInitialNote(activity, resetView)
 							showSyncError = false
@@ -984,6 +985,11 @@ class MainController {
 				}
 			})
 		}
+	}
+
+	private fun handleSyncDone() {
+		// Branches: taken care of in getTreeData
+		Notes.clearCache()
 	}
 
 	fun onDestroy() {

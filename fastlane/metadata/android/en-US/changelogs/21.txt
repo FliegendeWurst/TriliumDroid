@@ -7,3 +7,4 @@ Fixes
 - Crash on launch if invalid date notes are present
 - Crash when viewing a too large note (>16 MB)
 - Tables now have borders in view mode
+- When syncing currently open node, update node view
