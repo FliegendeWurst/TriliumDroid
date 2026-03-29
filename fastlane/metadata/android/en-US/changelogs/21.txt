@@ -1,0 +1,3 @@
+Features
+- Support for Trilium 0.102
+- Russian translation (thanks to @Xapitonov)

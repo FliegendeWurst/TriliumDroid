@@ -453,6 +453,11 @@ class CacheDbHelper(context: Context, private val sql: String) :
 					}
 					Log.i(TAG, "migrating to version 233 done")
 				}
+				if (oldVersion < 234 && newVersion >= 234) {
+					Log.i(TAG, "migrating aiChat nodes to code notes")
+					execSQL("UPDATE notes SET type='code', mime='application/json' WHERE type='aiChat'")
+					Log.i(TAG, "migration to version 234 done")
+				}
 				// always update to latest version
 				execSQL(
 					"UPDATE options SET value = ? WHERE name = 'dbVersion'",
