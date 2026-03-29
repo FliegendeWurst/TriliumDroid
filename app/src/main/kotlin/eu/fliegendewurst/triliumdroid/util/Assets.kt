@@ -10,7 +10,7 @@ import kotlin.io.path.outputStream
 
 object Assets {
 	private const val TAG: String = "Assets"
-	private const val LATEST_WEB_ASSETS = 7 // increment when updating web.zip
+	private const val LATEST_WEB_ASSETS = 9 // increment when updating web.zip
 	private const val LATEST_DOC_ASSETS = 1 // increment when updating doc_notes.zip
 	private const val LATEST_CSS_ASSETS = 1 // increment when updating stylesheets.zip
 
@@ -22,6 +22,7 @@ object Assets {
 	private var noteChildren_TPL: String? = null
 	private var noteEditable_TPL: String? = null
 	private var noteEditable_JS: String? = null
+	private var noteMath_JS: String? = null
 
 	fun excalidrawTemplateHTML(context: Context): String {
 		if (excalidraw_TPL != null) {
@@ -117,6 +118,18 @@ object Assets {
 			}
 		}
 		return noteEditable_JS!!
+	}
+
+	fun noteMathJS(context: Context): String {
+		if (noteMath_JS != null) {
+			return noteMath_JS!!
+		}
+		context.resources.assets.open("noteMath.js").use { fileInput ->
+			fileInput.bufferedReader().use {
+				noteMath_JS = it.readText()
+			}
+		}
+		return noteMath_JS!!
 	}
 
 	fun webAsset(context: Context, url: String): InputStream? = synchronized(this) {

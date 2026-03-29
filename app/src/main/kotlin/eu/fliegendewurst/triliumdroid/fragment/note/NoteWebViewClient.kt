@@ -21,6 +21,7 @@ import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment.Companion.WEBVI
 import eu.fliegendewurst.triliumdroid.fragment.note.NoteFragment.Companion.WEBVIEW_HOST
 import eu.fliegendewurst.triliumdroid.util.Assets
 import eu.fliegendewurst.triliumdroid.util.Preferences
+import eu.fliegendewurst.triliumdroid.util.findFirst
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
@@ -194,6 +195,13 @@ class NoteWebViewClient(
 					Assets.noteEditableJS(view.context).byteInputStream()
 				)
 			}
+			if (id == "noteMath.js") {
+				return WebResourceResponse(
+					"text/javascript",
+					"utf-8",
+					Assets.noteMathJS(view.context).byteInputStream()
+				)
+			}
 			val note = if (!fetchingAttachment) {
 				runBlocking { Notes.getNoteWithContent(NoteId(id)) }
 			} else {
@@ -348,6 +356,24 @@ class NoteWebViewClient(
 				}
 			}
 			if (mime == "text/html") {
+				// we don't want Quirks Mode
+				data = "<!DOCTYPE html>\n".encodeToByteArray() + data
+				// LaTeX rendering hack
+				if (data.findFirst("class=\"math-tex\"".encodeToByteArray()) != -1) {
+					data += """
+						|<link rel="stylesheet" href="https://esm.sh/katex@0.16.33/dist/katex.min.css">
+						|<script type="importmap">
+        				|{
+          				|	"imports": {
+            			|		"katex": "https://esm.sh/katex@0.16.33/es2022/katex.mjs",
+						|       "katex/contrib/mhchem": "https://esm.sh/katex@0.16.33/es2022/contrib/mhchem.mjs",
+						|       "katex/contrib/auto-render": "https://esm.sh/katex@0.16.33/es2022/contrib/auto-render.mjs"
+          				|	}
+        				|}
+    					|</script>
+						|<script type="module" src="/noteMath.js"></script>
+					""".trimMargin().encodeToByteArray()
+				}
 				data += """<style>
 					|img {
 					|	max-width: 100% !important;
