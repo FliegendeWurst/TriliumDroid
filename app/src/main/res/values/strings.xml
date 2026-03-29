@@ -3,6 +3,8 @@
     <string name="server_placeholder" translatable="false">https://example.trilium.cc</string>
     <string name="user_placeholder">Username</string>
     <string name="password_placeholder">Trilium password</string>
+    <string name="basic_auth_user_placeholder">User ID</string>
+    <string name="basic_auth_placeholder">Password</string>
     <string name="fab_description">Primary action</string>
     <string name="fab_tree_description">Secondary action</string>
     <string name="jump_to_dialog">Jump to note</string>
@@ -14,6 +16,7 @@
     <string name="action_sync">Sync</string>
     <string name="settings_sync_server_header">Sync server</string>
     <string name="password_label">Password</string>
+    <string name="basic_auth_label">HTTP Basic authentication (optional)</string>
     <string name="server_label">Server instance address (host + port)</string>
     <string name="action_share">Share</string>
     <string name="action_add">Create new note</string>

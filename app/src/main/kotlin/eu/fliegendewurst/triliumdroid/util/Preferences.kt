@@ -19,6 +19,8 @@ object Preferences {
 
 	private const val HOSTNAME = "hostname"
 	private const val PASSWORD = "password"
+	private const val BASIC_AUTH_USER = "basicAuthUser"
+	private const val BASIC_AUTH_PASSWORD = "basicAuthPassword"
 	private const val INSTANCE_ID = "instanceId"
 	private const val DOCUMENT_SECRET = "documentSecret"
 	private const val SYNC_SSID = "syncSSID"
@@ -55,6 +57,8 @@ object Preferences {
 
 	fun hostname(): String? = prefs.getString(HOSTNAME, null)
 	fun password(): String? = prefs.getString(PASSWORD, null)
+	fun basicAuthUser(): String? = prefs.getString(BASIC_AUTH_USER, null)
+	fun basicAuthPassword(): String? = prefs.getString(BASIC_AUTH_PASSWORD, null)
 	fun instanceId(): String = prefs.getString(INSTANCE_ID, null).let {
 		if (it == null) {
 			setInstanceId("mobile" + Util.randomString(6))
@@ -124,6 +128,10 @@ object Preferences {
 
 	fun setHostname(hostname: String) = prefs.edit { putString(HOSTNAME, hostname) }
 	fun setPassword(password: String) = prefs.edit { putString(PASSWORD, password) }
+	fun setBasicAuthUser(username: String) = prefs.edit { putString(BASIC_AUTH_USER, username) }
+	fun setBasicAuthPassword(password: String) =
+		prefs.edit { putString(BASIC_AUTH_PASSWORD, password) }
+
 	fun setInstanceId(newValue: String) = prefs.edit { putString(INSTANCE_ID, newValue) }
 	fun setSyncVersion(newValue: Int) = prefs.edit { putInt(SYNC_VERSION, newValue) }
 	fun setDatabaseVersion(newValue: Int) = prefs.edit { putInt(DATABASE_VERSION, newValue) }

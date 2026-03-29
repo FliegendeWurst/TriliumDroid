@@ -21,11 +21,18 @@ object ConfigureSyncDialog {
 	fun showDialog(activity: AppCompatActivity, callback: () -> Unit) {
 		var server: EditText? = null
 		var password: EditText? = null
+		var basicAuthUser: EditText? = null
+		var basicAuthPassword: EditText? = null
 		val dialog = AlertDialog.Builder(activity)
 			.setTitle(R.string.settings_sync_server_header)
 			.setView(R.layout.dialog_configure_sync)
 			.setPositiveButton(android.R.string.ok) { dialog, _ ->
-				done(server!!.text.toString(), password!!.text.toString())
+				done(
+					server!!.text.toString(),
+					password!!.text.toString(),
+					basicAuthUser!!.text.toString(),
+					basicAuthPassword!!.text.toString()
+				)
 				dialog.dismiss()
 				callback.invoke()
 			}
@@ -34,6 +41,8 @@ object ConfigureSyncDialog {
 
 		server = dialog.findViewById(R.id.server)!!
 		password = dialog.findViewById(R.id.password)!!
+		basicAuthUser = dialog.findViewById(R.id.basic_auth_user)!!
+		basicAuthPassword = dialog.findViewById(R.id.basic_auth_password)!!
 		val buttonConfigureMtls = dialog.findViewById<Button>(R.id.button_configure_mtls)!!
 		val buttonConfigureMtls2 = dialog.findViewById<Button>(R.id.button_configure_mtls_2)!!
 		val buttonConfigureSsid = dialog.findViewById<Button>(R.id.button_configure_ssid)!!
@@ -42,6 +51,8 @@ object ConfigureSyncDialog {
 
 		server.setText(Preferences.hostname() ?: "")
 		password.setText(Preferences.password() ?: "")
+		basicAuthUser.setText(Preferences.basicAuthUser() ?: "")
+		basicAuthPassword.setText(Preferences.basicAuthPassword() ?: "")
 
 		val mtlsCert = Preferences.mTLS()
 		buttonConfigureMtls.setOnClickListener {
@@ -106,7 +117,9 @@ object ConfigureSyncDialog {
 
 	private fun done(
 		serverInput: String,
-		password: String
+		password: String,
+		basicAuthUser: String,
+		basicAuthPassword: String
 	) {
 		var server = serverInput.trimEnd('/')
 		if (!(server.startsWith("http://") || server.startsWith("https://"))) {
@@ -114,5 +127,7 @@ object ConfigureSyncDialog {
 		}
 		Preferences.setHostname(server)
 		Preferences.setPassword(password)
+		Preferences.setBasicAuthUser(basicAuthUser)
+		Preferences.setBasicAuthPassword(basicAuthPassword)
 	}
 }

@@ -1,3 +1,9 @@
 Features
 - Support for Trilium 0.102
+- Support for HTTP Basic Authentication
 - Russian translation (thanks to @Xapitonov)
+
+Fixes
+- Crash on launch if invalid date notes are present
+- Crash when viewing a too large note (>16 MB)
+- Tables now have borders in view mode

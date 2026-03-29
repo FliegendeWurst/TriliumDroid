@@ -65,6 +65,47 @@
     <include layout="@layout/divider" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/settings_basic_auth"
+        style="@style/SettingsHolderTextViewOneLinerStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/basic_auth_label"
+            style="@style/SettingsTextLabelStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/basic_auth_label"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <EditText
+            android:id="@+id/basic_auth_user"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:autofillHints="password"
+            android:hint="@string/basic_auth_user_placeholder"
+            android:inputType="text"
+            app:layout_constraintEnd_toStartOf="@id/basic_auth_password"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/basic_auth_label" />
+
+        <EditText
+            android:id="@+id/basic_auth_password"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:autofillHints="password"
+            android:hint="@string/basic_auth_placeholder"
+            android:inputType="textPassword"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/basic_auth_user"
+            app:layout_constraintTop_toBottomOf="@+id/basic_auth_label" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <include layout="@layout/divider" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/settings_mtls"
         style="@style/SettingsHolderTextViewOneLinerStyle"
         android:layout_width="match_parent"

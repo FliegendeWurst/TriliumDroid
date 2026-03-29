@@ -16,6 +16,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
+import okhttp3.Credentials
 import okhttp3.FormBody
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
@@ -149,6 +150,7 @@ object ConnectionUtil {
 			// bump timeout from default 10s to 30s
 			.readTimeout(30, TimeUnit.SECONDS)
 
+		// mTLS authentication setup
 		var pk: PrivateKey? = null
 		var chain: Array<X509Certificate>? = null
 
@@ -165,6 +167,7 @@ object ConnectionUtil {
 			}
 		}
 
+		// custom server certificate setup
 		val trustManagerFactory =
 			TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
 		val ks: KeyStore = KeyStore.getInstance("AndroidKeyStore").apply {
@@ -241,6 +244,16 @@ object ConnectionUtil {
 						serverCert
 					)
 				}
+		}
+
+		// HTTP Basic Authentication
+		val basicAuthUser = Preferences.basicAuthUser()
+		val basicAuthPassword = Preferences.basicAuthPassword()
+		if (basicAuthUser?.isNotBlank() == true && basicAuthPassword?.isNotBlank() == true) {
+			val cred = Credentials.basic(basicAuthUser, basicAuthPassword, Charsets.UTF_8)
+			clientBuilder.authenticator { _, response ->
+				response.request.newBuilder().header("Authorization", cred).build()
+			}
 		}
 
 		client = clientBuilder
