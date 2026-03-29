@@ -117,7 +117,12 @@ object Cache {
 			).use {
 				val l = mutableListOf<Calendar>()
 				while (it.moveToNext()) {
-					val ymd = it.getString(0).split('-')
+					val formatted = it.getString(0)
+					val ymd = formatted.split('-')
+					if (ymd.size != 3 || ymd[0].length != 4 || ymd[1].length != 2 || ymd[2].length != 2) {
+						Log.w(TAG, "wrong date note with '${formatted}' not in YYYY-MM-DD format")
+						continue
+					}
 					val year = ymd[0].toInt()
 					val month = ymd[1].toInt()
 					val day = ymd[2].toInt()
