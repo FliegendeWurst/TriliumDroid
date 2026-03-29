@@ -158,9 +158,9 @@ class NavigationFragment : Fragment(R.layout.fragment_navigation) {
 			binding.navigationListBottom.smoothScrollBy(5000, 0)
 
 			val entries = notes.map {
-				val noteHere = Notes.getNote(it.note)!!
+				val noteHere = Notes.getNote(it.note) ?: return@map null
 				Entry(noteHere.icon(), noteHere.title(), noteHere, it, 0)
-			}.asReversed()
+			}.filterNotNull().asReversed()
 			adapter.submitList(entries)
 		}
 	}
