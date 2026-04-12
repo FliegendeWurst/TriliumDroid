@@ -43,7 +43,7 @@
     <string name="action_note_navigation">Navigation starten</string>
     <string name="fab_setup_hint">L = linke Aktion, R = rechte Aktion, M = Menü-Aktion</string>
     <string name="app_name">Trilium Notes</string>
-    <string name="password_placeholder">Trilium-Rasswort</string>
+    <string name="password_placeholder">Trilium-Passwort</string>
     <string name="jump_to_dialog">Zu Notiz springen</string>
     <string name="action_about">Über</string>
     <string name="settings_sync_server_header">Sync-Server</string>
@@ -172,4 +172,8 @@
     <string name="basic_auth_label">HTTP-Basisauthentifizierung (optional)</string>
     <string name="label_promoted">Empfohlen</string>
     <string name="app_version">App-Version:</string>
+    <string name="toast_clone_would_cycle">Klon würde Zyklus erzeugen</string>
+    <string name="toast_ssl_certificate">Starte Sync um neues Zertifikat zu akzeptieren</string>
+    <string name="button_journal">Wähle Journal-Datum</string>
+    <string name="toast_no_journal_found">Kein Journal gefunden!</string>
 </resources>
