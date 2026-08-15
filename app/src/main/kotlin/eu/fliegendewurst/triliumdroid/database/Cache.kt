@@ -354,6 +354,7 @@ object Cache {
 		const val DATABASE_VERSION_0_97_0 = 233 // same up to 0.101.3
 		const val DATABASE_VERSION_0_102_0 = 234 // same up to 0.102.1
 		const val DATABASE_VERSION_0_103_0 = 238
+		const val DATABASE_VERSION_0_104_0 = 239
 
 		const val SYNC_VERSION_0_59_4 = 29
 		const val SYNC_VERSION_0_60_4 = 29
@@ -363,7 +364,7 @@ object Cache {
 		const val SYNC_VERSION_0_91_6 = 34 // same up to 0.93.0
 		const val SYNC_VERSION_0_94_0 = 35 // same up to 0.94.1
 		const val SYNC_VERSION_0_95_0 = 36 // same up to 0.102.1
-		const val SYNC_VERSION_0_103_0 = 39
+		const val SYNC_VERSION_0_103_0 = 39 // same up to 0.104.1
 
 		val SUPPORTED_SYNC_VERSIONS: Set<Int> = setOf(
 			SYNC_VERSION_0_95_0,
@@ -372,10 +373,11 @@ object Cache {
 		val SUPPORTED_DATABASE_VERSIONS: Set<Int> = setOf(
 			DATABASE_VERSION_0_97_0,
 			DATABASE_VERSION_0_102_0,
-			DATABASE_VERSION_0_103_0
+			DATABASE_VERSION_0_103_0,
+			DATABASE_VERSION_0_104_0
 		)
 
-		const val DATABASE_VERSION = DATABASE_VERSION_0_103_0
+		const val DATABASE_VERSION = DATABASE_VERSION_0_104_0
 		const val DATABASE_NAME = "Document.db"
 
 		// sync version is largely irrelevant
