@@ -1,0 +1,35 @@
+name: APK build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Read Gradle version
+        id: gradle
+        shell: bash
+        run: |
+          version=$(sed -nE 's/^[[:space:]]*gradleVersion[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' build.gradle | head -n 1)
+          echo "version=${version:-8.11.1}" >> "$GITHUB_OUTPUT"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: ${{ steps.gradle.outputs.version }}
+      - run: gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: debug-apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/androidTest/debug/*.apk
+            app/build/test-results/testDebugUnitTest/*.xml
