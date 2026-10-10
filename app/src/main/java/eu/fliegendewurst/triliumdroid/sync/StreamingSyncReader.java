@@ -3,6 +3,7 @@ package eu.fliegendewurst.triliumdroid.sync;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 
 import java.io.*;
 import java.util.*;
@@ -34,7 +35,11 @@ public final class StreamingSyncReader {
         int count = 0;
         boolean sawChanges = false;
         List<File> files = new ArrayList<>();
-        try (JsonParser parser = new JsonFactory().createParser(input)) {
+        // Preserve large metadata strings accepted by the previous JSONObject reader.
+        JsonFactory factory = JsonFactory.builder()
+            .streamReadConstraints(StreamReadConstraints.builder().maxStringLength(Integer.MAX_VALUE).build())
+            .build();
+        try (JsonParser parser = factory.createParser(input)) {
             require(parser.nextToken() == JsonToken.START_OBJECT, "Expected sync response object");
             while (parser.nextToken() != JsonToken.END_OBJECT) {
                 require(parser.currentToken() == JsonToken.FIELD_NAME, "Expected response field");

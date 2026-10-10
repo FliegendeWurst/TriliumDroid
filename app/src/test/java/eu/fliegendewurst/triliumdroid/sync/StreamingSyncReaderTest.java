@@ -17,6 +17,32 @@ import static org.junit.Assert.*;
 public class StreamingSyncReaderTest {
     @Rule public TemporaryFolder temp = new TemporaryFolder();
 
+    @Test public void preservesMetadataStringsAboveJacksonDefaultLimit() throws Exception {
+        File response = temp.newFile();
+        File spool = temp.newFolder();
+        int size = 21_000_000;
+        byte[] block = new byte[8192];
+        java.util.Arrays.fill(block, (byte) 'x');
+        try (OutputStream out = new BufferedOutputStream(new FileOutputStream(response))) {
+            out.write("{\"entityChanges\":[{\"entity\":{\"textRepresentation\":\"".getBytes(StandardCharsets.UTF_8));
+            for (int left = size; left > 0;) {
+                int n = Math.min(left, block.length);
+                out.write(block, 0, n);
+                left -= n;
+            }
+            out.write("\"}}],\"lastEntityChangeId\":1,\"outstandingPullCount\":0}".getBytes(StandardCharsets.UTF_8));
+        }
+        try (InputStream input = new FileInputStream(response)) {
+            StreamingSyncReader.Summary summary = StreamingSyncReader.read(input, spool, change -> {
+                String value = (String) ((Map<?, ?>) change.get("entity")).get("textRepresentation");
+                assertEquals(size, value.length());
+                for (int i = 0; i < size; i++) assertEquals('x', value.charAt(i));
+            });
+            assertEquals(1, summary.changeCount);
+        }
+        assertEquals(0, spool.list().length);
+    }
+
     @Test public void decodesAttachmentLargerThanHeapWithoutMaterializingIt() throws Exception {
         File response = temp.newFile();
         File spool = temp.newFolder();
