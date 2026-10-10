@@ -28,6 +28,7 @@ import okhttp3.Response
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
+import java.io.InputStream
 import java.net.Socket
 import java.security.KeyStore
 import java.security.Principal
@@ -418,7 +419,7 @@ object ConnectionUtil {
 
 	fun doSyncRequest(
 		uri: String,
-		callback: (JSONObject) -> Unit,
+		callback: (InputStream) -> Unit,
 		callbackError: (Exception) -> Unit
 	) {
 		val req = Request.Builder()
@@ -431,13 +432,8 @@ object ConnectionUtil {
 				response.use {
 					try {
 						val body = response.body!!
-						if (body.contentLength() >= 30000000) {
-							Log.e(TAG, "sync data too big: ${body.contentLength()} bytes > 30 MB")
-							callbackError(SyncResponseTooBigException)
-							return
-						}
-						val json = JSONObject(body.string())
-						callback(json)
+						if (!response.isSuccessful) throw IOException("Sync request returned HTTP ${response.code}")
+						callback(body.byteStream())
 					} catch (e: Exception) {
 						Log.e(TAG, "failed to read sync response ", e)
 						callbackError(e)
