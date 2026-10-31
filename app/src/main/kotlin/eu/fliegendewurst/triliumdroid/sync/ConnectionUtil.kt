@@ -37,11 +37,10 @@ import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509KeyManager
-import javax.net.ssl.X509TrustManager
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -167,20 +166,19 @@ object ConnectionUtil {
 			}
 		}
 
-		// custom server certificate setup
-		val trustManagerFactory =
-			TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-		val ks: KeyStore = KeyStore.getInstance("AndroidKeyStore").apply {
-			load(null)
-		}
+		// server certificate validation: the CAs trusted by the system,
+		// plus the server certificate the user chose to trust (e.g. self-signed)
 		var serverCert: Certificate? = null
 		try {
+			val ks: KeyStore = KeyStore.getInstance("AndroidKeyStore").apply {
+				load(null)
+			}
 			serverCert = ks.getCertificate("syncServer")
-			trustManagerFactory.init(ks)
 		} catch (e: Exception) {
 			Log.w(TAG, "KeyStore error: ", e)
 		}
-		val trustManagers = trustManagerFactory.trustManagers
+		val trustManager =
+			SyncTrustManager(SyncTrustManager.systemDefault(), serverCert as? X509Certificate)
 
 
 		val keyManagerFactory =
@@ -192,7 +190,7 @@ object ConnectionUtil {
 				keyType: String?,
 				issuers: Array<Principal>
 			): Array<String> {
-				return if (mTLS != null && serverCert != null) {
+				return if (mTLS != null) {
 					arrayOf(mTLS)
 				} else {
 					arrayOf()
@@ -232,17 +230,20 @@ object ConnectionUtil {
 		}
 
 		val sslContext = SSLContext.getInstance("TLS")
-		sslContext.init(arrayOf(km), trustManagers, null)
+		sslContext.init(arrayOf(km), arrayOf(trustManager), null)
 
 		clientBuilder = clientBuilder
-			.sslSocketFactory(sslContext.socketFactory, trustManagers[0] as X509TrustManager)
+			.sslSocketFactory(sslContext.socketFactory, trustManager)
 
 		if (serverCert != null) {
+			// the trusted certificate may not match the hostname (e.g. self-signed),
+			// any other certificate is checked as usual
+			val defaultVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
 			clientBuilder =
-				clientBuilder.hostnameVerifier { _, session ->
+				clientBuilder.hostnameVerifier { hostname, session ->
 					session.peerCertificates.contains(
 						serverCert
-					)
+					) || defaultVerifier.verify(hostname, session)
 				}
 		}
 
