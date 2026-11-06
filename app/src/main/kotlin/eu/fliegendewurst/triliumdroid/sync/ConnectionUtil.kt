@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509KeyManager
 import kotlin.io.encoding.Base64
@@ -180,10 +179,6 @@ object ConnectionUtil {
 		val trustManager =
 			SyncTrustManager(SyncTrustManager.systemDefault(), serverCert as? X509Certificate)
 
-
-		val keyManagerFactory =
-			KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
-		keyManagerFactory.init(null, null)
 
 		val km = object : X509KeyManager {
 			override fun getClientAliases(
