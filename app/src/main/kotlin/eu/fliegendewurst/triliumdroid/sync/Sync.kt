@@ -1,18 +1,13 @@
 package eu.fliegendewurst.triliumdroid.sync
 
-import android.content.ContentValues
 import android.database.Cursor
-import android.database.sqlite.SQLiteDatabase
 import android.util.Log
-import eu.fliegendewurst.triliumdroid.data.BranchId
 import eu.fliegendewurst.triliumdroid.database.Cache.Versions
-import eu.fliegendewurst.triliumdroid.database.Cache.utcDateModified
 import eu.fliegendewurst.triliumdroid.database.DB
 import eu.fliegendewurst.triliumdroid.util.Preferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import okio.ByteString.Companion.decodeBase64
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.OffsetDateTime
@@ -219,106 +214,16 @@ object Sync {
 			val changesUri =
 				"/api/sync/changed?instanceId=${Preferences.instanceId()}&lastEntityChangeId=${lastSyncedPull}&logMarkerId=${logMarkerId}"
 
-			ConnectionUtil.doSyncRequest(changesUri, { resp ->
+			ConnectionUtil.doSyncRequest(changesUri, { input ->
 				runBlocking {
-					val outstandingPullCount = resp.getInt("outstandingPullCount")
-					val entityChangeId = resp.getInt("lastEntityChangeId")
-					Log.i(TAG, "sync outstanding $outstandingPullCount")
-					val changes = resp.getJSONArray("entityChanges")
-					totalSynced += changes.length()
-					for (i in 0 until changes.length()) {
-						val change = changes.get(i) as JSONObject
-						val entityChange = change.optJSONObject("entityChange")!!
-						val entityName = entityChange.getString("entityName")
-						val changeId = entityChange.getString("changeId")
-						val entity = change.optJSONObject("entity")
-						if (entity == null) {
-							val primaryKey = primaryKeyForTable(entityName)
-							val entityId = entityChange.getString("entityId")
-							// deleted entity
-							DB.delete(entityName, "$primaryKey = ?", arrayOf(entityId))
-							continue
-						}
-						val alreadyHere = DB.rawQuery(
-							"SELECT 1 FROM entity_changes WHERE changeId = ?",
-							arrayOf(changeId)
-						).use {
-							return@use it.count != 0
-						}
-						if (alreadyHere) {
-							continue
-						}
-
-						if (entityName == "note_reordering") {
-							for (key in entity.keys()) {
-								DB.update(BranchId(key), Pair("notePosition", entity[key]))
-							}
-							continue
-						}
-						val keys = entity.keys().asSequence().toList()
-
-						// TODO: invalidate existing cache
-						// TODO: lookup notes related to blob!
-
-						val cv = ContentValues(entity.length())
-						keys.map { fieldName ->
-							var x = entity.get(fieldName)
-							if (x == JSONObject.NULL) {
-								cv.putNull(fieldName)
-							} else {
-								if (fieldName.equals("content") && x is String) {
-									val decoded = x.decodeBase64()
-									if (decoded == null) {
-										callbackError(IllegalStateException("failed to base64-decode content column in sync response"))
-										return@runBlocking
-									}
-									x = decoded.toByteArray()
-								}
-								when (x) {
-									is String -> {
-										cv.put(fieldName, x)
-									}
-
-									is Int -> {
-										cv.put(fieldName, x)
-									}
-
-									is Double -> {
-										cv.put(fieldName, x)
-									}
-
-									is ByteArray -> {
-										cv.put(fieldName, x)
-									}
-
-									else -> {
-										Log.e(
-											TAG,
-											"failed to recognize sync entity value $x of type ${x.javaClass}"
-										)
-									}
-								}
-							}
-						}
-						// read-only mode: should still receive database updates
-						DB.internalGetDatabase()!!.insertWithOnConflict(
-							entityName,
-							null,
-							cv,
-							SQLiteDatabase.CONFLICT_REPLACE
-						)
+					val summary = withContext(Dispatchers.IO) {
+						SyncPullWriter.apply(DB.internalGetDatabase()!!, input, DB.applicationContext!!.cacheDir)
 					}
-					Log.i(TAG, "last entity change id: $entityChangeId")
-					val utc = utcDateModified()
-					DB.insertWithConflict(
-						"options",
-						SQLiteDatabase.CONFLICT_REPLACE,
-						Pair("name", "lastSyncedPull"),
-						Pair("value", entityChangeId),
-						Pair("utcDateModified", utc)
-					)
-					if (outstandingPullCount > 0) {
-						callbackOutstanding(outstandingPullCount)
+					totalSynced += summary.changeCount
+					Log.i(TAG, "last entity change id: ${summary.lastEntityChangeId}")
+					Log.i(TAG, "sync outstanding ${summary.outstandingPullCount}")
+					if (summary.outstandingPullCount > 0) {
+						callbackOutstanding(summary.outstandingPullCount)
 						sync(totalSynced, callbackOutstanding, callbackError, callbackDone)
 					} else {
 						callbackDone(Pair(totalSynced, totalPushed))
@@ -331,17 +236,17 @@ object Sync {
 		}
 	}
 
-	private fun primaryKeyForTable(table: String) = when (table) {
+	internal fun primaryKeyForTable(table: String) = when (table) {
 		"attachments" -> "attachmentId"
 		"attributes" -> "attributeId"
 		"blobs" -> "blobId"
 		"branches" -> "branchId"
 		"entity_changes" -> "changeId"
-		"etapi_tokens" -> "" // TODO
+		"etapi_tokens" -> "etapiTokenId"
 		"notes" -> "noteId"
 		"note_contents" -> "noteId" // is this still relevant?
 		"options" -> "name"
-		"recent_notes" -> "" // TODO
+		"recent_notes" -> "noteId"
 		"revisions" -> "revisionId"
 		"note_embeddings" -> "embedId"
 		"embedding_queue" -> "noteId" // unclear if this is synchronized
